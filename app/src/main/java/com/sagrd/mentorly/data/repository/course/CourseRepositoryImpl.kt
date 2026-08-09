@@ -21,4 +21,32 @@ class CourseRepositoryImpl @Inject constructor(
                 emit(Resource.Error(it.message ?: "No se pudieron cargar los cursos"))
             }
     }
+
+    override fun getCourseById(
+        courseId: String
+    ): Flow<Resource<Course>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.getCourseById(courseId)
+            .onSuccess { course ->
+                emit(Resource.Success(course.toDomain()))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo cargar el curso."))
+            }
+    }
+
+    override fun getCourseContent(
+        courseId: String
+    ): Flow<Resource<Course>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.getCourseContent(courseId)
+            .onSuccess { course ->
+                emit(Resource.Success(course.toDomain()))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo cargar el contenido del curso."))
+            }
+    }
 }
