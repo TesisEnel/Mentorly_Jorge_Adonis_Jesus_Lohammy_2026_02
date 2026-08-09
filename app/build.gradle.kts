@@ -1,3 +1,16 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+
+    if (localPropertiesFile.exists()) {
+        FileInputStream(localPropertiesFile).use(::load)
+    }
+}
+
+val mentorlyDebugKeystorePath = localProperties.getProperty("mentorly.debug.keystore")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -20,6 +33,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            mentorlyDebugKeystorePath?.let { keystorePath ->
+                storeFile = file(keystorePath)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
     }
 
     buildTypes {
