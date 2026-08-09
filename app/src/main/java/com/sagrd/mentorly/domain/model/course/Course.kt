@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.domain.course
+package com.sagrd.mentorly.domain.model.course
 
 data class Course(
     val id: String,

@@ -1,6 +1,6 @@
 package com.sagrd.mentorly.data.remote.dto.course
 
-import com.sagrd.mentorly.domain.course.Course
+import com.sagrd.mentorly.domain.model.course.Course
 
 data class CourseDto(
     val id: String,
