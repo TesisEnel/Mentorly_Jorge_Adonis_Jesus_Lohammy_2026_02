@@ -1,0 +1,105 @@
+package com.sagrd.mentorly.presentation.navigation
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import com.sagrd.mentorly.presentation.auth.LoginScreen
+import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
+import com.sagrd.mentorly.presentation.course.list.CourseListScreen
+
+@Composable
+fun AppNavigation() {
+    val backStack = rememberNavBackStack(Screen.Login)
+
+    AppNavigationDisplay(backStack)
+}
+
+@Composable
+private fun AppNavigationDisplay(
+    backStack: NavBackStack<NavKey>
+) {
+    val currentDestination = backStack.lastOrNull()
+    val showBottomNavigation = currentDestination is Screen.CourseList
+
+    Scaffold(
+        bottomBar = {
+            if (showBottomNavigation) {
+                MentorlyBottomNavigation(
+                    currentSection = MentorlySection.COURSES,
+                    onSectionSelected = { section ->
+                        if (section == MentorlySection.COURSES) {
+                            navigateToCourseList(backStack)
+                        }
+                    }
+                )
+            }
+        }
+    ) { innerPadding ->
+        NavigationContent(
+            backStack = backStack,
+            innerPadding = innerPadding
+        )
+    }
+}
+
+@Composable
+private fun NavigationContent(
+    backStack: NavBackStack<NavKey>,
+    innerPadding: PaddingValues
+) {
+    NavDisplay(
+        backStack = backStack,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding),
+        onBack = {
+            if (backStack.size > 1) {
+                backStack.removeLastOrNull()
+            }
+        },
+        entryProvider = entryProvider {
+            entry<Screen.Login> {
+                LoginScreen(
+                    onLoginCompleted = {
+                        backStack.clear()
+                        backStack.add(Screen.CourseList)
+                    }
+                )
+            }
+
+            entry<Screen.CourseList> {
+                CourseListScreen(
+                    onCourseClick = { courseId ->
+                        backStack.add(Screen.CourseDetail(courseId))
+                    }
+                )
+            }
+
+            entry<Screen.CourseDetail> { destination ->
+                CourseDetailScreen(
+                    courseId = destination.courseId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    }
+                )
+            }
+        }
+    )
+}
+
+private fun navigateToCourseList(backStack: NavBackStack<NavKey>) {
+    if (backStack.lastOrNull() is Screen.CourseList) {
+        return
+    }
+
+    backStack.clear()
+    backStack.add(Screen.CourseList)
+}
