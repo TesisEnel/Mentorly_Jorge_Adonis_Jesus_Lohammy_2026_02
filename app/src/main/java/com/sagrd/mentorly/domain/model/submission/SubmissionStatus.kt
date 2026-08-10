@@ -4,19 +4,17 @@ enum class SubmissionStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    ESCALATED;
+    ESCALATED,
+    UNKNOWN;
 
     companion object {
-        fun fromApi(value: Int): SubmissionStatus {
-            return when (value) {
+        fun fromApi(value: Int): SubmissionStatus =
+            when (value) {
                 1 -> PENDING
                 2 -> APPROVED
                 3 -> REJECTED
                 4 -> ESCALATED
-                else -> throw IllegalArgumentException(
-                    "Estado de entrega no reconocido: $value"
-                )
+                else -> UNKNOWN
             }
-        }
     }
 }
