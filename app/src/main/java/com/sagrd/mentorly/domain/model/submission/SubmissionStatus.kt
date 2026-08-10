@@ -10,10 +10,10 @@ enum class SubmissionStatus {
     companion object {
         fun fromApi(value: Int): SubmissionStatus =
             when (value) {
-                0 -> PENDING
-                1 -> APPROVED
-                2 -> REJECTED
-                3 -> ESCALATED
+                1 -> PENDING
+                2 -> APPROVED
+                3 -> REJECTED
+                4 -> ESCALATED
                 else -> UNKNOWN
             }
     }
