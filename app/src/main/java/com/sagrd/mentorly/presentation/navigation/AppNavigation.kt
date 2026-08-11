@@ -14,6 +14,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
+import com.sagrd.mentorly.presentation.profile.ProfileScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
 
 @Composable
@@ -28,16 +29,29 @@ private fun AppNavigationDisplay(
     backStack: NavBackStack<NavKey>
 ) {
     val currentDestination = backStack.lastOrNull()
-    val showBottomNavigation = currentDestination is Screen.CourseList
+    val showBottomNavigation = currentDestination is Screen.CourseList || currentDestination is Screen.Profile
 
     Scaffold(
         bottomBar = {
             if (showBottomNavigation) {
                 MentorlyBottomNavigation(
-                    currentSection = MentorlySection.COURSES,
+                    currentSection = when (currentDestination) {
+                        is Screen.Profile -> MentorlySection.PROFILE
+                        else -> MentorlySection.COURSES
+                    },
                     onSectionSelected = { section ->
-                        if (section == MentorlySection.COURSES) {
-                            navigateToCourseList(backStack)
+                        when (section) {
+                            MentorlySection.COURSES -> {
+                                if (currentDestination !is Screen.CourseList) {
+                                    replaceRoot(backStack, Screen.CourseList)
+                                }
+                            }
+                            MentorlySection.PROFILE -> {
+                                if (currentDestination !is Screen.Profile) {
+                                    replaceRoot(backStack, Screen.Profile)
+                                }
+                            }
+                            else -> {}
                         }
                     }
                 )
@@ -102,16 +116,16 @@ private fun NavigationContent(
                     }
                 )
             }
+
+            entry<Screen.Profile> {
+                ProfileScreen(
+                    onSignOutCompleted = {
+                        replaceRoot(backStack, Screen.Login)
+                    }
+                )
+            }
         }
     )
-}
-
-private fun navigateToCourseList(backStack: NavBackStack<NavKey>) {
-    if (backStack.lastOrNull() is Screen.CourseList) {
-        return
-    }
-
-    replaceRoot(backStack, Screen.CourseList)
 }
 
 private fun replaceRoot(
