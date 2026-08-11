@@ -6,7 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.student.ProvisionStudentDto
 import com.sagrd.mentorly.domain.model.auth.AuthUser
+import com.sagrd.mentorly.domain.model.session.AppSession
+import com.sagrd.mentorly.domain.model.student.Student
 import com.sagrd.mentorly.domain.repository.auth.AuthRepository
+import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,28 +22,17 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val studentRepository: StudentRepository
+    private val studentRepository: StudentRepository,
+    private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
-    init {
-        restoreSession()
-    }
-
     fun onEvent(event: LoginUiEvent) {
         when (event) {
             is LoginUiEvent.SignInWithGoogle -> signInWithGoogle(event.context)
             LoginUiEvent.SignOut -> signOut()
-        }
-    }
-
-    private fun restoreSession() {
-        val authUser = authRepository.getCurrentUser() ?: return
-
-        viewModelScope.launch {
-            provisionStudent(authUser)
         }
     }
 
@@ -76,6 +68,7 @@ class LoginViewModel @Inject constructor(
 
         if (email.isNullOrBlank() || displayName.isNullOrBlank()) {
             authRepository.signOut()
+            sessionRepository.clearSession()
 
             _state.update {
                 it.copy(
@@ -108,10 +101,13 @@ class LoginViewModel @Inject constructor(
                 }
 
                 is Resource.Success -> {
+                    val student = resource.data ?: return@collect
+                    sessionRepository.saveSession(student.toSession(authUser.uid))
+
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            student = resource.data,
+                            student = student,
                             errorMessage = null
                         )
                     }
@@ -119,6 +115,7 @@ class LoginViewModel @Inject constructor(
 
                 is Resource.Error -> {
                     authRepository.signOut()
+                    sessionRepository.clearSession()
 
                     _state.update {
                         it.copy(
@@ -136,8 +133,20 @@ class LoginViewModel @Inject constructor(
     private fun signOut() {
         viewModelScope.launch {
             authRepository.signOut()
+            sessionRepository.clearSession()
 
             _state.value = LoginUiState()
         }
+    }
+
+    private fun Student.toSession(firebaseUserId: String): AppSession {
+        return AppSession(
+            studentId = id,
+            firebaseUserId = firebaseUserId,
+            displayName = displayName,
+            email = email,
+            role = role,
+            isLeaderboardPublic = isLeaderboardPublic
+        )
     }
 }
