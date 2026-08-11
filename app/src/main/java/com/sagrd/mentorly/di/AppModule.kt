@@ -4,9 +4,12 @@ import com.sagrd.mentorly.data.remote.api.CourseApi
 import com.sagrd.mentorly.data.remote.api.StudentApi
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
+import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
+import com.sagrd.mentorly.data.repository.session.SessionRepositoryImpl
 import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
+import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -84,5 +87,13 @@ object AppModule {
         remoteDataSource: StudentRemoteDataSource
     ): StudentRepository {
         return StudentRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSessionRepository(
+        sessionPreferences: SessionPreferences
+    ): SessionRepository {
+        return SessionRepositoryImpl(sessionPreferences)
     }
 }

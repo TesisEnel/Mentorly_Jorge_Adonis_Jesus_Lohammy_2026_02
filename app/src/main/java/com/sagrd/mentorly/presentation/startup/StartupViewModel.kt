@@ -1,6 +1,5 @@
-package com.sagrd.mentorly.presentation.auth
+package com.sagrd.mentorly.presentation.startup
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
@@ -15,50 +14,45 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(
+class StartupViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val studentRepository: StudentRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(LoginUiState())
-    val state: StateFlow<LoginUiState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(StartupUiState())
+    val state: StateFlow<StartupUiState> = _state.asStateFlow()
 
-    fun onEvent(event: LoginUiEvent) {
+    init {
+        restoreSession()
+    }
+
+    fun onEvent(event: StartupUiEvent) {
         when (event) {
-            is LoginUiEvent.SignInWithGoogle -> signInWithGoogle(event.context)
-            LoginUiEvent.SignOut -> signOut()
+            StartupUiEvent.Retry -> restoreSession()
+            StartupUiEvent.SignOut -> signOut()
         }
     }
 
-    private fun signInWithGoogle(context: Context) {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true,
-                    errorMessage = null
-                )
-            }
+    private fun restoreSession() {
+        val authUser = authRepository.getCurrentUser()
 
-            authRepository.signInWithGoogle(context).fold(
-                onSuccess = { authUser ->
-                    provisionStudent(authUser)
-                },
-                onFailure = { exception ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = exception.message
-                                ?: "No se pudo iniciar sesión con Google."
-                        )
-                    }
-                }
-            )
+        if (authUser == null) {
+            viewModelScope.launch {
+                sessionRepository.clearSession()
+                navigateTo(StartupDestination.LOGIN)
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            provisionStudent(authUser)
         }
     }
 
@@ -82,6 +76,7 @@ class LoginViewModel @Inject constructor(
         _state.update {
             it.copy(
                 isLoading = true,
+                destination = null,
                 errorMessage = null
             )
         }
@@ -94,33 +89,19 @@ class LoginViewModel @Inject constructor(
             )
         ).collect { resource ->
             when (resource) {
-                is Resource.Loading -> {
-                    _state.update {
-                        it.copy(isLoading = true)
-                    }
-                }
+                is Resource.Loading -> Unit
 
                 is Resource.Success -> {
                     val student = resource.data ?: return@collect
-                    sessionRepository.saveSession(student.toSession(authUser.uid))
 
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            student = student,
-                            errorMessage = null
-                        )
-                    }
+                    sessionRepository.saveSession(student.toSession(authUser.uid))
+                    navigateTo(StartupDestination.COURSE_LIST)
                 }
 
                 is Resource.Error -> {
-                    authRepository.signOut()
-                    sessionRepository.clearSession()
-
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            student = null,
                             errorMessage = resource.message
                                 ?: "No se pudo sincronizar tu perfil."
                         )
@@ -134,9 +115,15 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.signOut()
             sessionRepository.clearSession()
-
-            _state.value = LoginUiState()
+            navigateTo(StartupDestination.LOGIN)
         }
+    }
+
+    private fun navigateTo(destination: StartupDestination) {
+        _state.value = StartupUiState(
+            isLoading = false,
+            destination = destination
+        )
     }
 
     private fun Student.toSession(firebaseUserId: String): AppSession {

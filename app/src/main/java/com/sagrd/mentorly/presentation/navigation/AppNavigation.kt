@@ -14,10 +14,11 @@ import androidx.navigation3.ui.NavDisplay
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
+import com.sagrd.mentorly.presentation.startup.StartupScreen
 
 @Composable
 fun AppNavigation() {
-    val backStack = rememberNavBackStack(Screen.Login)
+    val backStack = rememberNavBackStack(Screen.Startup)
 
     AppNavigationDisplay(backStack)
 }
@@ -66,11 +67,21 @@ private fun NavigationContent(
             }
         },
         entryProvider = entryProvider {
+            entry<Screen.Startup> {
+                StartupScreen(
+                    onNavigateToLogin = {
+                        replaceRoot(backStack, Screen.Login)
+                    },
+                    onNavigateToCourseList = {
+                        replaceRoot(backStack, Screen.CourseList)
+                    }
+                )
+            }
+
             entry<Screen.Login> {
                 LoginScreen(
                     onLoginCompleted = {
-                        backStack.clear()
-                        backStack.add(Screen.CourseList)
+                        replaceRoot(backStack, Screen.CourseList)
                     }
                 )
             }
@@ -100,6 +111,13 @@ private fun navigateToCourseList(backStack: NavBackStack<NavKey>) {
         return
     }
 
+    replaceRoot(backStack, Screen.CourseList)
+}
+
+private fun replaceRoot(
+    backStack: NavBackStack<NavKey>,
+    screen: Screen
+) {
     backStack.clear()
-    backStack.add(Screen.CourseList)
+    backStack.add(screen)
 }
