@@ -1,6 +1,6 @@
 package com.sagrd.mentorly.data.remote.dto.theme
 
-import com.sagrd.mentorly.domain.model.theme.Theme
+import com.sagrd.mentorly.domain.model.content.Theme
 
 data class ThemeDto(
     val id: String,

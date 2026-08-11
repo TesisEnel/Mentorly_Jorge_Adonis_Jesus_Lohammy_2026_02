@@ -1,8 +1,8 @@
 package com.sagrd.mentorly.data.remote.remotedatasource
 
 import com.sagrd.mentorly.data.remote.api.ThemeApi
+import com.sagrd.mentorly.data.remote.dto.common.ReorderItemsDto
 import com.sagrd.mentorly.data.remote.dto.theme.CreateThemeDto
-import com.sagrd.mentorly.data.remote.dto.theme.ReorderItemsDto
 import com.sagrd.mentorly.data.remote.dto.theme.ThemeDto
 import com.sagrd.mentorly.data.remote.dto.theme.UpdateThemeDto
 import retrofit2.HttpException

@@ -1,10 +1,10 @@
 package com.sagrd.mentorly.domain.repository.theme
 
 import com.sagrd.mentorly.data.remote.Resource
+import com.sagrd.mentorly.data.remote.dto.common.ReorderItemsDto
 import com.sagrd.mentorly.data.remote.dto.theme.CreateThemeDto
-import com.sagrd.mentorly.data.remote.dto.theme.ReorderItemsDto
 import com.sagrd.mentorly.data.remote.dto.theme.UpdateThemeDto
-import com.sagrd.mentorly.domain.model.theme.Theme
+import com.sagrd.mentorly.domain.model.content.Theme
 import kotlinx.coroutines.flow.Flow
 
 interface ThemeRepository {
