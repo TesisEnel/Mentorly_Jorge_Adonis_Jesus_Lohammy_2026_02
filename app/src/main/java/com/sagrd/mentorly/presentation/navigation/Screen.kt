@@ -19,4 +19,7 @@ sealed class Screen : NavKey {
     data class CourseDetail(
         val courseId: String
     ) : Screen()
+
+    @Serializable
+    data object Profile : Screen()
 }
