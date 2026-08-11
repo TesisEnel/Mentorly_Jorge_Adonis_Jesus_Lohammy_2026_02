@@ -1,0 +1,17 @@
+package com.sagrd.mentorly.presentation.profile
+
+import com.sagrd.mentorly.domain.model.student.Student
+import com.sagrd.mentorly.domain.model.student.StudentStatistics
+
+data class ProfileUiState(
+    val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
+    val student: Student? = null,
+    val statistics: StudentStatistics? = null,
+    val isEditDialogVisible: Boolean = false,
+    val editedDisplayName: String = "",
+    val editedEmail: String = "",
+    val isSignOutDialogVisible: Boolean = false,
+    val isSignedOut: Boolean = false,
+    val errorMessage: String? = null
+)
