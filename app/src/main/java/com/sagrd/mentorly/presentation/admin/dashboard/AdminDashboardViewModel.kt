@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.domain.repository.analytics.AnalyticsRepository
+import com.sagrd.mentorly.domain.repository.auth.AuthRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -19,6 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AdminDashboardViewModel @Inject constructor(
     private val analyticsRepository: AnalyticsRepository,
+    private val authRepository: AuthRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
@@ -36,6 +38,23 @@ class AdminDashboardViewModel @Inject constructor(
             AdminDashboardUiEvent.Load -> loadOverview(isRefresh = false)
             AdminDashboardUiEvent.Refresh -> loadOverview(isRefresh = true)
             AdminDashboardUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            AdminDashboardUiEvent.ShowSignOutDialog -> _uiState.update {
+                it.copy(isSignOutDialogVisible = true)
+            }
+            AdminDashboardUiEvent.DismissSignOutDialog -> _uiState.update {
+                it.copy(isSignOutDialogVisible = false)
+            }
+            AdminDashboardUiEvent.ConfirmSignOut -> signOut()
+        }
+    }
+
+    private fun signOut() {
+        viewModelScope.launch {
+            authRepository.signOut()
+            sessionRepository.clearSession()
+            _uiState.update {
+                it.copy(isSignOutDialogVisible = false, isSignedOut = true)
+            }
         }
     }
 
