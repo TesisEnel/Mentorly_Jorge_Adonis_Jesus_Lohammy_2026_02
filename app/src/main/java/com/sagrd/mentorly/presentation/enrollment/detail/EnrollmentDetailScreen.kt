@@ -37,6 +37,7 @@ import com.sagrd.mentorly.domain.model.enrollment.Certificate
 import com.sagrd.mentorly.domain.model.enrollment.Enrollment
 import com.sagrd.mentorly.domain.model.enrollment.EnrollmentStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun EnrollmentDetailScreen(
@@ -146,11 +147,12 @@ private fun EnrollmentInformation(
     ) {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Intento ${enrollment.attemptNumber}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text(enrollment.courseTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text("Intento ${enrollment.attemptNumber}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                 Text("Estado: ${status.label()}", color = MaterialTheme.colorScheme.primary)
-                Text("Inició: ${enrollment.startedAt}")
-                Text("Vence: ${enrollment.expiresAt}")
-                enrollment.completedAt?.let { Text("Completó: $it") }
+                Text("Inició: ${DateFormatter.format(enrollment.startedAt)}")
+                Text("Vence: ${DateFormatter.format(enrollment.expiresAt)}")
+                enrollment.completedAt?.let { Text("Completó: ${DateFormatter.format(it)}") }
             }
         }
 
@@ -174,7 +176,7 @@ private fun EnrollmentInformation(
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Certificado disponible", fontWeight = FontWeight.SemiBold)
-                    Text("Emitido: ${it.issuedAt}", style = MaterialTheme.typography.bodySmall)
+                    Text("Emitido: ${DateFormatter.format(it.issuedAt)}", style = MaterialTheme.typography.bodySmall)
                     Text(it.certificateUrl, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -214,7 +216,7 @@ private fun EnrollmentDetailPreview() {
     MentorlyTheme {
         EnrollmentDetailContent(
             uiState = EnrollmentDetailUiState(
-                enrollment = Enrollment("enrollment-1", "student-1", "course-1", 1, "2026-08-12", "2026-11-12", null, EnrollmentStatus.ACTIVE)
+                enrollment = Enrollment("enrollment-1", "student-1", "course-1", "Fundamentos de SQL", 1, "2026-08-12", "2026-11-12", null, EnrollmentStatus.ACTIVE)
             ),
             onBackClick = {},
             onProgressClick = {},
