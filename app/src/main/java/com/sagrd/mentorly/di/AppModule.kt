@@ -3,23 +3,27 @@ package com.sagrd.mentorly.di
 import com.sagrd.mentorly.data.remote.api.CourseApi
 import com.sagrd.mentorly.data.remote.api.EnrollmentApi
 import com.sagrd.mentorly.data.remote.api.EnrollmentProgressApi
+import com.sagrd.mentorly.data.remote.api.PeerReviewApi
 import com.sagrd.mentorly.data.remote.api.StudentApi
 import com.sagrd.mentorly.data.remote.api.SubmissionApi
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentProgressRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.PeerReviewRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.SubmissionRemoteDataSource
 import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
 import com.sagrd.mentorly.data.repository.enrollment.EnrollmentRepositoryImpl
 import com.sagrd.mentorly.data.repository.progress.EnrollmentProgressRepositoryImpl
+import com.sagrd.mentorly.data.repository.peerreview.PeerReviewRepositoryImpl
 import com.sagrd.mentorly.data.repository.session.SessionRepositoryImpl
 import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
 import com.sagrd.mentorly.data.repository.submission.SubmissionRepositoryImpl
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
 import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
+import com.sagrd.mentorly.domain.repository.peerreview.PeerReviewRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import com.sagrd.mentorly.domain.repository.submission.SubmissionRepository
@@ -83,6 +87,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun providePeerReviewApi(retrofit: Retrofit): PeerReviewApi {
+        return retrofit.create(PeerReviewApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideSubmissionApi(retrofit: Retrofit): SubmissionApi {
         return retrofit.create(SubmissionApi::class.java)
     }
@@ -117,6 +127,14 @@ object AppModule {
         enrollmentProgressApi: EnrollmentProgressApi
     ): EnrollmentProgressRemoteDataSource {
         return EnrollmentProgressRemoteDataSource(enrollmentProgressApi)
+    }
+
+    @Provides
+    @Singleton
+    fun providePeerReviewRemoteDataSource(
+        peerReviewApi: PeerReviewApi
+    ): PeerReviewRemoteDataSource {
+        return PeerReviewRemoteDataSource(peerReviewApi)
     }
 
     @Provides
@@ -157,6 +175,14 @@ object AppModule {
         remoteDataSource: EnrollmentProgressRemoteDataSource
     ): EnrollmentProgressRepository {
         return EnrollmentProgressRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun providePeerReviewRepository(
+        remoteDataSource: PeerReviewRemoteDataSource
+    ): PeerReviewRepository {
+        return PeerReviewRepositoryImpl(remoteDataSource)
     }
 
     @Provides
