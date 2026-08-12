@@ -45,6 +45,7 @@ class AdminDashboardViewModel @Inject constructor(
                 it.copy(isSignOutDialogVisible = false)
             }
             AdminDashboardUiEvent.ConfirmSignOut -> signOut()
+            AdminDashboardUiEvent.SignOutHandled -> _uiState.update { it.copy(isSignedOut = false) }
         }
     }
 
