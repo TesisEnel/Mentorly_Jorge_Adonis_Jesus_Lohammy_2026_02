@@ -57,4 +57,16 @@ sealed class Screen : NavKey {
     data class AdminCourseForm(
         val courseId: String?
     ) : Screen()
+
+    @Serializable
+    data class ContentManagement(val courseId: String) : Screen()
+
+    @Serializable
+    data class UnitForm(val courseId: String, val unitId: String?) : Screen()
+
+    @Serializable
+    data class ThemeForm(val unitId: String, val themeId: String?) : Screen()
+
+    @Serializable
+    data class ActivityForm(val themeId: String, val activityId: String?) : Screen()
 }

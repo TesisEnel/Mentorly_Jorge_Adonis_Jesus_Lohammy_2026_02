@@ -13,6 +13,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.sagrd.mentorly.presentation.admin.course.form.CourseFormScreen
 import com.sagrd.mentorly.presentation.admin.course.list.AdminCourseListScreen
+import com.sagrd.mentorly.presentation.admin.content.ContentManagementScreen
+import com.sagrd.mentorly.presentation.admin.content.activity.ActivityFormScreen
+import com.sagrd.mentorly.presentation.admin.content.theme.ThemeFormScreen
+import com.sagrd.mentorly.presentation.admin.content.unit.UnitFormScreen
 import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
@@ -257,9 +261,7 @@ private fun NavigationContent(
                     onEditCourseClick = { courseId ->
                         backStack.add(Screen.AdminCourseForm(courseId))
                     },
-                    onManageContentClick = {
-                        // ContentManagement todavía no existe en esta rama.
-                    },
+                    onManageContentClick = { courseId -> backStack.add(Screen.ContentManagement(courseId)) },
                     onBackClick = {
                         backStack.removeLastOrNull()
                     }
