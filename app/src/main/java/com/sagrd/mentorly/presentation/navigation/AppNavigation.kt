@@ -136,6 +136,13 @@ private fun NavigationContent(
                     courseId = destination.courseId,
                     onBackClick = {
                         backStack.removeLastOrNull()
+                    },
+                    onEnrollmentCreated = { enrollmentId ->
+                        backStack.removeLastOrNull()
+                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                    },
+                    onActiveEnrollmentClick = { enrollmentId ->
+                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
                     }
                 )
             }
