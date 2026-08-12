@@ -30,6 +30,7 @@ import com.sagrd.mentorly.presentation.peerreview.history.PeerReviewHistoryScree
 import com.sagrd.mentorly.presentation.peerreview.queue.PeerReviewQueueScreen
 import com.sagrd.mentorly.presentation.progress.EnrollmentProgressScreen
 import com.sagrd.mentorly.presentation.profile.ProfileScreen
+import com.sagrd.mentorly.presentation.quiz.QuizScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
 import com.sagrd.mentorly.presentation.submission.detail.SubmissionDetailScreen
 import com.sagrd.mentorly.presentation.submission.form.SubmissionFormScreen
@@ -217,6 +218,36 @@ private fun NavigationContent(
                                 activityId = activityId
                             )
                         )
+                    },
+                    onQuizClick = { activityId ->
+                        backStack.add(
+                            Screen.Quiz(
+                                enrollmentId = destination.enrollmentId,
+                                activityId = activityId
+                            )
+                        )
+                    }
+                )
+            }
+
+            entry<Screen.Quiz> { destination ->
+                QuizScreen(
+                    enrollmentId = destination.enrollmentId,
+                    activityId = destination.activityId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onQuizSubmitted = {
+                        backStack.removeLastOrNull()
+                        val currentDestination = backStack.lastOrNull()
+                        if (
+                            currentDestination !is Screen.EnrollmentProgress ||
+                            currentDestination.enrollmentId != destination.enrollmentId
+                        ) {
+                            backStack.add(
+                                Screen.EnrollmentProgress(destination.enrollmentId)
+                            )
+                        }
                     }
                 )
             }
