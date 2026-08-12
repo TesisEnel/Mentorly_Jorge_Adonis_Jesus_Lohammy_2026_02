@@ -1,7 +1,18 @@
 package com.sagrd.mentorly.di
 
-import com.squareup.moshi.KotlinJsonAdapterFactory
+import com.sagrd.mentorly.data.remote.api.CourseApi
+import com.sagrd.mentorly.data.remote.api.StudentApi
+import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
+import com.sagrd.mentorly.data.local.session.SessionPreferences
+import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
+import com.sagrd.mentorly.data.repository.session.SessionRepositoryImpl
+import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
+import com.sagrd.mentorly.domain.repository.course.CourseRepository
+import com.sagrd.mentorly.domain.repository.session.SessionRepository
+import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,6 +24,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    private const val BASE_URL =
+        "https://mentorlyapi-ap2-f8gfgwh3efchgzfn.eastus2-01.azurewebsites.net/"
+
     @Provides
     @Singleton
     fun provideMoshi(): Moshi {
@@ -24,10 +39,61 @@ object AppModule {
     @Provides
     @Singleton
     fun provideRetrofit(moshi: Moshi): Retrofit {
-        val baseUrl = "https://mentorlyapi-ap2-f8gfgwh3efchgzfn.eastus2-01.azurewebsites.net/"
         return Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(BASE_URL)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseApi(retrofit: Retrofit): CourseApi {
+        return retrofit.create(CourseApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStudentApi(retrofit: Retrofit): StudentApi {
+        return retrofit.create(StudentApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseRemoteDataSource(
+        courseApi: CourseApi
+    ): CourseRemoteDataSource {
+        return CourseRemoteDataSource(courseApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStudentRemoteDataSource(
+        studentApi: StudentApi
+    ): StudentRemoteDataSource {
+        return StudentRemoteDataSource(studentApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseRepository(
+        remoteDataSource: CourseRemoteDataSource
+    ): CourseRepository {
+        return CourseRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStudentRepository(
+        remoteDataSource: StudentRemoteDataSource
+    ): StudentRepository {
+        return StudentRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSessionRepository(
+        sessionPreferences: SessionPreferences
+    ): SessionRepository {
+        return SessionRepositoryImpl(sessionPreferences)
     }
 }
