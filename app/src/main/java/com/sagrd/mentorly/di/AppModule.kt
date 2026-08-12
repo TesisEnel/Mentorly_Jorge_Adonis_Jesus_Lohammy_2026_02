@@ -2,17 +2,21 @@ package com.sagrd.mentorly.di
 
 import com.sagrd.mentorly.data.remote.api.CourseApi
 import com.sagrd.mentorly.data.remote.api.EnrollmentApi
+import com.sagrd.mentorly.data.remote.api.EnrollmentProgressApi
 import com.sagrd.mentorly.data.remote.api.StudentApi
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentProgressRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
 import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
 import com.sagrd.mentorly.data.repository.enrollment.EnrollmentRepositoryImpl
+import com.sagrd.mentorly.data.repository.progress.EnrollmentProgressRepositoryImpl
 import com.sagrd.mentorly.data.repository.session.SessionRepositoryImpl
 import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
+import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import com.squareup.moshi.Moshi
@@ -69,6 +73,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideEnrollmentProgressApi(retrofit: Retrofit): EnrollmentProgressApi {
+        return retrofit.create(EnrollmentProgressApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideCourseRemoteDataSource(
         courseApi: CourseApi
     ): CourseRemoteDataSource {
@@ -93,6 +103,14 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideEnrollmentProgressRemoteDataSource(
+        enrollmentProgressApi: EnrollmentProgressApi
+    ): EnrollmentProgressRemoteDataSource {
+        return EnrollmentProgressRemoteDataSource(enrollmentProgressApi)
+    }
+
+    @Provides
+    @Singleton
     fun provideCourseRepository(
         remoteDataSource: CourseRemoteDataSource
     ): CourseRepository {
@@ -113,6 +131,14 @@ object AppModule {
         remoteDataSource: EnrollmentRemoteDataSource
     ): EnrollmentRepository {
         return EnrollmentRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentProgressRepository(
+        remoteDataSource: EnrollmentProgressRemoteDataSource
+    ): EnrollmentProgressRepository {
+        return EnrollmentProgressRepositoryImpl(remoteDataSource)
     }
 
     @Provides
