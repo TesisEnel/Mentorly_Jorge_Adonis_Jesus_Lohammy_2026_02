@@ -37,6 +37,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.quiz.QuizAttempt
 import com.sagrd.mentorly.domain.model.quiz.QuizQuestion
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun QuizScreen(
@@ -262,7 +263,7 @@ private fun ResultCard(result: QuizAttempt) {
             Text(text = "Puntuación: ${result.score}")
             Text(text = if (result.passed) "Cuestionario aprobado" else "Cuestionario no aprobado")
             Text(
-                text = "Enviado: ${result.submittedAtUtc}",
+                text = "Enviado: ${DateFormatter.format(result.submittedAtUtc)}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
