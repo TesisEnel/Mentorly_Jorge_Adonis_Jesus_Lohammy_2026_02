@@ -1,5 +1,6 @@
 package com.sagrd.mentorly.di
 
+import com.sagrd.mentorly.data.remote.api.ActivityApi
 import com.sagrd.mentorly.data.remote.api.CourseApi
 import com.sagrd.mentorly.data.remote.api.EnrollmentApi
 import com.sagrd.mentorly.data.remote.api.EnrollmentProgressApi
@@ -9,6 +10,7 @@ import com.sagrd.mentorly.data.remote.api.StudentApi
 import com.sagrd.mentorly.data.remote.api.SubmissionApi
 import com.sagrd.mentorly.data.remote.api.ThemeApi
 import com.sagrd.mentorly.data.remote.api.UnitApi
+import com.sagrd.mentorly.data.remote.remotedatasource.ActivityRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentProgressRemoteDataSource
@@ -19,6 +21,7 @@ import com.sagrd.mentorly.data.remote.remotedatasource.SubmissionRemoteDataSourc
 import com.sagrd.mentorly.data.remote.remotedatasource.ThemeRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.UnitRemoteDataSource
 import com.sagrd.mentorly.data.local.session.SessionPreferences
+import com.sagrd.mentorly.data.repository.activity.ActivityRepositoryImpl
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
 import com.sagrd.mentorly.data.repository.enrollment.EnrollmentRepositoryImpl
 import com.sagrd.mentorly.data.repository.progress.EnrollmentProgressRepositoryImpl
@@ -29,6 +32,7 @@ import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
 import com.sagrd.mentorly.data.repository.submission.SubmissionRepositoryImpl
 import com.sagrd.mentorly.data.repository.theme.ThemeRepositoryImpl
 import com.sagrd.mentorly.data.repository.unit.UnitRepositoryImpl
+import com.sagrd.mentorly.domain.repository.activity.ActivityRepository
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
 import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
@@ -77,6 +81,12 @@ object AppModule {
     @Singleton
     fun provideCourseApi(retrofit: Retrofit): CourseApi {
         return retrofit.create(CourseApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideActivityApi(retrofit: Retrofit): ActivityApi {
+        return retrofit.create(ActivityApi::class.java)
     }
 
     @Provides
@@ -133,6 +143,14 @@ object AppModule {
         courseApi: CourseApi
     ): CourseRemoteDataSource {
         return CourseRemoteDataSource(courseApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideActivityRemoteDataSource(
+        activityApi: ActivityApi
+    ): ActivityRemoteDataSource {
+        return ActivityRemoteDataSource(activityApi)
     }
 
     @Provides
@@ -205,6 +223,14 @@ object AppModule {
         remoteDataSource: CourseRemoteDataSource
     ): CourseRepository {
         return CourseRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideActivityRepository(
+        remoteDataSource: ActivityRemoteDataSource
+    ): ActivityRepository {
+        return ActivityRepositoryImpl(remoteDataSource)
     }
 
     @Provides
