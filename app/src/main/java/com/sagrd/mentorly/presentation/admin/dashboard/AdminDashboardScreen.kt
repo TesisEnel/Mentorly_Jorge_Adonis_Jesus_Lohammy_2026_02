@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -27,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,9 +47,16 @@ fun AdminDashboardScreen(
     onPeerReviewsClick: () -> Unit,
     onEscalatedSubmissionsClick: () -> Unit,
     onAnalyticsClick: () -> Unit,
+    onSignOutCompleted: () -> Unit,
     viewModel: AdminDashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isSignedOut) {
+        if (uiState.isSignedOut) {
+            onSignOutCompleted()
+        }
+    }
 
     AdminDashboardContent(
         uiState = uiState,
@@ -57,7 +66,16 @@ fun AdminDashboardScreen(
         onStudentsClick = onStudentsClick,
         onPeerReviewsClick = onPeerReviewsClick,
         onEscalatedSubmissionsClick = onEscalatedSubmissionsClick,
-        onAnalyticsClick = onAnalyticsClick
+        onAnalyticsClick = onAnalyticsClick,
+        onShowSignOutDialog = {
+            viewModel.onEvent(AdminDashboardUiEvent.ShowSignOutDialog)
+        },
+        onDismissSignOutDialog = {
+            viewModel.onEvent(AdminDashboardUiEvent.DismissSignOutDialog)
+        },
+        onConfirmSignOut = {
+            viewModel.onEvent(AdminDashboardUiEvent.ConfirmSignOut)
+        },
     )
 }
 
@@ -71,7 +89,10 @@ private fun AdminDashboardContent(
     onStudentsClick: () -> Unit,
     onPeerReviewsClick: () -> Unit,
     onEscalatedSubmissionsClick: () -> Unit,
-    onAnalyticsClick: () -> Unit
+    onAnalyticsClick: () -> Unit,
+    onShowSignOutDialog: () -> Unit,
+    onDismissSignOutDialog: () -> Unit,
+    onConfirmSignOut: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -83,6 +104,9 @@ private fun AdminDashboardContent(
                         enabled = uiState.hasAdminAccess && !uiState.isRefreshing
                     ) {
                         Text("Recargar")
+                    }
+                    TextButton(onClick = onShowSignOutDialog) {
+                        Text("Cerrar sesión")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors()
@@ -131,6 +155,24 @@ private fun AdminDashboardContent(
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
         }
+    }
+
+    if (uiState.isSignOutDialogVisible) {
+        AlertDialog(
+            onDismissRequest = onDismissSignOutDialog,
+            title = { Text("Cerrar sesión") },
+            text = { Text("¿Seguro que deseas cerrar sesión?") },
+            confirmButton = {
+                TextButton(onClick = onConfirmSignOut) {
+                    Text("Cerrar sesión")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissSignOutDialog) {
+                    Text("Cancelar")
+                }
+            },
+        )
     }
 }
 
@@ -311,7 +353,10 @@ private fun AdminDashboardPreview() {
             onStudentsClick = {},
             onPeerReviewsClick = {},
             onEscalatedSubmissionsClick = {},
-            onAnalyticsClick = {}
+            onAnalyticsClick = {},
+            onShowSignOutDialog = {},
+            onDismissSignOutDialog = {},
+            onConfirmSignOut = {},
         )
     }
 }
