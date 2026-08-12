@@ -23,6 +23,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,6 +44,7 @@ import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun SubmissionListScreen(
+    onBackClick: () -> Unit,
     onSubmissionClick: (String) -> Unit,
     viewModel: SubmissionListViewModel = hiltViewModel()
 ) {
@@ -47,6 +52,7 @@ fun SubmissionListScreen(
 
     SubmissionListContent(
         state = state,
+        onBackClick = onBackClick,
         onSubmissionClick = onSubmissionClick,
         onRetry = { viewModel.onEvent(SubmissionListUiEvent.Refresh) }
     )
@@ -56,6 +62,7 @@ fun SubmissionListScreen(
 @Composable
 private fun SubmissionListContent(
     state: SubmissionListUiState,
+    onBackClick: () -> Unit,
     onSubmissionClick: (String) -> Unit,
     onRetry: () -> Unit
 ) {
@@ -67,6 +74,14 @@ private fun SubmissionListContent(
                         text = "Mis entregas",
                         fontWeight = FontWeight.Bold
                     )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
                 }
             )
         }
@@ -250,6 +265,7 @@ private fun SubmissionListPreview() {
                     )
                 )
             ),
+            onBackClick = {},
             onSubmissionClick = {},
             onRetry = {}
         )
