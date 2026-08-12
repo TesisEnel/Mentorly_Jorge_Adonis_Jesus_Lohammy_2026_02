@@ -57,6 +57,7 @@ fun CourseDetailScreen(
     courseId: String,
     onBackClick: () -> Unit,
     onEnrollmentCreated: (String) -> Unit,
+    onActiveEnrollmentClick: (String) -> Unit,
     viewModel: CourseDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -73,6 +74,7 @@ fun CourseDetailScreen(
         state = state,
         onBackClick = onBackClick,
         onEnroll = { viewModel.onEvent(CourseDetailUiEvent.Enroll) },
+        onActiveEnrollmentClick = onActiveEnrollmentClick,
         onDismissEnrollmentError = {
             viewModel.onEvent(CourseDetailUiEvent.ClearEnrollmentError)
         },
@@ -88,6 +90,7 @@ private fun CourseDetailContent(
     state: CourseDetailUiState,
     onBackClick: () -> Unit,
     onEnroll: () -> Unit,
+    onActiveEnrollmentClick: (String) -> Unit,
     onDismissEnrollmentError: () -> Unit,
     onRetry: () -> Unit
 ) {
@@ -131,8 +134,11 @@ private fun CourseDetailContent(
                 CourseContent(
                     course = state.course,
                     isEnrolling = state.isEnrolling,
+                    isCheckingActiveEnrollment = state.isCheckingActiveEnrollment,
+                    activeEnrollmentId = state.activeEnrollmentId,
                     enrollmentErrorMessage = state.enrollmentErrorMessage,
                     onEnroll = onEnroll,
+                    onActiveEnrollmentClick = onActiveEnrollmentClick,
                     onDismissEnrollmentError = onDismissEnrollmentError,
                     modifier = Modifier
                         .fillMaxSize()
@@ -147,8 +153,11 @@ private fun CourseDetailContent(
 private fun CourseContent(
     course: Course,
     isEnrolling: Boolean,
+    isCheckingActiveEnrollment: Boolean,
+    activeEnrollmentId: String?,
     enrollmentErrorMessage: String?,
     onEnroll: () -> Unit,
+    onActiveEnrollmentClick: (String) -> Unit,
     onDismissEnrollmentError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -161,6 +170,9 @@ private fun CourseContent(
             CourseHeader(
                 course = course,
                 isEnrolling = isEnrolling,
+                isCheckingActiveEnrollment = isCheckingActiveEnrollment,
+                activeEnrollmentId = activeEnrollmentId,
+                onActiveEnrollmentClick = onActiveEnrollmentClick,
                 onEnroll = onEnroll
             )
         }
@@ -208,6 +220,9 @@ private fun CourseContent(
 private fun CourseHeader(
     course: Course,
     isEnrolling: Boolean,
+    isCheckingActiveEnrollment: Boolean,
+    activeEnrollmentId: String?,
+    onActiveEnrollmentClick: (String) -> Unit,
     onEnroll: () -> Unit
 ) {
     Column {
@@ -242,12 +257,35 @@ private fun CourseHeader(
         if (course.isPublished) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onEnroll,
-                enabled = !isEnrolling,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (isEnrolling) "Inscribiendo..." else "Inscribirme al curso")
+            when {
+                isCheckingActiveEnrollment -> {
+                    Button(
+                        onClick = {},
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Comprobando inscripción...")
+                    }
+                }
+
+                activeEnrollmentId != null -> {
+                    Button(
+                        onClick = { onActiveEnrollmentClick(activeEnrollmentId) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Ir a mi curso")
+                    }
+                }
+
+                else -> {
+                    Button(
+                        onClick = onEnroll,
+                        enabled = !isEnrolling,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (isEnrolling) "Inscribiendo..." else "Inscribirme al curso")
+                    }
+                }
             }
         }
     }
@@ -473,6 +511,7 @@ private fun CourseDetailPreview() {
             ),
             onBackClick = {},
             onEnroll = {},
+            onActiveEnrollmentClick = {},
             onDismissEnrollmentError = {},
             onRetry = {}
         )
