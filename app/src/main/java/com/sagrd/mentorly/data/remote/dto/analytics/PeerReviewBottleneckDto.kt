@@ -5,15 +5,15 @@ import com.sagrd.mentorly.domain.model.analytics.PeerReviewBottleneck
 data class PeerReviewBottleneckDto(
     val activityId: String,
     val activityTitle: String,
-    val courseTitle: String,
-    val pendingSubmissionsCount: Int,
-    val averageWaitTimeHours: Double
+    val pendingSubmissions: Int,
+    val escalatedSubmissions: Int,
+    val oldestPendingAtUtc: String?
 ) {
     fun toDomain() = PeerReviewBottleneck(
         activityId = activityId,
         activityTitle = activityTitle,
-        courseTitle = courseTitle,
-        pendingSubmissionsCount = pendingSubmissionsCount,
-        averageWaitTimeHours = averageWaitTimeHours
+        pendingSubmissions = pendingSubmissions,
+        escalatedSubmissions = escalatedSubmissions,
+        oldestPendingAtUtc = oldestPendingAtUtc
     )
 }
