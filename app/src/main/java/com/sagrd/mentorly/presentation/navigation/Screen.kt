@@ -38,4 +38,12 @@ sealed class Screen : NavKey {
 
     @Serializable
     data object AdminDashboard : Screen()
+
+    @Serializable
+    data object AdminCourseList : Screen()
+
+    @Serializable
+    data class AdminCourseForm(
+        val courseId: String?
+    ) : Screen()
 }

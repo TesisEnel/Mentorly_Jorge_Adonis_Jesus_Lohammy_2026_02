@@ -11,6 +11,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.sagrd.mentorly.presentation.admin.course.form.CourseFormScreen
+import com.sagrd.mentorly.presentation.admin.course.list.AdminCourseListScreen
 import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
@@ -196,11 +198,45 @@ private fun NavigationContent(
 
             entry<Screen.AdminDashboard> {
                 AdminDashboardScreen(
-                    onCoursesClick = {},
+                    onCoursesClick = {
+                        backStack.add(Screen.AdminCourseList)
+                    },
                     onStudentsClick = {},
                     onPeerReviewsClick = {},
                     onEscalatedSubmissionsClick = {},
                     onAnalyticsClick = {}
+                )
+            }
+
+            entry<Screen.AdminCourseList> {
+                AdminCourseListScreen(
+                    onCreateCourseClick = {
+                        backStack.add(Screen.AdminCourseForm(courseId = null))
+                    },
+                    onEditCourseClick = { courseId ->
+                        backStack.add(Screen.AdminCourseForm(courseId))
+                    },
+                    onManageContentClick = {
+                        // ContentManagement todavía no existe en esta rama.
+                    },
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    }
+                )
+            }
+
+            entry<Screen.AdminCourseForm> { destination ->
+                CourseFormScreen(
+                    courseId = destination.courseId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onSaved = {
+                        backStack.removeLastOrNull()
+                        if (backStack.lastOrNull() !is Screen.AdminCourseList) {
+                            backStack.add(Screen.AdminCourseList)
+                        }
+                    }
                 )
             }
         }
