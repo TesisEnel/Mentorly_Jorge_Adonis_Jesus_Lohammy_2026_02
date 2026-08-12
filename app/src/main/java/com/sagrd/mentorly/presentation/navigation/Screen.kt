@@ -69,4 +69,7 @@ sealed class Screen : NavKey {
 
     @Serializable
     data class ActivityForm(val themeId: String, val activityId: String?) : Screen()
+
+    @Serializable
+    data class AdminQuizQuestion(val activityId: String) : Screen()
 }
