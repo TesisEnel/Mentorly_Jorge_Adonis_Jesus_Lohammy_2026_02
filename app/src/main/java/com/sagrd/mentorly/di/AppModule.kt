@@ -1,16 +1,56 @@
 package com.sagrd.mentorly.di
 
+import com.sagrd.mentorly.data.remote.api.ActivityApi
+import com.sagrd.mentorly.data.remote.api.AnalyticsApi
 import com.sagrd.mentorly.data.remote.api.CourseApi
+import com.sagrd.mentorly.data.remote.api.CourseCommunityApi
+import com.sagrd.mentorly.data.remote.api.EnrollmentApi
+import com.sagrd.mentorly.data.remote.api.EnrollmentProgressApi
+import com.sagrd.mentorly.data.remote.api.PeerReviewApi
+import com.sagrd.mentorly.data.remote.api.QuizApi
 import com.sagrd.mentorly.data.remote.api.StudentApi
+import com.sagrd.mentorly.data.remote.api.SubmissionApi
+import com.sagrd.mentorly.data.remote.api.ThemeApi
+import com.sagrd.mentorly.data.remote.api.UnitApi
+import com.sagrd.mentorly.data.remote.remotedatasource.ActivityRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.AnalyticsRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.CourseCommunityRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentProgressRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.PeerReviewRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.QuizRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.SubmissionRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.ThemeRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.UnitRemoteDataSource
 import com.sagrd.mentorly.data.local.session.SessionPreferences
+import com.sagrd.mentorly.data.repository.activity.ActivityRepositoryImpl
+import com.sagrd.mentorly.data.repository.analytics.AnalyticsRepositoryImpl
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
+import com.sagrd.mentorly.data.repository.community.CourseCommunityRepositoryImpl
+import com.sagrd.mentorly.data.repository.enrollment.EnrollmentRepositoryImpl
+import com.sagrd.mentorly.data.repository.progress.EnrollmentProgressRepositoryImpl
+import com.sagrd.mentorly.data.repository.peerreview.PeerReviewRepositoryImpl
+import com.sagrd.mentorly.data.repository.quiz.QuizRepositoryImpl
 import com.sagrd.mentorly.data.repository.session.SessionRepositoryImpl
 import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
+import com.sagrd.mentorly.data.repository.submission.SubmissionRepositoryImpl
+import com.sagrd.mentorly.data.repository.theme.ThemeRepositoryImpl
+import com.sagrd.mentorly.data.repository.unit.UnitRepositoryImpl
+import com.sagrd.mentorly.domain.repository.activity.ActivityRepository
+import com.sagrd.mentorly.domain.repository.analytics.AnalyticsRepository
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
+import com.sagrd.mentorly.domain.repository.community.CourseCommunityRepository
+import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
+import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
+import com.sagrd.mentorly.domain.repository.peerreview.PeerReviewRepository
+import com.sagrd.mentorly.domain.repository.quiz.QuizRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
+import com.sagrd.mentorly.domain.repository.submission.SubmissionRepository
+import com.sagrd.mentorly.domain.repository.theme.ThemeRepository
+import com.sagrd.mentorly.domain.repository.unit.UnitRepository
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -53,8 +93,68 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideCourseCommunityApi(retrofit: Retrofit): CourseCommunityApi {
+        return retrofit.create(CourseCommunityApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideActivityApi(retrofit: Retrofit): ActivityApi {
+        return retrofit.create(ActivityApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAnalyticsApi(retrofit: Retrofit): AnalyticsApi {
+        return retrofit.create(AnalyticsApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideStudentApi(retrofit: Retrofit): StudentApi {
         return retrofit.create(StudentApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentApi(retrofit: Retrofit): EnrollmentApi {
+        return retrofit.create(EnrollmentApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentProgressApi(retrofit: Retrofit): EnrollmentProgressApi {
+        return retrofit.create(EnrollmentProgressApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun providePeerReviewApi(retrofit: Retrofit): PeerReviewApi {
+        return retrofit.create(PeerReviewApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideQuizApi(retrofit: Retrofit): QuizApi {
+        return retrofit.create(QuizApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSubmissionApi(retrofit: Retrofit): SubmissionApi {
+        return retrofit.create(SubmissionApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideThemeApi(retrofit: Retrofit): ThemeApi {
+        return retrofit.create(ThemeApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUnitApi(retrofit: Retrofit): UnitApi {
+        return retrofit.create(UnitApi::class.java)
     }
 
     @Provides
@@ -67,10 +167,90 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideCourseCommunityRemoteDataSource(
+        courseCommunityApi: CourseCommunityApi
+    ): CourseCommunityRemoteDataSource {
+        return CourseCommunityRemoteDataSource(courseCommunityApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideActivityRemoteDataSource(
+        activityApi: ActivityApi
+    ): ActivityRemoteDataSource {
+        return ActivityRemoteDataSource(activityApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAnalyticsRemoteDataSource(
+        analyticsApi: AnalyticsApi
+    ): AnalyticsRemoteDataSource {
+        return AnalyticsRemoteDataSource(analyticsApi)
+    }
+
+    @Provides
+    @Singleton
     fun provideStudentRemoteDataSource(
         studentApi: StudentApi
     ): StudentRemoteDataSource {
         return StudentRemoteDataSource(studentApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentRemoteDataSource(
+        enrollmentApi: EnrollmentApi
+    ): EnrollmentRemoteDataSource {
+        return EnrollmentRemoteDataSource(enrollmentApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentProgressRemoteDataSource(
+        enrollmentProgressApi: EnrollmentProgressApi
+    ): EnrollmentProgressRemoteDataSource {
+        return EnrollmentProgressRemoteDataSource(enrollmentProgressApi)
+    }
+
+    @Provides
+    @Singleton
+    fun providePeerReviewRemoteDataSource(
+        peerReviewApi: PeerReviewApi
+    ): PeerReviewRemoteDataSource {
+        return PeerReviewRemoteDataSource(peerReviewApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideQuizRemoteDataSource(
+        quizApi: QuizApi
+    ): QuizRemoteDataSource {
+        return QuizRemoteDataSource(quizApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSubmissionRemoteDataSource(
+        submissionApi: SubmissionApi
+    ): SubmissionRemoteDataSource {
+        return SubmissionRemoteDataSource(submissionApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideThemeRemoteDataSource(
+        themeApi: ThemeApi
+    ): ThemeRemoteDataSource {
+        return ThemeRemoteDataSource(themeApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUnitRemoteDataSource(
+        unitApi: UnitApi
+    ): UnitRemoteDataSource {
+        return UnitRemoteDataSource(unitApi)
     }
 
     @Provides
@@ -83,10 +263,90 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideCourseCommunityRepository(
+        remoteDataSource: CourseCommunityRemoteDataSource
+    ): CourseCommunityRepository {
+        return CourseCommunityRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideActivityRepository(
+        remoteDataSource: ActivityRemoteDataSource
+    ): ActivityRepository {
+        return ActivityRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAnalyticsRepository(
+        remoteDataSource: AnalyticsRemoteDataSource
+    ): AnalyticsRepository {
+        return AnalyticsRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
     fun provideStudentRepository(
         remoteDataSource: StudentRemoteDataSource
     ): StudentRepository {
         return StudentRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentRepository(
+        remoteDataSource: EnrollmentRemoteDataSource
+    ): EnrollmentRepository {
+        return EnrollmentRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentProgressRepository(
+        remoteDataSource: EnrollmentProgressRemoteDataSource
+    ): EnrollmentProgressRepository {
+        return EnrollmentProgressRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun providePeerReviewRepository(
+        remoteDataSource: PeerReviewRemoteDataSource
+    ): PeerReviewRepository {
+        return PeerReviewRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideQuizRepository(
+        remoteDataSource: QuizRemoteDataSource
+    ): QuizRepository {
+        return QuizRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSubmissionRepository(
+        remoteDataSource: SubmissionRemoteDataSource
+    ): SubmissionRepository {
+        return SubmissionRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideThemeRepository(
+        remoteDataSource: ThemeRemoteDataSource
+    ): ThemeRepository {
+        return ThemeRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUnitRepository(
+        remoteDataSource: UnitRemoteDataSource
+    ): UnitRepository {
+        return UnitRepositoryImpl(remoteDataSource)
     }
 
     @Provides
