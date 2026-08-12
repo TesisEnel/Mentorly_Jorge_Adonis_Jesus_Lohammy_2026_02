@@ -250,7 +250,10 @@ private fun NavigationContent(
                     onStudentsClick = {},
                     onPeerReviewsClick = {},
                     onEscalatedSubmissionsClick = {},
-                    onAnalyticsClick = {}
+                    onAnalyticsClick = {},
+                    onSignOutCompleted = {
+                        replaceRoot(backStack, Screen.Login)
+                    },
                 )
             }
 
