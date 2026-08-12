@@ -7,5 +7,7 @@ data class EnrollmentProgress(
     val totalThemes: Int,
     val approvedMandatoryActivities: Int,
     val totalMandatoryActivities: Int,
+    val canSubmitNextUnit: Boolean,
+    val blockedReason: String?,
     val units: List<EnrollmentUnitProgress>
 )

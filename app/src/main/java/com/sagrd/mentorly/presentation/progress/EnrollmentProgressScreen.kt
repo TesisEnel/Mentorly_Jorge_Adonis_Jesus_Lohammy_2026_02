@@ -127,6 +127,10 @@ private fun ProgressContent(
             OverallProgressCard(progress, isRefreshing, onRetry)
         }
 
+        progress.blockedReason?.let { reason ->
+            item { BlockedReasonCard(reason) }
+        }
+
         errorMessage?.let { message ->
             item {
                 ErrorBanner(message, onRetry)
@@ -196,25 +200,13 @@ private fun UnitProgressCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("Unidad $number", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Unidad $number: ${unit.title}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
             Text("Temas: ${unit.completedThemes} de ${unit.totalThemes}")
             Text("Actividades obligatorias: ${unit.approvedMandatoryActivities} de ${unit.totalMandatoryActivities}")
-
-            unit.blockedReason?.let { reason ->
-                Text(
-                    text = reason,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            if (unit.canSubmitNextUnit) {
-                Text(
-                    text = "Puedes continuar con la siguiente unidad.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
 
             if (unit.activities.isNotEmpty()) {
                 HorizontalDivider()
@@ -237,35 +229,28 @@ private fun ActivityProgressRow(
     activity: EnrollmentActivityProgress,
     onClick: () -> Unit
 ) {
-    val status = when {
-        activity.isBlocked -> "Bloqueada"
-        activity.isApproved -> "Aprobada"
-        activity.isPending -> "Pendiente de revisión"
-        else -> "Pendiente"
-    }
-
-    val color = when {
-        activity.isBlocked -> MaterialTheme.colorScheme.error
-        activity.isApproved -> MaterialTheme.colorScheme.primary
-        activity.isPending -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Actividad $number", fontWeight = FontWeight.Medium)
+            Text("Actividad $number: ${activity.title}", fontWeight = FontWeight.Medium)
             Text(
-                text = if (activity.isMandatory) "Obligatoria · $status" else "Opcional · $status",
+                text = if (activity.isMandatory) "Obligatoria" else "Opcional",
                 style = MaterialTheme.typography.bodySmall,
-                color = color
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (!activity.isBlocked) {
-                Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-                    Text("Ver actividad")
+            Text(
+                text = if (activity.isApproved) "Aprobada" else "Pendiente",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (activity.isApproved) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
                 }
+            )
+            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+                Text("Ver actividad")
             }
         }
     }
@@ -296,6 +281,20 @@ private fun ErrorBanner(message: String, onRetry: () -> Unit) {
     }
 }
 
+@Composable
+private fun BlockedReasonCard(reason: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Progreso bloqueado", fontWeight = FontWeight.SemiBold)
+            Text(
+                text = reason,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun EnrollmentProgressPreview() {
@@ -309,29 +308,29 @@ private fun EnrollmentProgressPreview() {
                     totalThemes = 5,
                     approvedMandatoryActivities = 1,
                     totalMandatoryActivities = 3,
+                    canSubmitNextUnit = false,
+                    blockedReason = "Debes aprobar el ejercicio obligatorio de la unidad anterior.",
                     units = listOf(
                         EnrollmentUnitProgress(
                             unitId = "unit-1",
+                            title = "Fundamentos",
                             completedThemes = 2,
                             totalThemes = 2,
                             approvedMandatoryActivities = 1,
                             totalMandatoryActivities = 1,
-                            canSubmitNextUnit = true,
-                            blockedReason = null,
                             activities = listOf(
-                                EnrollmentActivityProgress("activity-1", true, true, false, false)
+                                EnrollmentActivityProgress("activity-1", "Ejercicio inicial", true, true)
                             )
                         ),
                         EnrollmentUnitProgress(
                             unitId = "unit-2",
+                            title = "Proyecto final",
                             completedThemes = 0,
                             totalThemes = 3,
                             approvedMandatoryActivities = 0,
                             totalMandatoryActivities = 2,
-                            canSubmitNextUnit = false,
-                            blockedReason = "Debes aprobar la actividad obligatoria anterior.",
                             activities = listOf(
-                                EnrollmentActivityProgress("activity-2", true, false, false, true)
+                                EnrollmentActivityProgress("activity-2", "Entrega final", true, false)
                             )
                         )
                     )
