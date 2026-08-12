@@ -11,37 +11,37 @@ import javax.inject.Inject
 class AnalyticsRepositoryImpl @Inject constructor(
     private val remoteDataSource: AnalyticsRemoteDataSource
 ) : AnalyticsRepository {
-    override fun getOverview(): Flow<Resource<AnalyticsOverview>> = flow {
+    override fun getOverview(adminId: String): Flow<Resource<AnalyticsOverview>> = flow {
         emit(Resource.Loading())
-        remoteDataSource.getOverview()
+        remoteDataSource.getOverview(adminId)
             .onSuccess { emit(Resource.Success(it.toDomain())) }
             .onFailure { emit(Resource.Error(it.message ?: "Error desconocido")) }
     }
 
-    override fun getDropOff(courseId: String): Flow<Resource<List<DropOff>>> = flow {
+    override fun getDropOff(adminId: String, courseId: String): Flow<Resource<List<DropOff>>> = flow {
         emit(Resource.Loading())
-        remoteDataSource.getDropOff(courseId)
+        remoteDataSource.getDropOff(adminId, courseId)
             .onSuccess { list -> emit(Resource.Success(list.map { it.toDomain() })) }
             .onFailure { emit(Resource.Error(it.message ?: "Error desconocido")) }
     }
 
-    override fun getCompletionTimeReport(courseId: String): Flow<Resource<CompletionTimeReport>> = flow {
+    override fun getCompletionTimeReport(adminId: String, courseId: String): Flow<Resource<CompletionTimeReport>> = flow {
         emit(Resource.Loading())
-        remoteDataSource.getCompletionTimeReport(courseId)
+        remoteDataSource.getCompletionTimeReport(adminId, courseId)
             .onSuccess { emit(Resource.Success(it.toDomain())) }
             .onFailure { emit(Resource.Error(it.message ?: "Error desconocido")) }
     }
 
-    override fun getBottlenecks(): Flow<Resource<List<PeerReviewBottleneck>>> = flow {
+    override fun getBottlenecks(adminId: String, courseId: String): Flow<Resource<List<PeerReviewBottleneck>>> = flow {
         emit(Resource.Loading())
-        remoteDataSource.getBottlenecks()
+        remoteDataSource.getBottlenecks(adminId, courseId)
             .onSuccess { list -> emit(Resource.Success(list.map { it.toDomain() })) }
             .onFailure { emit(Resource.Error(it.message ?: "Error desconocido")) }
     }
 
-    override fun getEnrollmentHistory(): Flow<Resource<List<EnrollmentHistory>>> = flow {
+    override fun getEnrollmentHistory(adminId: String, courseId: String): Flow<Resource<List<EnrollmentHistory>>> = flow {
         emit(Resource.Loading())
-        remoteDataSource.getEnrollmentHistory()
+        remoteDataSource.getEnrollmentHistory(adminId, courseId)
             .onSuccess { list -> emit(Resource.Success(list.map { it.toDomain() })) }
             .onFailure { emit(Resource.Error(it.message ?: "Error desconocido")) }
     }

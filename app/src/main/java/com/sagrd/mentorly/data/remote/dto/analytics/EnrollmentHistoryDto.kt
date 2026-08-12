@@ -4,20 +4,20 @@ import com.sagrd.mentorly.domain.model.analytics.EnrollmentHistory
 
 data class EnrollmentHistoryDto(
     val enrollmentId: String,
-    val studentName: String,
-    val courseTitle: String,
-    val status: String,
+    val studentId: String,
     val attemptNumber: Int,
-    val startedAt: String,
-    val updatedAt: String
+    val status: Int,
+    val startedAtUtc: String,
+    val expiresAtUtc: String,
+    val completedAtUtc: String?
 ) {
     fun toDomain() = EnrollmentHistory(
         enrollmentId = enrollmentId,
-        studentName = studentName,
-        courseTitle = courseTitle,
-        status = status,
+        studentId = studentId,
         attemptNumber = attemptNumber,
-        startedAt = startedAt,
-        updatedAt = updatedAt
+        status = status,
+        startedAtUtc = startedAtUtc,
+        expiresAtUtc = expiresAtUtc,
+        completedAtUtc = completedAtUtc
     )
 }

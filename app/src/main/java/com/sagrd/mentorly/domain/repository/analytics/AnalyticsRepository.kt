@@ -5,9 +5,9 @@ import com.sagrd.mentorly.domain.model.analytics.*
 import kotlinx.coroutines.flow.Flow
 
 interface AnalyticsRepository {
-    fun getOverview(): Flow<Resource<AnalyticsOverview>>
-    fun getDropOff(courseId: String): Flow<Resource<List<DropOff>>>
-    fun getCompletionTimeReport(courseId: String): Flow<Resource<CompletionTimeReport>>
-    fun getBottlenecks(): Flow<Resource<List<PeerReviewBottleneck>>>
-    fun getEnrollmentHistory(): Flow<Resource<List<EnrollmentHistory>>>
+    fun getOverview(adminId: String): Flow<Resource<AnalyticsOverview>>
+    fun getDropOff(adminId: String, courseId: String): Flow<Resource<List<DropOff>>>
+    fun getCompletionTimeReport(adminId: String, courseId: String): Flow<Resource<CompletionTimeReport>>
+    fun getBottlenecks(adminId: String, courseId: String): Flow<Resource<List<PeerReviewBottleneck>>>
+    fun getEnrollmentHistory(adminId: String, courseId: String): Flow<Resource<List<EnrollmentHistory>>>
 }

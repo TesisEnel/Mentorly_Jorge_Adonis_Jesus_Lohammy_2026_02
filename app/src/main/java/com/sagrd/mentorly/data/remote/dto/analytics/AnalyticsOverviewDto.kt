@@ -3,17 +3,17 @@ package com.sagrd.mentorly.data.remote.dto.analytics
 import com.sagrd.mentorly.domain.model.analytics.AnalyticsOverview
 
 data class AnalyticsOverviewDto(
-    val totalStudents: Int,
-    val totalCourses: Int,
-    val totalEnrollments: Int,
-    val activeStudents: Int,
-    val completionRate: Double
+    val courses: Int,
+    val activeEnrollments: Int,
+    val completedEnrollments: Int,
+    val expiredEnrollments: Int,
+    val pendingPeerReviewSubmissions: Int
 ) {
     fun toDomain() = AnalyticsOverview(
-        totalStudents = totalStudents,
-        totalCourses = totalCourses,
-        totalEnrollments = totalEnrollments,
-        activeStudents = activeStudents,
-        completionRate = completionRate
+        courses = courses,
+        activeEnrollments = activeEnrollments,
+        completedEnrollments = completedEnrollments,
+        expiredEnrollments = expiredEnrollments,
+        pendingPeerReviewSubmissions = pendingPeerReviewSubmissions
     )
 }

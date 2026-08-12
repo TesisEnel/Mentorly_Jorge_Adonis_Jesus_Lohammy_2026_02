@@ -2,10 +2,10 @@ package com.sagrd.mentorly.domain.model.analytics
 
 data class EnrollmentHistory(
     val enrollmentId: String,
-    val studentName: String,
-    val courseTitle: String,
-    val status: String,
+    val studentId: String,
     val attemptNumber: Int,
-    val startedAt: String,
-    val updatedAt: String
+    val status: Int,
+    val startedAtUtc: String,
+    val expiresAtUtc: String,
+    val completedAtUtc: String?
 )
