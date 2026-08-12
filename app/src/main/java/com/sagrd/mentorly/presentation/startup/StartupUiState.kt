@@ -8,5 +8,6 @@ data class StartupUiState(
 
 enum class StartupDestination {
     LOGIN,
-    COURSE_LIST
+    COURSE_LIST,
+    ADMIN_DASHBOARD
 }

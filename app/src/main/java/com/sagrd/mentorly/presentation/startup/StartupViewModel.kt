@@ -7,6 +7,7 @@ import com.sagrd.mentorly.data.remote.dto.student.ProvisionStudentDto
 import com.sagrd.mentorly.domain.model.auth.AuthUser
 import com.sagrd.mentorly.domain.model.session.AppSession
 import com.sagrd.mentorly.domain.model.student.Student
+import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.domain.repository.auth.AuthRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
@@ -95,7 +96,13 @@ class StartupViewModel @Inject constructor(
                     val student = resource.data ?: return@collect
 
                     sessionRepository.saveSession(student.toSession(authUser.uid))
-                    navigateTo(StartupDestination.COURSE_LIST)
+                    navigateTo(
+                        if (student.role == StudentRole.ADMIN) {
+                            StartupDestination.ADMIN_DASHBOARD
+                        } else {
+                            StartupDestination.COURSE_LIST
+                        }
+                    )
                 }
 
                 is Resource.Error -> {
