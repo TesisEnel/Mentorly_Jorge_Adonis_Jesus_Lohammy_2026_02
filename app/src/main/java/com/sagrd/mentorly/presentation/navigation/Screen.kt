@@ -22,4 +22,7 @@ sealed class Screen : NavKey {
 
     @Serializable
     data object Profile : Screen()
+
+    @Serializable
+    data object AdminDashboard : Screen()
 }
