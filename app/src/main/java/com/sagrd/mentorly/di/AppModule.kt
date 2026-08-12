@@ -2,6 +2,7 @@ package com.sagrd.mentorly.di
 
 import com.sagrd.mentorly.data.remote.api.ActivityApi
 import com.sagrd.mentorly.data.remote.api.CourseApi
+import com.sagrd.mentorly.data.remote.api.CourseCommunityApi
 import com.sagrd.mentorly.data.remote.api.EnrollmentApi
 import com.sagrd.mentorly.data.remote.api.EnrollmentProgressApi
 import com.sagrd.mentorly.data.remote.api.PeerReviewApi
@@ -12,6 +13,7 @@ import com.sagrd.mentorly.data.remote.api.ThemeApi
 import com.sagrd.mentorly.data.remote.api.UnitApi
 import com.sagrd.mentorly.data.remote.remotedatasource.ActivityRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.CourseCommunityRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentProgressRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.PeerReviewRemoteDataSource
@@ -23,6 +25,7 @@ import com.sagrd.mentorly.data.remote.remotedatasource.UnitRemoteDataSource
 import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.data.repository.activity.ActivityRepositoryImpl
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
+import com.sagrd.mentorly.data.repository.community.CourseCommunityRepositoryImpl
 import com.sagrd.mentorly.data.repository.enrollment.EnrollmentRepositoryImpl
 import com.sagrd.mentorly.data.repository.progress.EnrollmentProgressRepositoryImpl
 import com.sagrd.mentorly.data.repository.peerreview.PeerReviewRepositoryImpl
@@ -34,6 +37,7 @@ import com.sagrd.mentorly.data.repository.theme.ThemeRepositoryImpl
 import com.sagrd.mentorly.data.repository.unit.UnitRepositoryImpl
 import com.sagrd.mentorly.domain.repository.activity.ActivityRepository
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
+import com.sagrd.mentorly.domain.repository.community.CourseCommunityRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
 import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
 import com.sagrd.mentorly.domain.repository.peerreview.PeerReviewRepository
@@ -81,6 +85,12 @@ object AppModule {
     @Singleton
     fun provideCourseApi(retrofit: Retrofit): CourseApi {
         return retrofit.create(CourseApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseCommunityApi(retrofit: Retrofit): CourseCommunityApi {
+        return retrofit.create(CourseCommunityApi::class.java)
     }
 
     @Provides
@@ -143,6 +153,14 @@ object AppModule {
         courseApi: CourseApi
     ): CourseRemoteDataSource {
         return CourseRemoteDataSource(courseApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseCommunityRemoteDataSource(
+        courseCommunityApi: CourseCommunityApi
+    ): CourseCommunityRemoteDataSource {
+        return CourseCommunityRemoteDataSource(courseCommunityApi)
     }
 
     @Provides
@@ -223,6 +241,14 @@ object AppModule {
         remoteDataSource: CourseRemoteDataSource
     ): CourseRepository {
         return CourseRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseCommunityRepository(
+        remoteDataSource: CourseCommunityRemoteDataSource
+    ): CourseCommunityRepository {
+        return CourseCommunityRepositoryImpl(remoteDataSource)
     }
 
     @Provides
