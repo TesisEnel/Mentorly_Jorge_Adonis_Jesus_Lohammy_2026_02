@@ -286,7 +286,8 @@ private fun SubmissionDetailPreview() {
                 submission = Submission(
                     id = "1",
                     enrollmentId = "e1",
-                    activityId = "Actividad 1",
+                    activityId = "activity-1",
+                    activityTitle = "Crear consultas SQL para una base de datos",
                     evidenceUrl = "https://github.com/user/repo",
                     status = SubmissionStatus.PENDING,
                     submittedAt = "2026-08-01"

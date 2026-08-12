@@ -7,6 +7,7 @@ data class SubmissionDto(
     val id: String,
     val enrollmentId: String,
     val activityId: String,
+    val activityTitle: String,
     val evidenceUrl: String,
     val status: Int,
     val submittedAt: String
@@ -15,6 +16,7 @@ data class SubmissionDto(
         id = id,
         enrollmentId = enrollmentId,
         activityId = activityId,
+        activityTitle = activityTitle,
         evidenceUrl = evidenceUrl,
         status = SubmissionStatus.fromApi(status),
         submittedAt = submittedAt
