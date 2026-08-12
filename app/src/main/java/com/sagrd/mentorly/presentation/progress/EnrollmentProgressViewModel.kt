@@ -32,7 +32,41 @@ class EnrollmentProgressViewModel @Inject constructor(
     fun onEvent(event: EnrollmentProgressUiEvent) {
         when (event) {
             EnrollmentProgressUiEvent.Refresh -> loadProgress(isRefresh = true)
+            is EnrollmentProgressUiEvent.CompleteTheme -> completeTheme(event.themeId)
             EnrollmentProgressUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+        }
+    }
+
+    private fun completeTheme(themeId: String) {
+        val id = enrollmentId ?: return
+        if (themeId in _uiState.value.completingThemeIds) return
+
+        viewModelScope.launch {
+            enrollmentProgressRepository.completeTheme(id, themeId).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _uiState.update {
+                        it.copy(
+                            completingThemeIds = it.completingThemeIds + themeId,
+                            errorMessage = null
+                        )
+                    }
+
+                    is Resource.Success -> _uiState.update {
+                        it.copy(
+                            progress = resource.data,
+                            completingThemeIds = it.completingThemeIds - themeId,
+                            errorMessage = null
+                        )
+                    }
+
+                    is Resource.Error -> _uiState.update {
+                        it.copy(
+                            completingThemeIds = it.completingThemeIds - themeId,
+                            errorMessage = resource.message ?: "No se pudo completar el tema."
+                        )
+                    }
+                }
+            }
         }
     }
 

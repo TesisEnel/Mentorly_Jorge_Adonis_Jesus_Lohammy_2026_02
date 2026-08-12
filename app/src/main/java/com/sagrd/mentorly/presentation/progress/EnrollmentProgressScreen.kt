@@ -4,11 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,12 +28,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +47,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.content.ActivityType
 import com.sagrd.mentorly.domain.model.progress.EnrollmentActivityProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentProgress
+import com.sagrd.mentorly.domain.model.progress.EnrollmentThemeProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentUnitProgress
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
@@ -62,6 +70,9 @@ fun EnrollmentProgressScreen(
         onBackClick = onBackClick,
         onActivityClick = onActivityClick,
         onQuizClick = onQuizClick,
+        onCompleteTheme = { themeId ->
+            viewModel.onEvent(EnrollmentProgressUiEvent.CompleteTheme(themeId))
+        },
         onRetry = { viewModel.onEvent(EnrollmentProgressUiEvent.Refresh) }
     )
 }
@@ -73,6 +84,7 @@ private fun EnrollmentProgressContent(
     onBackClick: () -> Unit,
     onActivityClick: (String) -> Unit,
     onQuizClick: (String) -> Unit,
+    onCompleteTheme: (String) -> Unit,
     onRetry: () -> Unit
 ) {
     Scaffold(
@@ -104,9 +116,11 @@ private fun EnrollmentProgressContent(
             uiState.progress != null -> ProgressContent(
                 progress = uiState.progress,
                 isRefreshing = uiState.isRefreshing,
+                completingThemeIds = uiState.completingThemeIds,
                 errorMessage = uiState.errorMessage,
                 onActivityClick = onActivityClick,
                 onQuizClick = onQuizClick,
+                onCompleteTheme = onCompleteTheme,
                 onRetry = onRetry,
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
@@ -118,9 +132,11 @@ private fun EnrollmentProgressContent(
 private fun ProgressContent(
     progress: EnrollmentProgress,
     isRefreshing: Boolean,
+    completingThemeIds: Set<String>,
     errorMessage: String?,
     onActivityClick: (String) -> Unit,
     onQuizClick: (String) -> Unit,
+    onCompleteTheme: (String) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier
 ) {
@@ -129,19 +145,11 @@ private fun ProgressContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            OverallProgressCard(progress, isRefreshing, onRetry)
-        }
+        item { OverallProgressCard(progress, isRefreshing, onRetry) }
 
-        progress.blockedReason?.let { reason ->
-            item { BlockedReasonCard(reason) }
-        }
+        progress.blockedReason?.let { reason -> item { BlockedReasonCard(reason) } }
 
-        errorMessage?.let { message ->
-            item {
-                ErrorBanner(message, onRetry)
-            }
-        }
+        errorMessage?.let { message -> item { ErrorBanner(message, onRetry) } }
 
         item {
             Text(
@@ -155,8 +163,10 @@ private fun ProgressContent(
             UnitProgressCard(
                 number = index + 1,
                 unit = unit,
+                completingThemeIds = completingThemeIds,
                 onActivityClick = onActivityClick,
-                onQuizClick = onQuizClick
+                onQuizClick = onQuizClick,
+                onCompleteTheme = onCompleteTheme
             )
         }
     }
@@ -196,8 +206,10 @@ private fun OverallProgressCard(
 private fun UnitProgressCard(
     number: Int,
     unit: EnrollmentUnitProgress,
+    completingThemeIds: Set<String>,
     onActivityClick: (String) -> Unit,
-    onQuizClick: (String) -> Unit
+    onQuizClick: (String) -> Unit,
+    onCompleteTheme: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -216,10 +228,77 @@ private fun UnitProgressCard(
             Text("Temas: ${unit.completedThemes} de ${unit.totalThemes}")
             Text("Actividades obligatorias: ${unit.approvedMandatoryActivities} de ${unit.totalMandatoryActivities}")
 
-            if (unit.activities.isNotEmpty()) {
+            unit.themes.forEachIndexed { index, theme ->
                 HorizontalDivider()
+                ThemeProgressCard(
+                    number = index + 1,
+                    theme = theme,
+                    isCompleting = theme.themeId in completingThemeIds,
+                    onActivityClick = onActivityClick,
+                    onQuizClick = onQuizClick,
+                    onCompleteTheme = { onCompleteTheme(theme.themeId) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeProgressCard(
+    number: Int,
+    theme: EnrollmentThemeProgress,
+    isCompleting: Boolean,
+    onActivityClick: (String) -> Unit,
+    onQuizClick: (String) -> Unit,
+    onCompleteTheme: () -> Unit
+) {
+    var isContentVisible by remember(theme.themeId) { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Tema $number: ${theme.title}",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = if (theme.isCompleted) "Completado" else "Pendiente",
+            color = if (theme.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall
+        )
+        OutlinedButton(
+            onClick = { isContentVisible = !isContentVisible },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (isContentVisible) "Ocultar contenido" else "Leer contenido")
+        }
+
+        if (isContentVisible) {
+            Text(
+                text = theme.contentText.ifBlank { "Este tema no tiene contenido disponible." },
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Button(
+                onClick = onCompleteTheme,
+                enabled = !theme.isCompleted && !isCompleting,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isCompleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Completando...")
+                } else {
+                    Text(if (theme.isCompleted) "Completado" else "Marcar como completado")
+                }
+            }
+
+            if (theme.activities.isNotEmpty()) {
                 Text("Actividades", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
-                unit.activities.forEachIndexed { index, activity ->
+                theme.activities.forEachIndexed { index, activity ->
                     ActivityProgressRow(
                         number = index + 1,
                         activity = activity,
@@ -256,15 +335,9 @@ private fun ActivityProgressRow(
             Text(
                 text = if (activity.isApproved) "Aprobada" else "Pendiente",
                 style = MaterialTheme.typography.bodySmall,
-                color = if (activity.isApproved) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                color = if (activity.isApproved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-                Text("Ver actividad")
-            }
+            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text("Ver actividad") }
         }
     }
 }
@@ -299,11 +372,7 @@ private fun BlockedReasonCard(reason: String) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text("Progreso bloqueado", fontWeight = FontWeight.SemiBold)
-            Text(
-                text = reason,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text(text = reason, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -331,8 +400,22 @@ private fun EnrollmentProgressPreview() {
                             totalThemes = 2,
                             approvedMandatoryActivities = 1,
                             totalMandatoryActivities = 1,
-                            activities = listOf(
-                                EnrollmentActivityProgress("activity-1", "Ejercicio inicial", true, true)
+                            themes = listOf(
+                                EnrollmentThemeProgress(
+                                    themeId = "theme-1",
+                                    title = "Introducción",
+                                    contentText = "Lee los conceptos principales antes de comenzar.",
+                                    orderIndex = 1,
+                                    isCompleted = true,
+                                    activities = listOf(
+                                        EnrollmentActivityProgress(
+                                            activityId = "activity-1",
+                                            title = "Ejercicio inicial",
+                                            isMandatory = true,
+                                            isApproved = true
+                                        )
+                                    )
+                                )
                             )
                         ),
                         EnrollmentUnitProgress(
@@ -342,8 +425,23 @@ private fun EnrollmentProgressPreview() {
                             totalThemes = 3,
                             approvedMandatoryActivities = 0,
                             totalMandatoryActivities = 2,
-                            activities = listOf(
-                                EnrollmentActivityProgress("activity-2", "Entrega final", true, false)
+                            themes = listOf(
+                                EnrollmentThemeProgress(
+                                    themeId = "theme-2",
+                                    title = "Preparación del proyecto",
+                                    contentText = "Revisa los requisitos de la entrega final.",
+                                    orderIndex = 1,
+                                    isCompleted = false,
+                                    activities = listOf(
+                                        EnrollmentActivityProgress(
+                                            activityId = "activity-2",
+                                            title = "Cuestionario final",
+                                            isMandatory = true,
+                                            isApproved = false,
+                                            type = ActivityType.QUIZ
+                                        )
+                                    )
+                                )
                             )
                         )
                     )
@@ -352,6 +450,7 @@ private fun EnrollmentProgressPreview() {
             onBackClick = {},
             onActivityClick = {},
             onQuizClick = {},
+            onCompleteTheme = {},
             onRetry = {}
         )
     }
