@@ -7,4 +7,5 @@ sealed interface AdminDashboardUiEvent {
     data object ShowSignOutDialog : AdminDashboardUiEvent
     data object DismissSignOutDialog : AdminDashboardUiEvent
     data object ConfirmSignOut : AdminDashboardUiEvent
+    data object SignOutHandled : AdminDashboardUiEvent
 }
