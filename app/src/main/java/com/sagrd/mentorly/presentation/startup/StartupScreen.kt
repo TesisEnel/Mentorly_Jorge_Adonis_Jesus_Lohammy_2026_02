@@ -29,9 +29,18 @@ fun StartupScreen(
 
     LaunchedEffect(state.destination) {
         when (state.destination) {
-            StartupDestination.LOGIN -> onNavigateToLogin()
-            StartupDestination.COURSE_LIST -> onNavigateToCourseList()
-            StartupDestination.ADMIN_DASHBOARD -> onNavigateToAdminDashboard()
+            StartupDestination.LOGIN -> {
+                viewModel.onEvent(StartupUiEvent.DestinationHandled)
+                onNavigateToLogin()
+            }
+            StartupDestination.COURSE_LIST -> {
+                viewModel.onEvent(StartupUiEvent.DestinationHandled)
+                onNavigateToCourseList()
+            }
+            StartupDestination.ADMIN_DASHBOARD -> {
+                viewModel.onEvent(StartupUiEvent.DestinationHandled)
+                onNavigateToAdminDashboard()
+            }
             null -> Unit
         }
     }
