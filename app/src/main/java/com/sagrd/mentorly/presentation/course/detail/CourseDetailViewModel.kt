@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.enrollment.CreateEnrollmentDto
+import com.sagrd.mentorly.domain.model.enrollment.EnrollmentStatus
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
@@ -30,16 +31,21 @@ class CourseDetailViewModel @Inject constructor(
 
     private var courseId: String? = null
     private var loadJob: Job? = null
+    private var activeEnrollmentJob: Job? = null
 
     fun onEvent(event: CourseDetailUiEvent) {
         when (event) {
             is CourseDetailUiEvent.LoadCourseContent -> {
                 courseId = event.courseId
                 loadCourseContent(event.courseId)
+                checkActiveEnrollment(event.courseId)
             }
 
             CourseDetailUiEvent.Retry -> {
-                courseId?.let(::loadCourseContent)
+                courseId?.let {
+                    loadCourseContent(it)
+                    checkActiveEnrollment(it)
+                }
             }
 
             CourseDetailUiEvent.Enroll -> enroll()
@@ -51,6 +57,13 @@ class CourseDetailViewModel @Inject constructor(
 
     private fun loadCourseContent(courseId: String) {
         loadJob?.cancel()
+
+        _state.update {
+            it.copy(
+                activeEnrollmentId = null,
+                createdEnrollmentId = null
+            )
+        }
 
         loadJob = viewModelScope.launch {
             courseRepository.getCourseContent(courseId).collect { resource ->
@@ -124,6 +137,51 @@ class CourseDetailViewModel @Inject constructor(
                             enrollmentErrorMessage = resource.message
                                 ?: "No se pudo crear la inscripción."
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun checkActiveEnrollment(courseId: String) {
+        activeEnrollmentJob?.cancel()
+
+        activeEnrollmentJob = viewModelScope.launch {
+            val session = sessionRepository.session.first()
+            if (session == null) {
+                _state.update {
+                    it.copy(
+                        isCheckingActiveEnrollment = false,
+                        activeEnrollmentId = null
+                    )
+                }
+                return@launch
+            }
+
+            enrollmentRepository.getEnrollments(session.studentId).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _state.update {
+                        it.copy(
+                            isCheckingActiveEnrollment = true,
+                            activeEnrollmentId = null
+                        )
+                    }
+
+                    is Resource.Success -> _state.update {
+                        it.copy(
+                            isCheckingActiveEnrollment = false,
+                            activeEnrollmentId = resource.data
+                                .orEmpty()
+                                .firstOrNull { enrollment ->
+                                    enrollment.courseId == courseId &&
+                                        enrollment.status == EnrollmentStatus.ACTIVE
+                                }
+                                ?.id
+                        )
+                    }
+
+                    is Resource.Error -> _state.update {
+                        it.copy(isCheckingActiveEnrollment = false)
                     }
                 }
             }
