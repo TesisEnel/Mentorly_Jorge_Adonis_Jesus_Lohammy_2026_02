@@ -9,6 +9,8 @@ data class EnrollmentProgressDto(
     val totalThemes: Int,
     val approvedMandatoryActivities: Int,
     val totalMandatoryActivities: Int,
+    val canSubmitNextUnit: Boolean,
+    val blockedReason: String?,
     val units: List<EnrollmentUnitProgressDto>
 ) {
     fun toDomain() = EnrollmentProgress(
@@ -18,6 +20,8 @@ data class EnrollmentProgressDto(
         totalThemes = totalThemes,
         approvedMandatoryActivities = approvedMandatoryActivities,
         totalMandatoryActivities = totalMandatoryActivities,
+        canSubmitNextUnit = canSubmitNextUnit,
+        blockedReason = blockedReason,
         units = units.map { it.toDomain() }
     )
 }
