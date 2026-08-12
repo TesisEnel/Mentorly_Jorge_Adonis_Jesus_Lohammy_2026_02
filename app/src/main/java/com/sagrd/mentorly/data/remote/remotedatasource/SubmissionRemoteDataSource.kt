@@ -2,6 +2,8 @@ package com.sagrd.mentorly.data.remote.remotedatasource
 
 import com.sagrd.mentorly.data.remote.api.SubmissionApi
 import com.sagrd.mentorly.data.remote.dto.submission.AdminSubmissionDecisionDto
+import com.sagrd.mentorly.data.remote.dto.submission.AdminEscalatedSubmissionDto
+import com.sagrd.mentorly.data.remote.dto.submission.AdminSubmissionAuditDto
 import com.sagrd.mentorly.data.remote.dto.submission.CreateSubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.SubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.SubmissionReviewDto
@@ -12,6 +14,43 @@ import javax.inject.Inject
 class SubmissionRemoteDataSource @Inject constructor(
     private val api: SubmissionApi
 ) {
+
+    suspend fun getEscalatedSubmissions(
+        adminId: String
+    ): Result<List<AdminEscalatedSubmissionDto>> {
+        return try {
+            val response = api.getEscalatedSubmissions(adminId)
+
+            if (!response.isSuccessful) {
+                Result.failure(Exception("Error de red ${response.code()}"))
+            } else {
+                Result.success(response.body()!!)
+            }
+        } catch (exception: HttpException) {
+            Result.failure(Exception("Error de servidor", exception))
+        } catch (exception: Exception) {
+            Result.failure(Exception("Error desconocido", exception))
+        }
+    }
+
+    suspend fun getEscalatedSubmissionAudit(
+        adminId: String,
+        submissionId: String
+    ): Result<AdminSubmissionAuditDto> {
+        return try {
+            val response = api.getEscalatedSubmissionAudit(adminId, submissionId)
+
+            if (!response.isSuccessful) {
+                Result.failure(Exception("Error de red ${response.code()}"))
+            } else {
+                Result.success(response.body()!!)
+            }
+        } catch (exception: HttpException) {
+            Result.failure(Exception("Error de servidor", exception))
+        } catch (exception: Exception) {
+            Result.failure(Exception("Error desconocido", exception))
+        }
+    }
 
     suspend fun createSubmission(
         enrollmentId: String,

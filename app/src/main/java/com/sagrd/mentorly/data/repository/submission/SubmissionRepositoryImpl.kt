@@ -7,6 +7,8 @@ import com.sagrd.mentorly.data.remote.dto.submission.UpdateSubmissionDto
 import com.sagrd.mentorly.data.remote.remotedatasource.SubmissionRemoteDataSource
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionReview
+import com.sagrd.mentorly.domain.model.submission.AdminEscalatedSubmission
+import com.sagrd.mentorly.domain.model.submission.AdminSubmissionAudit
 import com.sagrd.mentorly.domain.repository.submission.SubmissionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -15,6 +17,35 @@ import javax.inject.Inject
 class SubmissionRepositoryImpl @Inject constructor(
     private val remoteDataSource: SubmissionRemoteDataSource
 ) : SubmissionRepository {
+
+    override fun getEscalatedSubmissions(
+        adminId: String
+    ): Flow<Resource<List<AdminEscalatedSubmission>>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.getEscalatedSubmissions(adminId)
+            .onSuccess { submissions ->
+                emit(Resource.Success(submissions.map { it.toDomain() }))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudieron cargar las entregas escaladas."))
+            }
+    }
+
+    override fun getEscalatedSubmissionAudit(
+        adminId: String,
+        submissionId: String
+    ): Flow<Resource<AdminSubmissionAudit>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.getEscalatedSubmissionAudit(adminId, submissionId)
+            .onSuccess { audit ->
+                emit(Resource.Success(audit.toDomain()))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo cargar la auditoría de la entrega."))
+            }
+    }
 
     override fun createSubmission(
         enrollmentId: String,

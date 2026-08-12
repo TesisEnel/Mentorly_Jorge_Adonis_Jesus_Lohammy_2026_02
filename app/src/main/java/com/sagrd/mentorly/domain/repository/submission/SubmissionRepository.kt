@@ -6,9 +6,20 @@ import com.sagrd.mentorly.data.remote.dto.submission.CreateSubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.UpdateSubmissionDto
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionReview
+import com.sagrd.mentorly.domain.model.submission.AdminEscalatedSubmission
+import com.sagrd.mentorly.domain.model.submission.AdminSubmissionAudit
 import kotlinx.coroutines.flow.Flow
 
 interface SubmissionRepository {
+
+    fun getEscalatedSubmissions(
+        adminId: String
+    ): Flow<Resource<List<AdminEscalatedSubmission>>>
+
+    fun getEscalatedSubmissionAudit(
+        adminId: String,
+        submissionId: String
+    ): Flow<Resource<AdminSubmissionAudit>>
 
     fun createSubmission(
         enrollmentId: String,
