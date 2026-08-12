@@ -38,6 +38,7 @@ class StartupViewModel @Inject constructor(
         when (event) {
             StartupUiEvent.Retry -> restoreSession()
             StartupUiEvent.SignOut -> signOut()
+            StartupUiEvent.DestinationHandled -> _state.update { it.copy(destination = null) }
         }
     }
 

@@ -11,5 +11,6 @@ sealed interface ProfileUiEvent {
     data object ShowSignOutDialog : ProfileUiEvent
     data object DismissSignOutDialog : ProfileUiEvent
     data object ConfirmSignOut : ProfileUiEvent
+    data object SignOutHandled : ProfileUiEvent
     data object DismissError : ProfileUiEvent
 }

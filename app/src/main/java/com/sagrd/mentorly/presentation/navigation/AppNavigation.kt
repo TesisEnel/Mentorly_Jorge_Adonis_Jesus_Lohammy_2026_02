@@ -35,6 +35,7 @@ import com.sagrd.mentorly.presentation.startup.StartupScreen
 import com.sagrd.mentorly.presentation.submission.detail.SubmissionDetailScreen
 import com.sagrd.mentorly.presentation.submission.form.SubmissionFormScreen
 import com.sagrd.mentorly.presentation.submission.list.SubmissionListScreen
+import com.sagrd.mentorly.domain.model.student.StudentRole
 
 @Composable
 fun AppNavigation() {
@@ -137,8 +138,15 @@ private fun NavigationContent(
 
             entry<Screen.Login> {
                 LoginScreen(
-                    onLoginCompleted = {
-                        replaceRoot(backStack, Screen.Home)
+                    onLoginCompleted = { student ->
+                        replaceRoot(
+                            backStack,
+                            if (student.role == StudentRole.ADMIN) {
+                                Screen.AdminDashboard
+                            } else {
+                                Screen.Home
+                            }
+                        )
                     }
                 )
             }

@@ -26,6 +26,7 @@ fun ProfileScreen(
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
+            viewModel.onEvent(ProfileUiEvent.SignOutHandled)
             onSignOutCompleted()
         }
     }
