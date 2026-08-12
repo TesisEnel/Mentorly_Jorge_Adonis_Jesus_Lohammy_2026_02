@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.submission.CreateSubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.UpdateSubmissionDto
+import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.repository.submission.SubmissionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,11 +44,23 @@ class SubmissionFormViewModel @Inject constructor(
         this.submissionId = submissionId
 
         if (submissionId == null) {
-            _uiState.update { it.copy(isEditing = false, evidenceUrl = "") }
+            _uiState.update {
+                it.copy(
+                    isEditing = false,
+                    evidenceUrl = "",
+                    savedSubmissionId = null
+                )
+            }
             return
         }
 
-        _uiState.update { it.copy(isEditing = true, isLoading = true) }
+        _uiState.update {
+            it.copy(
+                isEditing = true,
+                isLoading = true,
+                savedSubmissionId = null
+            )
+        }
 
         viewModelScope.launch {
             submissionRepository.getSubmissionById(submissionId).collect { resource ->
@@ -74,7 +87,13 @@ class SubmissionFormViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+            _uiState.update {
+                it.copy(
+                    isSaving = true,
+                    errorMessage = null,
+                    savedSubmissionId = null
+                )
+            }
 
             val currentSubmissionId = submissionId
 
@@ -83,19 +102,52 @@ class SubmissionFormViewModel @Inject constructor(
                     enrollmentId,
                     activityId,
                     CreateSubmissionDto(evidenceUrl = state.evidenceUrl)
-                ).collect { resource -> handleSaveResult(resource) }
+                ).collect(::handleCreateResult)
             } else {
                 submissionRepository.updateSubmission(
                     currentSubmissionId,
                     UpdateSubmissionDto(evidenceUrl = state.evidenceUrl)
-                ).collect { resource -> handleSaveResult(resource) }
+                ).collect { resource ->
+                    handleUpdateResult(resource, currentSubmissionId)
+                }
             }
         }
     }
 
-    private fun handleSaveResult(resource: Resource<*>) {
+    private fun handleCreateResult(resource: Resource<Submission>) {
         when (resource) {
-            is Resource.Success -> _uiState.update { it.copy(isSaving = false, isSaved = true) }
+            is Resource.Success -> {
+                val createdSubmissionId = resource.data?.id
+                _uiState.update {
+                    if (createdSubmissionId == null) {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = "No se pudo obtener la entrega guardada."
+                        )
+                    } else {
+                        it.copy(
+                            isSaving = false,
+                            savedSubmissionId = createdSubmissionId
+                        )
+                    }
+                }
+            }
+            is Resource.Error -> _uiState.update { it.copy(isSaving = false, errorMessage = resource.message) }
+            is Resource.Loading -> Unit
+        }
+    }
+
+    private fun handleUpdateResult(
+        resource: Resource<Unit>,
+        updatedSubmissionId: String
+    ) {
+        when (resource) {
+            is Resource.Success -> _uiState.update {
+                it.copy(
+                    isSaving = false,
+                    savedSubmissionId = updatedSubmissionId
+                )
+            }
             is Resource.Error -> _uiState.update { it.copy(isSaving = false, errorMessage = resource.message) }
             is Resource.Loading -> Unit
         }
