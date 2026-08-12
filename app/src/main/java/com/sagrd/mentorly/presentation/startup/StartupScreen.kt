@@ -22,6 +22,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 fun StartupScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToCourseList: () -> Unit,
+    onNavigateToAdminDashboard: () -> Unit,
     viewModel: StartupViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -30,6 +31,7 @@ fun StartupScreen(
         when (state.destination) {
             StartupDestination.LOGIN -> onNavigateToLogin()
             StartupDestination.COURSE_LIST -> onNavigateToCourseList()
+            StartupDestination.ADMIN_DASHBOARD -> onNavigateToAdminDashboard()
             null -> Unit
         }
     }
