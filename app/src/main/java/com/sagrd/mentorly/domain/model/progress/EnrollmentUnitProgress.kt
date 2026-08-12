@@ -7,5 +7,5 @@ data class EnrollmentUnitProgress(
     val totalThemes: Int,
     val approvedMandatoryActivities: Int,
     val totalMandatoryActivities: Int,
-    val activities: List<EnrollmentActivityProgress>
+    val themes: List<EnrollmentThemeProgress>
 )
