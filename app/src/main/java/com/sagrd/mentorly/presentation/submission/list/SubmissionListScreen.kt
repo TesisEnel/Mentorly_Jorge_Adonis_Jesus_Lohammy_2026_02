@@ -36,6 +36,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun SubmissionListScreen(
@@ -162,7 +163,7 @@ private fun SubmissionCard(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = submission.submittedAt,
+                    text = "Enviada: ${DateFormatter.format(submission.submittedAt)}",
                     style = MaterialTheme.typography.labelSmall
                 )
             }
