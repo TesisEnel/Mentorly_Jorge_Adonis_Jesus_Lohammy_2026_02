@@ -57,7 +57,10 @@ fun LoginScreen(
     val context = LocalContext.current
 
     LaunchedEffect(state.student?.id) {
-        state.student?.let(onLoginCompleted)
+        state.student?.let { student ->
+            viewModel.onEvent(LoginUiEvent.LoginCompletedHandled)
+            onLoginCompleted(student)
+        }
     }
 
     LoginContent(
