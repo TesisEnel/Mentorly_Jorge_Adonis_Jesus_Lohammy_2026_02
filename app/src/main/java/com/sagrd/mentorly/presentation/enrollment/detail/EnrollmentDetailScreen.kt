@@ -43,6 +43,7 @@ fun EnrollmentDetailScreen(
     enrollmentId: String,
     onBackClick: () -> Unit,
     onRestarted: (String) -> Unit,
+    onProgressClick: (String) -> Unit,
     viewModel: EnrollmentDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -55,6 +56,7 @@ fun EnrollmentDetailScreen(
     EnrollmentDetailContent(
         uiState = uiState,
         onBackClick = onBackClick,
+        onProgressClick = { onProgressClick(enrollmentId) },
         onEvent = viewModel::onEvent
     )
 }
@@ -64,6 +66,7 @@ fun EnrollmentDetailScreen(
 private fun EnrollmentDetailContent(
     uiState: EnrollmentDetailUiState,
     onBackClick: () -> Unit,
+    onProgressClick: () -> Unit,
     onEvent: (EnrollmentDetailUiEvent) -> Unit
 ) {
     Scaffold(
@@ -97,6 +100,7 @@ private fun EnrollmentDetailContent(
                 isRestarting = uiState.isRestarting,
                 isLoadingCertificate = uiState.isLoadingCertificate,
                 errorMessage = uiState.errorMessage,
+                onProgressClick = onProgressClick,
                 onLoadCertificate = { onEvent(EnrollmentDetailUiEvent.LoadCertificate) },
                 onRestart = { onEvent(EnrollmentDetailUiEvent.ShowRestartConfirmation) },
                 onDismissError = { onEvent(EnrollmentDetailUiEvent.ClearError) },
@@ -130,6 +134,7 @@ private fun EnrollmentInformation(
     isRestarting: Boolean,
     isLoadingCertificate: Boolean,
     errorMessage: String?,
+    onProgressClick: () -> Unit,
     onLoadCertificate: () -> Unit,
     onRestart: () -> Unit,
     onDismissError: () -> Unit,
@@ -147,6 +152,10 @@ private fun EnrollmentInformation(
                 Text("Vence: ${enrollment.expiresAt}")
                 enrollment.completedAt?.let { Text("Completó: $it") }
             }
+        }
+
+        Button(onClick = onProgressClick, modifier = Modifier.fillMaxWidth()) {
+            Text("Ver progreso")
         }
 
         if (status == EnrollmentStatus.COMPLETED) {
@@ -208,6 +217,7 @@ private fun EnrollmentDetailPreview() {
                 enrollment = Enrollment("enrollment-1", "student-1", "course-1", 1, "2026-08-12", "2026-11-12", null, EnrollmentStatus.ACTIVE)
             ),
             onBackClick = {},
+            onProgressClick = {},
             onEvent = {}
         )
     }
