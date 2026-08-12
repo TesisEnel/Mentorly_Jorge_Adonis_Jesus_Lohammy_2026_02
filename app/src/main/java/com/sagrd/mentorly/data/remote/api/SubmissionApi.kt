@@ -1,6 +1,8 @@
 package com.sagrd.mentorly.data.remote.api
 
 import com.sagrd.mentorly.data.remote.dto.submission.AdminSubmissionDecisionDto
+import com.sagrd.mentorly.data.remote.dto.submission.AdminEscalatedSubmissionDto
+import com.sagrd.mentorly.data.remote.dto.submission.AdminSubmissionAuditDto
 import com.sagrd.mentorly.data.remote.dto.submission.CreateSubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.SubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.SubmissionReviewDto
@@ -13,6 +15,17 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface SubmissionApi {
+
+    @GET("api/admins/{adminId}/submissions/escalated")
+    suspend fun getEscalatedSubmissions(
+        @Path("adminId") adminId: String
+    ): Response<List<AdminEscalatedSubmissionDto>>
+
+    @GET("api/admins/{adminId}/submissions/{submissionId}/audit")
+    suspend fun getEscalatedSubmissionAudit(
+        @Path("adminId") adminId: String,
+        @Path("submissionId") submissionId: String
+    ): Response<AdminSubmissionAuditDto>
 
     @POST("api/enrollments/{enrollmentId}/activities/{activityId}/submissions")
     suspend fun createSubmission(
