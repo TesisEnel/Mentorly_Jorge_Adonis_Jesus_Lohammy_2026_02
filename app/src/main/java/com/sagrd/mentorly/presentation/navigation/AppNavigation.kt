@@ -130,7 +130,7 @@ private fun NavigationContent(
                         replaceRoot(backStack, Screen.Home)
                     },
                     onNavigateToAdminDashboard = {
-                        replaceRoot(backStack, Screen.Home)
+                        replaceRoot(backStack, Screen.AdminDashboard)
                     }
                 )
             }
