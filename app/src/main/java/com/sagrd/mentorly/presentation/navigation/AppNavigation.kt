@@ -17,6 +17,7 @@ import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
 import com.sagrd.mentorly.presentation.enrollment.detail.EnrollmentDetailScreen
 import com.sagrd.mentorly.presentation.enrollment.list.EnrollmentListScreen
+import com.sagrd.mentorly.presentation.progress.EnrollmentProgressScreen
 import com.sagrd.mentorly.presentation.profile.ProfileScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
 import com.sagrd.mentorly.domain.model.student.StudentRole
@@ -156,6 +157,21 @@ private fun NavigationContent(
                     onRestarted = { enrollmentId ->
                         backStack.removeLastOrNull()
                         backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                    },
+                    onProgressClick = { enrollmentId ->
+                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
+                    }
+                )
+            }
+
+            entry<Screen.EnrollmentProgress> { destination ->
+                EnrollmentProgressScreen(
+                    enrollmentId = destination.enrollmentId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onActivityClick = {
+                        // Las rutas de quizzes y entregas se conectarán en sus respectivas ramas.
                     }
                 )
             }

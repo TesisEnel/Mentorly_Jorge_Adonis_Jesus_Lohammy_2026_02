@@ -29,6 +29,11 @@ sealed class Screen : NavKey {
     ) : Screen()
 
     @Serializable
+    data class EnrollmentProgress(
+        val enrollmentId: String
+    ) : Screen()
+
+    @Serializable
     data object Profile : Screen()
 
     @Serializable
