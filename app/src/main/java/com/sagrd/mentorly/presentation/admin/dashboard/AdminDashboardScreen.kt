@@ -54,6 +54,7 @@ fun AdminDashboardScreen(
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
+            viewModel.onEvent(AdminDashboardUiEvent.SignOutHandled)
             onSignOutCompleted()
         }
     }
