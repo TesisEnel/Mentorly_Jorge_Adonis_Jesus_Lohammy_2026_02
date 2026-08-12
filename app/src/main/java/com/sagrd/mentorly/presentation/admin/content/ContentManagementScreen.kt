@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.sagrd.mentorly.domain.model.content.ActivityType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,6 +20,7 @@ fun ContentManagementScreen(
     onEditThemeClick: (String, String) -> Unit,
     onCreateActivityClick: (String) -> Unit,
     onEditActivityClick: (String, String) -> Unit,
+    onManageQuizQuestionsClick: (String) -> Unit,
     viewModel: ContentManagementViewModel = hiltViewModel(),
 ) {
     val s by viewModel.uiState.collectAsState()
@@ -109,6 +111,15 @@ fun ContentManagementScreen(
                                                             }
                                                         ) {
                                                             Text("Editar")
+                                                        }
+                                                        if (a.type == ActivityType.QUIZ) {
+                                                            TextButton(
+                                                                onClick = {
+                                                                    onManageQuizQuestionsClick(a.id)
+                                                                }
+                                                            ) {
+                                                                Text("Administrar preguntas")
+                                                            }
                                                         }
                                                     }
                                             }
