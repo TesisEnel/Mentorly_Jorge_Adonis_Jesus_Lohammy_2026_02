@@ -31,6 +31,9 @@ import com.sagrd.mentorly.presentation.peerreview.queue.PeerReviewQueueScreen
 import com.sagrd.mentorly.presentation.progress.EnrollmentProgressScreen
 import com.sagrd.mentorly.presentation.profile.ProfileScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
+import com.sagrd.mentorly.presentation.submission.detail.SubmissionDetailScreen
+import com.sagrd.mentorly.presentation.submission.form.SubmissionFormScreen
+import com.sagrd.mentorly.presentation.submission.list.SubmissionListScreen
 
 @Composable
 fun AppNavigation() {
@@ -207,8 +210,60 @@ private fun NavigationContent(
                     onBackClick = {
                         backStack.removeLastOrNull()
                     },
-                    onActivityClick = {
-                        // Las rutas de quizzes y entregas se conectarán en sus respectivas ramas.
+                    onActivityClick = { activityId ->
+                        backStack.add(
+                            Screen.SubmissionForm(
+                                enrollmentId = destination.enrollmentId,
+                                activityId = activityId
+                            )
+                        )
+                    }
+                )
+            }
+
+            entry<Screen.SubmissionList> {
+                SubmissionListScreen(
+                    onSubmissionClick = { submissionId ->
+                        backStack.add(Screen.SubmissionDetail(submissionId))
+                    }
+                )
+            }
+
+            entry<Screen.SubmissionDetail> { destination ->
+                SubmissionDetailScreen(
+                    submissionId = destination.submissionId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onEditClick = { submissionId, enrollmentId, activityId ->
+                        backStack.add(
+                            Screen.SubmissionForm(
+                                enrollmentId = enrollmentId,
+                                activityId = activityId,
+                                submissionId = submissionId
+                            )
+                        )
+                    }
+                )
+            }
+
+            entry<Screen.SubmissionForm> { destination ->
+                SubmissionFormScreen(
+                    enrollmentId = destination.enrollmentId,
+                    activityId = destination.activityId,
+                    submissionId = destination.submissionId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onSaved = { submissionId ->
+                        backStack.removeLastOrNull()
+                        val currentDestination = backStack.lastOrNull()
+                        if (
+                            currentDestination !is Screen.SubmissionDetail ||
+                            currentDestination.submissionId != submissionId
+                        ) {
+                            backStack.add(Screen.SubmissionDetail(submissionId))
+                        }
                     }
                 )
             }

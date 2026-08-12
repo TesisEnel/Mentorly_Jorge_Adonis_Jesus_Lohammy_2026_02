@@ -37,6 +37,21 @@ sealed class Screen : NavKey {
     ) : Screen()
 
     @Serializable
+    data object SubmissionList : Screen()
+
+    @Serializable
+    data class SubmissionDetail(
+        val submissionId: String
+    ) : Screen()
+
+    @Serializable
+    data class SubmissionForm(
+        val enrollmentId: String,
+        val activityId: String,
+        val submissionId: String? = null
+    ) : Screen()
+
+    @Serializable
     data object PeerReviewQueue : Screen()
 
     @Serializable
