@@ -7,5 +7,5 @@ data class SubmissionFormUiState(
     val evidenceUrl: String = "",
     val evidenceUrlError: String? = null,
     val errorMessage: String? = null,
-    val isSaved: Boolean = false
+    val savedSubmissionId: String? = null
 )
