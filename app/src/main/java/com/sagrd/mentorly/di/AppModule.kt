@@ -1,10 +1,8 @@
 package com.sagrd.mentorly.di
 
-import com.sagrd.mentorly.data.remote.api.*
-import com.sagrd.mentorly.data.remote.remotedatasource.*
-import com.sagrd.mentorly.data.repository.*
+import com.sagrd.mentorly.data.remote.api.AnalyticsApi
+import com.sagrd.mentorly.data.remote.remotedatasource.AnalyticsRemoteDataSource
 import com.sagrd.mentorly.data.repository.analytics.AnalyticsRepositoryImpl
-import com.sagrd.mentorly.domain.repository.*
 import com.sagrd.mentorly.domain.repository.analytics.AnalyticsRepository
 import com.squareup.moshi.KotlinJsonAdapterFactory
 import com.squareup.moshi.Moshi
@@ -39,36 +37,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCourseMentorlyApi(retrofit: Retrofit): CourseMentorlyApi {
-        return retrofit.create(CourseMentorlyApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideSubmissionApi(retrofit: Retrofit): SubmissionMentorlyApi {
-        return retrofit.create(SubmissionMentorlyApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun providePeerReviewApi(retrofit: Retrofit): PeerReviewMentorlyApi {
-        return retrofit.create(PeerReviewMentorlyApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideEnrollmentApi(retrofit: Retrofit): EnrollmentMentorlyApi {
-        return retrofit.create(EnrollmentMentorlyApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideStudentApi(retrofit: Retrofit): StudentMentorlyApi {
-        return retrofit.create(StudentMentorlyApi::class.java)
-    }
-
-    @Provides
-    @Singleton
     fun provideAnalyticsApi(retrofit: Retrofit): AnalyticsApi {
         return retrofit.create(AnalyticsApi::class.java)
     }
@@ -77,36 +45,6 @@ object AppModule {
     @Singleton
     fun provideAnalyticsRemoteDataSource(api: AnalyticsApi): AnalyticsRemoteDataSource {
         return AnalyticsRemoteDataSource(api)
-    }
-
-    @Provides
-    @Singleton
-    fun provideCourseRepository(remoteDataSource: CourseRemoteDataSource): CourseRepository {
-        return CourseRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun providePeerReviewRepository(remoteDataSource: PeerReviewRemoteDataSource): PeerReviewRepository {
-        return PeerReviewRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideSubmissionRepository(remoteDataSource: SubmissionRemoteDataSource): SubmissionRepository {
-        return SubmissionRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideEnrollmentRepository(remoteDataSource: EnrollmentRemoteDataSource): EnrollmentRepository {
-        return EnrollmentRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideStudentRepository(api: StudentMentorlyApi): StudentRepository {
-        return StudentRepositoryImpl(api)
     }
 
     @Provides
