@@ -11,11 +11,13 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
 import com.sagrd.mentorly.presentation.profile.ProfileScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
+import com.sagrd.mentorly.domain.model.student.StudentRole
 
 @Composable
 fun AppNavigation() {
@@ -88,14 +90,24 @@ private fun NavigationContent(
                     },
                     onNavigateToCourseList = {
                         replaceRoot(backStack, Screen.CourseList)
+                    },
+                    onNavigateToAdminDashboard = {
+                        replaceRoot(backStack, Screen.AdminDashboard)
                     }
                 )
             }
 
             entry<Screen.Login> {
                 LoginScreen(
-                    onLoginCompleted = {
-                        replaceRoot(backStack, Screen.CourseList)
+                    onLoginCompleted = { student ->
+                        replaceRoot(
+                            backStack,
+                            if (student.role == StudentRole.ADMIN) {
+                                Screen.AdminDashboard
+                            } else {
+                                Screen.CourseList
+                            }
+                        )
                     }
                 )
             }
@@ -121,7 +133,20 @@ private fun NavigationContent(
                 ProfileScreen(
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
+                    },
+                    onAdminDashboardClick = {
+                        backStack.add(Screen.AdminDashboard)
                     }
+                )
+            }
+
+            entry<Screen.AdminDashboard> {
+                AdminDashboardScreen(
+                    onCoursesClick = {},
+                    onStudentsClick = {},
+                    onPeerReviewsClick = {},
+                    onEscalatedSubmissionsClick = {},
+                    onAnalyticsClick = {}
                 )
             }
         }
