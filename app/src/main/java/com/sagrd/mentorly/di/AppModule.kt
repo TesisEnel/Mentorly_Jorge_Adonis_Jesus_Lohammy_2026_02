@@ -1,9 +1,5 @@
 package com.sagrd.mentorly.di
 
-import com.sagrd.mentorly.data.remote.api.AnalyticsApi
-import com.sagrd.mentorly.data.remote.remotedatasource.AnalyticsRemoteDataSource
-import com.sagrd.mentorly.data.repository.analytics.AnalyticsRepositoryImpl
-import com.sagrd.mentorly.domain.repository.analytics.AnalyticsRepository
 import com.squareup.moshi.KotlinJsonAdapterFactory
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -33,23 +29,5 @@ object AppModule {
             .baseUrl(baseUrl)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnalyticsApi(retrofit: Retrofit): AnalyticsApi {
-        return retrofit.create(AnalyticsApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnalyticsRemoteDataSource(api: AnalyticsApi): AnalyticsRemoteDataSource {
-        return AnalyticsRemoteDataSource(api)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnalyticsRepository(remoteDataSource: AnalyticsRemoteDataSource): AnalyticsRepository {
-        return AnalyticsRepositoryImpl(remoteDataSource)
     }
 }
