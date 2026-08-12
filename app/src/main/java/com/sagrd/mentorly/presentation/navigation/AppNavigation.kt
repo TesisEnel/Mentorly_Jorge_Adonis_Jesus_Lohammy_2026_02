@@ -14,6 +14,8 @@ import androidx.navigation3.ui.NavDisplay
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
+import com.sagrd.mentorly.presentation.enrollment.detail.EnrollmentDetailScreen
+import com.sagrd.mentorly.presentation.enrollment.list.EnrollmentListScreen
 import com.sagrd.mentorly.presentation.profile.ProfileScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
 
@@ -29,7 +31,9 @@ private fun AppNavigationDisplay(
     backStack: NavBackStack<NavKey>
 ) {
     val currentDestination = backStack.lastOrNull()
-    val showBottomNavigation = currentDestination is Screen.CourseList || currentDestination is Screen.Profile
+    val showBottomNavigation = currentDestination is Screen.CourseList ||
+        currentDestination is Screen.EnrollmentList ||
+        currentDestination is Screen.Profile
 
     Scaffold(
         bottomBar = {
@@ -37,6 +41,7 @@ private fun AppNavigationDisplay(
                 MentorlyBottomNavigation(
                     currentSection = when (currentDestination) {
                         is Screen.Profile -> MentorlySection.PROFILE
+                        is Screen.EnrollmentList -> MentorlySection.LEARNING
                         else -> MentorlySection.COURSES
                     },
                     onSectionSelected = { section ->
@@ -49,6 +54,11 @@ private fun AppNavigationDisplay(
                             MentorlySection.PROFILE -> {
                                 if (currentDestination !is Screen.Profile) {
                                     replaceRoot(backStack, Screen.Profile)
+                                }
+                            }
+                            MentorlySection.LEARNING -> {
+                                if (currentDestination !is Screen.EnrollmentList) {
+                                    replaceRoot(backStack, Screen.EnrollmentList)
                                 }
                             }
                             else -> {}
@@ -113,6 +123,27 @@ private fun NavigationContent(
                     courseId = destination.courseId,
                     onBackClick = {
                         backStack.removeLastOrNull()
+                    }
+                )
+            }
+
+            entry<Screen.EnrollmentList> {
+                EnrollmentListScreen(
+                    onEnrollmentClick = { enrollmentId ->
+                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                    }
+                )
+            }
+
+            entry<Screen.EnrollmentDetail> { destination ->
+                EnrollmentDetailScreen(
+                    enrollmentId = destination.enrollmentId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onRestarted = { enrollmentId ->
+                        backStack.removeLastOrNull()
+                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
                     }
                 )
             }
