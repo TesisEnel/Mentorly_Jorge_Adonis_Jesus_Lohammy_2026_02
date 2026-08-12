@@ -1,14 +1,18 @@
 package com.sagrd.mentorly.di
 
 import com.sagrd.mentorly.data.remote.api.CourseApi
+import com.sagrd.mentorly.data.remote.api.EnrollmentApi
 import com.sagrd.mentorly.data.remote.api.StudentApi
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
 import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
+import com.sagrd.mentorly.data.repository.enrollment.EnrollmentRepositoryImpl
 import com.sagrd.mentorly.data.repository.session.SessionRepositoryImpl
 import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
+import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import com.squareup.moshi.Moshi
@@ -59,6 +63,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideEnrollmentApi(retrofit: Retrofit): EnrollmentApi {
+        return retrofit.create(EnrollmentApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideCourseRemoteDataSource(
         courseApi: CourseApi
     ): CourseRemoteDataSource {
@@ -75,6 +85,14 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideEnrollmentRemoteDataSource(
+        enrollmentApi: EnrollmentApi
+    ): EnrollmentRemoteDataSource {
+        return EnrollmentRemoteDataSource(enrollmentApi)
+    }
+
+    @Provides
+    @Singleton
     fun provideCourseRepository(
         remoteDataSource: CourseRemoteDataSource
     ): CourseRepository {
@@ -87,6 +105,14 @@ object AppModule {
         remoteDataSource: StudentRemoteDataSource
     ): StudentRepository {
         return StudentRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEnrollmentRepository(
+        remoteDataSource: EnrollmentRemoteDataSource
+    ): EnrollmentRepository {
+        return EnrollmentRepositoryImpl(remoteDataSource)
     }
 
     @Provides
