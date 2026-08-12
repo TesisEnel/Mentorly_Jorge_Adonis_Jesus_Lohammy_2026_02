@@ -19,6 +19,7 @@ import com.sagrd.mentorly.domain.model.student.StudentStatistics
 @Composable
 fun ProfileScreen(
     onSignOutCompleted: () -> Unit,
+    onAdminDashboardClick: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -31,14 +32,16 @@ fun ProfileScreen(
 
     ProfileScreenContent(
         uiState = uiState,
-        onEvent = viewModel::onEvent
+        onEvent = viewModel::onEvent,
+        onAdminDashboardClick = onAdminDashboardClick
     )
 }
 
 @Composable
 fun ProfileScreenContent(
     uiState: ProfileUiState,
-    onEvent: (ProfileUiEvent) -> Unit
+    onEvent: (ProfileUiEvent) -> Unit,
+    onAdminDashboardClick: () -> Unit
 ) {
     if (uiState.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -123,6 +126,17 @@ fun ProfileScreenContent(
         }
 
         Spacer(Modifier.height(24.dp))
+
+        if (student.role == StudentRole.ADMIN) {
+            OutlinedButton(
+                onClick = onAdminDashboardClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Panel administrativo")
+            }
+
+            Spacer(Modifier.height(12.dp))
+        }
 
         Button(
             onClick = { onEvent(ProfileUiEvent.ShowSignOutDialog) },
@@ -212,7 +226,8 @@ private fun ProfileScreenPreview() {
                     badges = emptyList()
                 )
             ),
-            onEvent = {}
+            onEvent = {},
+            onAdminDashboardClick = {}
         )
     }
 }
