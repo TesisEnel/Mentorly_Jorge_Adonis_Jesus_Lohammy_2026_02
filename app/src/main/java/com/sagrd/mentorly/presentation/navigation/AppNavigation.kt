@@ -18,6 +18,7 @@ import com.sagrd.mentorly.presentation.admin.content.activity.ActivityFormScreen
 import com.sagrd.mentorly.presentation.admin.content.theme.ThemeFormScreen
 import com.sagrd.mentorly.presentation.admin.content.unit.UnitFormScreen
 import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
+import com.sagrd.mentorly.presentation.admin.quiz.AdminQuizQuestionScreen
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
@@ -280,6 +281,87 @@ private fun NavigationContent(
                             backStack.add(Screen.AdminCourseList)
                         }
                     }
+                )
+            }
+
+            entry<Screen.ContentManagement> { destination ->
+                ContentManagementScreen(
+                    courseId = destination.courseId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onCreateUnitClick = { courseId ->
+                        backStack.add(Screen.UnitForm(courseId, unitId = null))
+                    },
+                    onEditUnitClick = { courseId, unitId ->
+                        backStack.add(Screen.UnitForm(courseId, unitId))
+                    },
+                    onCreateThemeClick = { unitId ->
+                        backStack.add(Screen.ThemeForm(unitId, themeId = null))
+                    },
+                    onEditThemeClick = { unitId, themeId ->
+                        backStack.add(Screen.ThemeForm(unitId, themeId))
+                    },
+                    onCreateActivityClick = { themeId ->
+                        backStack.add(Screen.ActivityForm(themeId, activityId = null))
+                    },
+                    onEditActivityClick = { themeId, activityId ->
+                        backStack.add(Screen.ActivityForm(themeId, activityId))
+                    },
+                    onManageQuizQuestionsClick = { activityId ->
+                        backStack.add(Screen.AdminQuizQuestion(activityId))
+                    },
+                )
+            }
+
+            entry<Screen.UnitForm> { destination ->
+                UnitFormScreen(
+                    courseId = destination.courseId,
+                    unitId = destination.unitId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onSaved = {
+                        backStack.removeLastOrNull()
+                    },
+                )
+            }
+
+            entry<Screen.ThemeForm> { destination ->
+                ThemeFormScreen(
+                    unitId = destination.unitId,
+                    themeId = destination.themeId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onSaved = {
+                        backStack.removeLastOrNull()
+                    },
+                )
+            }
+
+            entry<Screen.ActivityForm> { destination ->
+                ActivityFormScreen(
+                    themeId = destination.themeId,
+                    activityId = destination.activityId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onSaved = {
+                        backStack.removeLastOrNull()
+                    },
+                )
+            }
+
+            entry<Screen.AdminQuizQuestion> { destination ->
+                AdminQuizQuestionScreen(
+                    activityId = destination.activityId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onQuestionCreated = {
+                        // La pantalla conserva el formulario para crear otra pregunta.
+                    },
                 )
             }
         }
