@@ -9,7 +9,7 @@ data class EnrollmentUnitProgressDto(
     val totalThemes: Int,
     val approvedMandatoryActivities: Int,
     val totalMandatoryActivities: Int,
-    val activities: List<EnrollmentActivityProgressDto>
+    val themes: List<EnrollmentThemeProgressDto>
 ) {
     fun toDomain() = EnrollmentUnitProgress(
         unitId = unitId,
@@ -18,6 +18,6 @@ data class EnrollmentUnitProgressDto(
         totalThemes = totalThemes,
         approvedMandatoryActivities = approvedMandatoryActivities,
         totalMandatoryActivities = totalMandatoryActivities,
-        activities = activities.map { it.toDomain() }
+        themes = themes.map { it.toDomain() }
     )
 }
