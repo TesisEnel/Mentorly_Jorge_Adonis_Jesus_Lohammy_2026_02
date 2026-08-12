@@ -48,7 +48,7 @@ import com.sagrd.mentorly.ui.theme.MentorlyTheme
 fun SubmissionDetailScreen(
     submissionId: String,
     onBackClick: () -> Unit,
-    onEditClick: (String) -> Unit,
+    onEditClick: (submissionId: String, enrollmentId: String, activityId: String) -> Unit,
     viewModel: SubmissionDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -61,7 +61,15 @@ fun SubmissionDetailScreen(
         state = state,
         onEvent = viewModel::onEvent,
         onBackClick = onBackClick,
-        onEditClick = { onEditClick(submissionId) }
+        onEditClick = {
+            state.submission?.let { submission ->
+                onEditClick(
+                    submission.id,
+                    submission.enrollmentId,
+                    submission.activityId
+                )
+            }
+        }
     )
 }
 

@@ -40,7 +40,7 @@ fun SubmissionFormScreen(
     activityId: String,
     submissionId: String? = null,
     onBackClick: () -> Unit,
-    onSaved: () -> Unit,
+    onSaved: (String) -> Unit,
     viewModel: SubmissionFormViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -49,10 +49,8 @@ fun SubmissionFormScreen(
         viewModel.onEvent(SubmissionFormUiEvent.Load(enrollmentId, activityId, submissionId))
     }
 
-    LaunchedEffect(state.isSaved) {
-        if (state.isSaved) {
-            onSaved()
-        }
+    LaunchedEffect(state.savedSubmissionId) {
+        state.savedSubmissionId?.let(onSaved)
     }
 
     SubmissionFormContent(
