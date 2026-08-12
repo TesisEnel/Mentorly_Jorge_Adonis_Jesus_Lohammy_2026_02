@@ -8,4 +8,6 @@ interface LoginUiEvent {
     ): LoginUiEvent
 
     data object SignOut: LoginUiEvent
+
+    data object LoginCompletedHandled : LoginUiEvent
 }
