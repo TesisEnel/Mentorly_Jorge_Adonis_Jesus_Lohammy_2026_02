@@ -7,6 +7,7 @@ import com.sagrd.mentorly.data.remote.api.PeerReviewApi
 import com.sagrd.mentorly.data.remote.api.QuizApi
 import com.sagrd.mentorly.data.remote.api.StudentApi
 import com.sagrd.mentorly.data.remote.api.SubmissionApi
+import com.sagrd.mentorly.data.remote.api.ThemeApi
 import com.sagrd.mentorly.data.remote.api.UnitApi
 import com.sagrd.mentorly.data.remote.remotedatasource.CourseRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.EnrollmentRemoteDataSource
@@ -15,6 +16,7 @@ import com.sagrd.mentorly.data.remote.remotedatasource.PeerReviewRemoteDataSourc
 import com.sagrd.mentorly.data.remote.remotedatasource.QuizRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.SubmissionRemoteDataSource
+import com.sagrd.mentorly.data.remote.remotedatasource.ThemeRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.UnitRemoteDataSource
 import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
@@ -25,6 +27,7 @@ import com.sagrd.mentorly.data.repository.quiz.QuizRepositoryImpl
 import com.sagrd.mentorly.data.repository.session.SessionRepositoryImpl
 import com.sagrd.mentorly.data.repository.student.StudentRepositoryImpl
 import com.sagrd.mentorly.data.repository.submission.SubmissionRepositoryImpl
+import com.sagrd.mentorly.data.repository.theme.ThemeRepositoryImpl
 import com.sagrd.mentorly.data.repository.unit.UnitRepositoryImpl
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
@@ -34,6 +37,7 @@ import com.sagrd.mentorly.domain.repository.quiz.QuizRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import com.sagrd.mentorly.domain.repository.submission.SubmissionRepository
+import com.sagrd.mentorly.domain.repository.theme.ThemeRepository
 import com.sagrd.mentorly.domain.repository.unit.UnitRepository
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -113,6 +117,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideThemeApi(retrofit: Retrofit): ThemeApi {
+        return retrofit.create(ThemeApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideUnitApi(retrofit: Retrofit): UnitApi {
         return retrofit.create(UnitApi::class.java)
     }
@@ -171,6 +181,14 @@ object AppModule {
         submissionApi: SubmissionApi
     ): SubmissionRemoteDataSource {
         return SubmissionRemoteDataSource(submissionApi)
+    }
+
+    @Provides
+    @Singleton
+    fun provideThemeRemoteDataSource(
+        themeApi: ThemeApi
+    ): ThemeRemoteDataSource {
+        return ThemeRemoteDataSource(themeApi)
     }
 
     @Provides
@@ -235,6 +253,14 @@ object AppModule {
         remoteDataSource: SubmissionRemoteDataSource
     ): SubmissionRepository {
         return SubmissionRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideThemeRepository(
+        remoteDataSource: ThemeRemoteDataSource
+    ): ThemeRepository {
+        return ThemeRepositoryImpl(remoteDataSource)
     }
 
     @Provides
