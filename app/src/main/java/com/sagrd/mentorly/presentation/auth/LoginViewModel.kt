@@ -33,6 +33,7 @@ class LoginViewModel @Inject constructor(
         when (event) {
             is LoginUiEvent.SignInWithGoogle -> signInWithGoogle(event.context)
             LoginUiEvent.SignOut -> signOut()
+            LoginUiEvent.LoginCompletedHandled -> _state.update { it.copy(student = null) }
         }
     }
 
