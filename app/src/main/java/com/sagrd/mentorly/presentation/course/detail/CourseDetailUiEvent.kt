@@ -6,4 +6,6 @@ sealed interface CourseDetailUiEvent {
     ) : CourseDetailUiEvent
 
     data object Retry : CourseDetailUiEvent
+    data object Enroll : CourseDetailUiEvent
+    data object ClearEnrollmentError : CourseDetailUiEvent
 }
