@@ -44,6 +44,7 @@ class ProfileViewModel @Inject constructor(
             is ProfileUiEvent.ShowSignOutDialog -> _uiState.update { it.copy(isSignOutDialogVisible = true) }
             is ProfileUiEvent.DismissSignOutDialog -> _uiState.update { it.copy(isSignOutDialogVisible = false) }
             is ProfileUiEvent.ConfirmSignOut -> signOut()
+            is ProfileUiEvent.SignOutHandled -> _uiState.update { it.copy(isSignedOut = false) }
             is ProfileUiEvent.DismissError -> _uiState.update { it.copy(errorMessage = null) }
         }
     }
