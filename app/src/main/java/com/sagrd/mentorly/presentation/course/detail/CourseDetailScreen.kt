@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,6 +56,7 @@ import com.sagrd.mentorly.ui.theme.MentorlyTheme
 fun CourseDetailScreen(
     courseId: String,
     onBackClick: () -> Unit,
+    onEnrollmentCreated: (String) -> Unit,
     viewModel: CourseDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -63,9 +65,17 @@ fun CourseDetailScreen(
         viewModel.onEvent(CourseDetailUiEvent.LoadCourseContent(courseId))
     }
 
+    LaunchedEffect(state.createdEnrollmentId) {
+        state.createdEnrollmentId?.let(onEnrollmentCreated)
+    }
+
     CourseDetailContent(
         state = state,
         onBackClick = onBackClick,
+        onEnroll = { viewModel.onEvent(CourseDetailUiEvent.Enroll) },
+        onDismissEnrollmentError = {
+            viewModel.onEvent(CourseDetailUiEvent.ClearEnrollmentError)
+        },
         onRetry = {
             viewModel.onEvent(CourseDetailUiEvent.Retry)
         }
@@ -77,6 +87,8 @@ fun CourseDetailScreen(
 private fun CourseDetailContent(
     state: CourseDetailUiState,
     onBackClick: () -> Unit,
+    onEnroll: () -> Unit,
+    onDismissEnrollmentError: () -> Unit,
     onRetry: () -> Unit
 ) {
     Scaffold(
@@ -118,6 +130,10 @@ private fun CourseDetailContent(
             state.course != null -> {
                 CourseContent(
                     course = state.course,
+                    isEnrolling = state.isEnrolling,
+                    enrollmentErrorMessage = state.enrollmentErrorMessage,
+                    onEnroll = onEnroll,
+                    onDismissEnrollmentError = onDismissEnrollmentError,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
@@ -130,6 +146,10 @@ private fun CourseDetailContent(
 @Composable
 private fun CourseContent(
     course: Course,
+    isEnrolling: Boolean,
+    enrollmentErrorMessage: String?,
+    onEnroll: () -> Unit,
+    onDismissEnrollmentError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -138,7 +158,24 @@ private fun CourseContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            CourseHeader(course)
+            CourseHeader(
+                course = course,
+                isEnrolling = isEnrolling,
+                onEnroll = onEnroll
+            )
+        }
+
+        enrollmentErrorMessage?.let { message ->
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(message, color = MaterialTheme.colorScheme.error)
+                        TextButton(onClick = onDismissEnrollmentError) {
+                            Text("Aceptar")
+                        }
+                    }
+                }
+            }
         }
 
         item {
@@ -168,7 +205,11 @@ private fun CourseContent(
 }
 
 @Composable
-private fun CourseHeader(course: Course) {
+private fun CourseHeader(
+    course: Course,
+    isEnrolling: Boolean,
+    onEnroll: () -> Unit
+) {
     Column {
         CourseImage(
             imageUrl = course.imageUrl,
@@ -197,6 +238,18 @@ private fun CourseHeader(course: Course) {
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary
         )
+
+        if (course.isPublished) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onEnroll,
+                enabled = !isEnrolling,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (isEnrolling) "Inscribiendo..." else "Inscribirme al curso")
+            }
+        }
     }
 }
 
@@ -419,6 +472,8 @@ private fun CourseDetailPreview() {
                 )
             ),
             onBackClick = {},
+            onEnroll = {},
+            onDismissEnrollmentError = {},
             onRetry = {}
         )
     }
