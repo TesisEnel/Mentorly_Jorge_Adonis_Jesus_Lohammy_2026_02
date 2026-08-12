@@ -22,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +40,7 @@ import com.sagrd.mentorly.util.DateFormatter
 @Composable
 fun EnrollmentListScreen(
     onEnrollmentClick: (String) -> Unit,
+    onSubmissionsClick: () -> Unit,
     viewModel: EnrollmentListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -46,6 +48,7 @@ fun EnrollmentListScreen(
     EnrollmentListContent(
         uiState = uiState,
         onEnrollmentClick = onEnrollmentClick,
+        onSubmissionsClick = onSubmissionsClick,
         onRetry = { viewModel.onEvent(EnrollmentListUiEvent.Refresh) }
     )
 }
@@ -55,12 +58,18 @@ fun EnrollmentListScreen(
 private fun EnrollmentListContent(
     uiState: EnrollmentListUiState,
     onEnrollmentClick: (String) -> Unit,
+    onSubmissionsClick: () -> Unit,
     onRetry: () -> Unit
 ) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Mi aprendizaje", fontWeight = FontWeight.Bold) }
+                title = { Text("Mi aprendizaje", fontWeight = FontWeight.Bold) },
+                actions = {
+                    TextButton(onClick = onSubmissionsClick) {
+                        Text("Entregas")
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -166,6 +175,7 @@ private fun EnrollmentListPreview() {
                 )
             ),
             onEnrollmentClick = {},
+            onSubmissionsClick = {},
             onRetry = {}
         )
     }

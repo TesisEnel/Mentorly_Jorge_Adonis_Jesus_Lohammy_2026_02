@@ -193,6 +193,9 @@ private fun NavigationContent(
                 EnrollmentListScreen(
                     onEnrollmentClick = { enrollmentId ->
                         backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                    },
+                    onSubmissionsClick = {
+                        backStack.add(Screen.SubmissionList)
                     }
                 )
             }
@@ -262,6 +265,9 @@ private fun NavigationContent(
 
             entry<Screen.SubmissionList> {
                 SubmissionListScreen(
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
                     onSubmissionClick = { submissionId ->
                         backStack.add(Screen.SubmissionDetail(submissionId))
                     }
