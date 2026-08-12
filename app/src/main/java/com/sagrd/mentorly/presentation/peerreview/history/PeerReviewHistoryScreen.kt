@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.peerreview.PeerReview
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun PeerReviewHistoryScreen(
@@ -116,7 +117,7 @@ private fun ReviewHistoryCard(review: PeerReview) {
                 style = MaterialTheme.typography.labelLarge
             )
             Text(review.feedbackComment, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            Text("Fecha: ${review.createdAt}", style = MaterialTheme.typography.bodySmall)
+            Text("Fecha: ${DateFormatter.format(review.createdAt)}", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
