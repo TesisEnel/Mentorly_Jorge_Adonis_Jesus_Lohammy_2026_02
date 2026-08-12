@@ -34,6 +34,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.enrollment.Enrollment
 import com.sagrd.mentorly.domain.model.enrollment.EnrollmentStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun EnrollmentListScreen(
@@ -108,13 +109,15 @@ private fun EnrollmentCard(enrollment: Enrollment, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
+            Text(enrollment.courseTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(8.dp))
             Text("Intento ${enrollment.attemptNumber}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             EnrollmentStatusLabel(enrollment.status)
             Spacer(Modifier.height(12.dp))
-            Text("Inicio: ${enrollment.startedAt}", style = MaterialTheme.typography.bodySmall)
-            Text("Vence: ${enrollment.expiresAt}", style = MaterialTheme.typography.bodySmall)
-            enrollment.completedAt?.let { Text("Completado: $it", style = MaterialTheme.typography.bodySmall) }
+            Text("Inicio: ${DateFormatter.format(enrollment.startedAt)}", style = MaterialTheme.typography.bodySmall)
+            Text("Vence: ${DateFormatter.format(enrollment.expiresAt)}", style = MaterialTheme.typography.bodySmall)
+            enrollment.completedAt?.let { Text("Completado: ${DateFormatter.format(it)}", style = MaterialTheme.typography.bodySmall) }
         }
     }
 }
@@ -158,8 +161,8 @@ private fun EnrollmentListPreview() {
         EnrollmentListContent(
             uiState = EnrollmentListUiState(
                 enrollments = listOf(
-                    Enrollment("enrollment-1", "student-1", "course-1", 1, "2026-08-12", "2026-11-12", null, EnrollmentStatus.ACTIVE),
-                    Enrollment("enrollment-2", "student-1", "course-2", 2, "2026-04-12", "2026-07-12", "2026-06-20", EnrollmentStatus.COMPLETED)
+                    Enrollment("enrollment-1", "student-1", "course-1", "Fundamentos de SQL", 1, "2026-08-12", "2026-11-12", null, EnrollmentStatus.ACTIVE),
+                    Enrollment("enrollment-2", "student-1", "course-2", "Android con Compose", 2, "2026-04-12", "2026-07-12", "2026-06-20", EnrollmentStatus.COMPLETED)
                 )
             ),
             onEnrollmentClick = {},

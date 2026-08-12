@@ -49,6 +49,7 @@ import com.sagrd.mentorly.domain.model.course.Course
 import com.sagrd.mentorly.domain.model.enrollment.Enrollment
 import com.sagrd.mentorly.domain.model.enrollment.EnrollmentStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun HomeScreen(
@@ -191,10 +192,6 @@ private fun HomeSections(
             ) { enrollment ->
                 EnrollmentCard(
                     enrollment = enrollment,
-                    courseTitle = uiState.publishedCourses
-                        .firstOrNull { course -> course.id == enrollment.courseId }
-                        ?.title
-                        ?: "Curso en progreso",
                     onClick = { onEnrollmentClick(enrollment.id) }
                 )
             }
@@ -235,7 +232,6 @@ private fun SectionTitle(text: String) {
 @Composable
 private fun EnrollmentCard(
     enrollment: Enrollment,
-    courseTitle: String,
     onClick: () -> Unit
 ) {
     Card(
@@ -250,7 +246,7 @@ private fun EnrollmentCard(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = courseTitle,
+                text = enrollment.courseTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -264,7 +260,7 @@ private fun EnrollmentCard(
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
-                text = "Disponible hasta ${enrollment.expiresAt}",
+                text = "Disponible hasta ${DateFormatter.format(enrollment.expiresAt)}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -425,6 +421,7 @@ private fun HomeScreenPreview() {
                         id = "enrollment-1",
                         studentId = "student-1",
                         courseId = "course-1",
+                        courseTitle = "Fundamentos de Bases de Datos",
                         attemptNumber = 1,
                         startedAt = "2026-08-12",
                         expiresAt = "2026-11-12",

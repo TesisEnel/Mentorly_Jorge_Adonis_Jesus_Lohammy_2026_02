@@ -43,6 +43,7 @@ import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionReview
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun SubmissionDetailScreen(
@@ -146,7 +147,7 @@ private fun SubmissionDetailContent(
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    "Enviado: ${submission.submittedAt}",
+                                    "Enviado: ${DateFormatter.format(submission.submittedAt)}",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
@@ -238,7 +239,7 @@ private fun SubmissionReviewItem(review: SubmissionReview) {
             Spacer(Modifier.height(4.dp))
             Text(review.feedbackComment, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(4.dp))
-            Text(review.reviewedAt, style = MaterialTheme.typography.labelSmall)
+            Text(DateFormatter.format(review.reviewedAt), style = MaterialTheme.typography.labelSmall)
         }
     }
 }

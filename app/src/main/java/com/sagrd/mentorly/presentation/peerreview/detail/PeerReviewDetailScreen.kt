@@ -38,6 +38,7 @@ import com.sagrd.mentorly.domain.model.peerreview.PeerReviewResult
 import com.sagrd.mentorly.domain.model.submission.AnonymousSubmission
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun PeerReviewDetailScreen(
@@ -122,7 +123,7 @@ private fun ReviewForm(
                 Text(submission.activityTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text("Entrega anónima", color = MaterialTheme.colorScheme.primary)
                 Text(submission.evidenceUrl, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                Text("Enviada: ${submission.submittedAtUtc}", style = MaterialTheme.typography.bodySmall)
+                Text("Enviada: ${DateFormatter.format(submission.submittedAtUtc)}", style = MaterialTheme.typography.bodySmall)
             }
         }
 
