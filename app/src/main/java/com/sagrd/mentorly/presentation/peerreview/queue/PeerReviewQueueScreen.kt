@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.peerreview.ReviewQueueItem
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun PeerReviewQueueScreen(
@@ -121,7 +122,7 @@ private fun QueueItemCard(item: ReviewQueueItem, onClick: () -> Unit) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            Text("Enviada: ${item.submittedAtUtc}", style = MaterialTheme.typography.bodySmall)
+            Text("Enviada: ${DateFormatter.format(item.submittedAtUtc)}", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
