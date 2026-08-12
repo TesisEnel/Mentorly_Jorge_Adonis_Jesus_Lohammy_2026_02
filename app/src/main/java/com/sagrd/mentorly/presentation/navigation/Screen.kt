@@ -34,6 +34,17 @@ sealed class Screen : NavKey {
     ) : Screen()
 
     @Serializable
+    data object PeerReviewQueue : Screen()
+
+    @Serializable
+    data class PeerReviewDetail(
+        val submissionId: String
+    ) : Screen()
+
+    @Serializable
+    data object PeerReviewHistory : Screen()
+
+    @Serializable
     data object Profile : Screen()
 
     @Serializable

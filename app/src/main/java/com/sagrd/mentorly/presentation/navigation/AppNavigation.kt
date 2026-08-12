@@ -19,6 +19,9 @@ import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
 import com.sagrd.mentorly.presentation.enrollment.detail.EnrollmentDetailScreen
 import com.sagrd.mentorly.presentation.enrollment.list.EnrollmentListScreen
+import com.sagrd.mentorly.presentation.peerreview.detail.PeerReviewDetailScreen
+import com.sagrd.mentorly.presentation.peerreview.history.PeerReviewHistoryScreen
+import com.sagrd.mentorly.presentation.peerreview.queue.PeerReviewQueueScreen
 import com.sagrd.mentorly.presentation.progress.EnrollmentProgressScreen
 import com.sagrd.mentorly.presentation.profile.ProfileScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
@@ -38,6 +41,7 @@ private fun AppNavigationDisplay(
     val currentDestination = backStack.lastOrNull()
     val showBottomNavigation = currentDestination is Screen.CourseList ||
         currentDestination is Screen.EnrollmentList ||
+        currentDestination is Screen.PeerReviewQueue ||
         currentDestination is Screen.Profile
 
     Scaffold(
@@ -47,6 +51,7 @@ private fun AppNavigationDisplay(
                     currentSection = when (currentDestination) {
                         is Screen.Profile -> MentorlySection.PROFILE
                         is Screen.EnrollmentList -> MentorlySection.LEARNING
+                        is Screen.PeerReviewQueue -> MentorlySection.REVIEWS
                         else -> MentorlySection.COURSES
                     },
                     onSectionSelected = { section ->
@@ -64,6 +69,11 @@ private fun AppNavigationDisplay(
                             MentorlySection.LEARNING -> {
                                 if (currentDestination !is Screen.EnrollmentList) {
                                     replaceRoot(backStack, Screen.EnrollmentList)
+                                }
+                            }
+                            MentorlySection.REVIEWS -> {
+                                if (currentDestination !is Screen.PeerReviewQueue) {
+                                    replaceRoot(backStack, Screen.PeerReviewQueue)
                                 }
                             }
                             else -> {}
@@ -181,6 +191,37 @@ private fun NavigationContent(
                     },
                     onActivityClick = {
                         // Las rutas de quizzes y entregas se conectarán en sus respectivas ramas.
+                    }
+                )
+            }
+
+            entry<Screen.PeerReviewQueue> {
+                PeerReviewQueueScreen(
+                    onSubmissionClick = { submissionId ->
+                        backStack.add(Screen.PeerReviewDetail(submissionId))
+                    },
+                    onHistoryClick = {
+                        backStack.add(Screen.PeerReviewHistory)
+                    }
+                )
+            }
+
+            entry<Screen.PeerReviewDetail> { destination ->
+                PeerReviewDetailScreen(
+                    submissionId = destination.submissionId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onReviewCompleted = {
+                        replaceRoot(backStack, Screen.PeerReviewQueue)
+                    }
+                )
+            }
+
+            entry<Screen.PeerReviewHistory> {
+                PeerReviewHistoryScreen(
+                    onBackClick = {
+                        backStack.removeLastOrNull()
                     }
                 )
             }
