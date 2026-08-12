@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.sagrd.mentorly.domain.model.content.ActivityType
 import com.sagrd.mentorly.domain.model.progress.EnrollmentActivityProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentUnitProgress
@@ -47,6 +48,7 @@ fun EnrollmentProgressScreen(
     enrollmentId: String,
     onBackClick: () -> Unit,
     onActivityClick: (String) -> Unit,
+    onQuizClick: (String) -> Unit = {},
     viewModel: EnrollmentProgressViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -59,6 +61,7 @@ fun EnrollmentProgressScreen(
         uiState = uiState,
         onBackClick = onBackClick,
         onActivityClick = onActivityClick,
+        onQuizClick = onQuizClick,
         onRetry = { viewModel.onEvent(EnrollmentProgressUiEvent.Refresh) }
     )
 }
@@ -69,6 +72,7 @@ private fun EnrollmentProgressContent(
     uiState: EnrollmentProgressUiState,
     onBackClick: () -> Unit,
     onActivityClick: (String) -> Unit,
+    onQuizClick: (String) -> Unit,
     onRetry: () -> Unit
 ) {
     Scaffold(
@@ -102,6 +106,7 @@ private fun EnrollmentProgressContent(
                 isRefreshing = uiState.isRefreshing,
                 errorMessage = uiState.errorMessage,
                 onActivityClick = onActivityClick,
+                onQuizClick = onQuizClick,
                 onRetry = onRetry,
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
@@ -115,6 +120,7 @@ private fun ProgressContent(
     isRefreshing: Boolean,
     errorMessage: String?,
     onActivityClick: (String) -> Unit,
+    onQuizClick: (String) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier
 ) {
@@ -149,7 +155,8 @@ private fun ProgressContent(
             UnitProgressCard(
                 number = index + 1,
                 unit = unit,
-                onActivityClick = onActivityClick
+                onActivityClick = onActivityClick,
+                onQuizClick = onQuizClick
             )
         }
     }
@@ -189,7 +196,8 @@ private fun OverallProgressCard(
 private fun UnitProgressCard(
     number: Int,
     unit: EnrollmentUnitProgress,
-    onActivityClick: (String) -> Unit
+    onActivityClick: (String) -> Unit,
+    onQuizClick: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -215,7 +223,12 @@ private fun UnitProgressCard(
                     ActivityProgressRow(
                         number = index + 1,
                         activity = activity,
-                        onClick = { onActivityClick(activity.activityId) }
+                        onClick = {
+                            when (activity.type) {
+                                ActivityType.EXERCISE -> onActivityClick(activity.activityId)
+                                ActivityType.QUIZ -> onQuizClick(activity.activityId)
+                            }
+                        }
                     )
                 }
             }
@@ -338,6 +351,7 @@ private fun EnrollmentProgressPreview() {
             ),
             onBackClick = {},
             onActivityClick = {},
+            onQuizClick = {},
             onRetry = {}
         )
     }
