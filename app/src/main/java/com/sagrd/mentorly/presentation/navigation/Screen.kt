@@ -52,6 +52,12 @@ sealed class Screen : NavKey {
     ) : Screen()
 
     @Serializable
+    data class Quiz(
+        val enrollmentId: String,
+        val activityId: String
+    ) : Screen()
+
+    @Serializable
     data object PeerReviewQueue : Screen()
 
     @Serializable
