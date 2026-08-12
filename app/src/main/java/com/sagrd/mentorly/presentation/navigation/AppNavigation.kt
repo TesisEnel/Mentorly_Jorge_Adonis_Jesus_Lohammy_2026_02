@@ -24,13 +24,13 @@ import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
 import com.sagrd.mentorly.presentation.enrollment.detail.EnrollmentDetailScreen
 import com.sagrd.mentorly.presentation.enrollment.list.EnrollmentListScreen
+import com.sagrd.mentorly.presentation.home.HomeScreen
 import com.sagrd.mentorly.presentation.peerreview.detail.PeerReviewDetailScreen
 import com.sagrd.mentorly.presentation.peerreview.history.PeerReviewHistoryScreen
 import com.sagrd.mentorly.presentation.peerreview.queue.PeerReviewQueueScreen
 import com.sagrd.mentorly.presentation.progress.EnrollmentProgressScreen
 import com.sagrd.mentorly.presentation.profile.ProfileScreen
 import com.sagrd.mentorly.presentation.startup.StartupScreen
-import com.sagrd.mentorly.domain.model.student.StudentRole
 
 @Composable
 fun AppNavigation() {
@@ -44,7 +44,8 @@ private fun AppNavigationDisplay(
     backStack: NavBackStack<NavKey>
 ) {
     val currentDestination = backStack.lastOrNull()
-    val showBottomNavigation = currentDestination is Screen.CourseList ||
+    val showBottomNavigation = currentDestination is Screen.Home ||
+        currentDestination is Screen.CourseList ||
         currentDestination is Screen.EnrollmentList ||
         currentDestination is Screen.PeerReviewQueue ||
         currentDestination is Screen.Profile
@@ -54,6 +55,7 @@ private fun AppNavigationDisplay(
             if (showBottomNavigation) {
                 MentorlyBottomNavigation(
                     currentSection = when (currentDestination) {
+                        is Screen.Home -> MentorlySection.HOME
                         is Screen.Profile -> MentorlySection.PROFILE
                         is Screen.EnrollmentList -> MentorlySection.LEARNING
                         is Screen.PeerReviewQueue -> MentorlySection.REVIEWS
@@ -61,6 +63,11 @@ private fun AppNavigationDisplay(
                     },
                     onSectionSelected = { section ->
                         when (section) {
+                            MentorlySection.HOME -> {
+                                if (currentDestination !is Screen.Home) {
+                                    replaceRoot(backStack, Screen.Home)
+                                }
+                            }
                             MentorlySection.COURSES -> {
                                 if (currentDestination !is Screen.CourseList) {
                                     replaceRoot(backStack, Screen.CourseList)
@@ -81,7 +88,6 @@ private fun AppNavigationDisplay(
                                     replaceRoot(backStack, Screen.PeerReviewQueue)
                                 }
                             }
-                            else -> {}
                         }
                     }
                 )
@@ -117,25 +123,32 @@ private fun NavigationContent(
                         replaceRoot(backStack, Screen.Login)
                     },
                     onNavigateToCourseList = {
-                        replaceRoot(backStack, Screen.CourseList)
+                        replaceRoot(backStack, Screen.Home)
                     },
                     onNavigateToAdminDashboard = {
-                        replaceRoot(backStack, Screen.AdminDashboard)
+                        replaceRoot(backStack, Screen.Home)
                     }
                 )
             }
 
             entry<Screen.Login> {
                 LoginScreen(
-                    onLoginCompleted = { student ->
-                        replaceRoot(
-                            backStack,
-                            if (student.role == StudentRole.ADMIN) {
-                                Screen.AdminDashboard
-                            } else {
-                                Screen.CourseList
-                            }
-                        )
+                    onLoginCompleted = {
+                        replaceRoot(backStack, Screen.Home)
+                    }
+                )
+            }
+
+            entry<Screen.Home> {
+                HomeScreen(
+                    onCourseClick = { courseId ->
+                        backStack.add(Screen.CourseDetail(courseId))
+                    },
+                    onEnrollmentClick = { enrollmentId ->
+                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                    },
+                    onProfileClick = {
+                        replaceRoot(backStack, Screen.Profile)
                     }
                 )
             }

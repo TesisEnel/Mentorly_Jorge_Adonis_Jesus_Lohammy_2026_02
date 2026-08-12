@@ -13,6 +13,9 @@ sealed class Screen : NavKey {
     data object Login : Screen()
 
     @Serializable
+    data object Home : Screen()
+
+    @Serializable
     data object CourseList : Screen()
 
     @Serializable
