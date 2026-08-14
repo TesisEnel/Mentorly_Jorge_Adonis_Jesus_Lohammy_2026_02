@@ -3,7 +3,6 @@ package com.sagrd.mentorly.presentation.admin.student.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
-import com.sagrd.mentorly.domain.model.student.Student
 import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository

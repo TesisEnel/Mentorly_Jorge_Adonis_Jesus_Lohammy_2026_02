@@ -11,23 +11,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.student.Student
 import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminStudentListScreen(
     onBackClick: () -> Unit,
     viewModel: AdminStudentListViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
-    val filteredStudents by viewModel.filteredStudents.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val filteredStudents by viewModel.filteredStudents.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.successMessage) {
@@ -36,6 +35,14 @@ fun AdminStudentListScreen(
             viewModel.onEvent(AdminStudentListUiEvent.ClearSuccessMessage)
         }
     }
+
+    AdminStudentListContent(
+        state = state,
+        filteredStudents = filteredStudents,
+        snackbarHostState = snackbarHostState,
+        onEvent = viewModel::onEvent,
+        onBackClick = onBackClick
+    )
 
     if (state.studentPendingPromotion != null) {
         AlertDialog(
@@ -54,23 +61,96 @@ fun AdminStudentListScreen(
             }
         )
     }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AdminStudentListContent(
+    state: AdminStudentListUiState,
+    filteredStudents: List<Student>,
+    snackbarHostState: SnackbarHostState,
+    onEvent: (AdminStudentListUiEvent) -> Unit,
+    onBackClick: () -> Unit
+) {
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Administrar estudiantes") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Atrás"
+                        )
+                    }
+                }
+            )
+        }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            AdminStudentListContent(
-                state = state,
-                filteredStudents = filteredStudents,
-                onEvent = viewModel::onEvent,
-                onBackClick = onBackClick
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = { onEvent(AdminStudentListUiEvent.SearchChanged(it)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                placeholder = { Text("Buscar por nombre...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                singleLine = true
+            )
+
+            if (state.isLoading && !state.isRefreshing) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (state.errorMessage != null) {
+                ErrorContent(
+                    message = state.errorMessage,
+                    onRetry = { onEvent(AdminStudentListUiEvent.Load) }
+                )
+            } else if (filteredStudents.isEmpty()) {
+                EmptyContent()
+            } else {
+                StudentList(
+                    students = filteredStudents,
+                    promotingStudentId = state.promotingStudentId,
+                    onPromoteClick = { studentId ->
+                        onEvent(AdminStudentListUiEvent.RequestPromotion(studentId))
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StudentList(
+    students: List<Student>,
+    promotingStudentId: String?,
+    onPromoteClick: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(students, key = { it.id }) { student ->
+            StudentItem(
+                student = student,
+                isPromoting = promotingStudentId == student.id,
+                onPromoteClick = { onPromoteClick(student.id) }
             )
         }
     }
 }
 
 @Composable
-fun StudentItem(
+private fun StudentItem(
     student: Student,
     isPromoting: Boolean,
     onPromoteClick: () -> Unit
@@ -100,11 +180,11 @@ fun StudentItem(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SuggestionChip(
                         onClick = { },
-                        label = { 
+                        label = {
                             Text(
-                                if (student.role == StudentRole.ADMIN) "Administrador" 
+                                if (student.role == StudentRole.ADMIN) "Administrador"
                                 else "Estudiante"
-                            ) 
+                            )
                         },
                         enabled = false
                     )
@@ -128,6 +208,33 @@ fun StudentItem(
     }
 }
 
+@Composable
+private fun ErrorContent(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = message, color = MaterialTheme.colorScheme.error)
+        Button(
+            onClick = onRetry,
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("Reintentar")
+        }
+    }
+}
+
+@Composable
+private fun EmptyContent() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("No hay estudiantes registrados.")
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun AdminStudentListScreenPreview() {
@@ -143,85 +250,9 @@ fun AdminStudentListScreenPreview() {
                 Student("1", "juan@example.com", "Juan Perez", StudentRole.STUDENT, true, 100),
                 Student("2", "admin@example.com", "Admin Sistema", StudentRole.ADMIN, true, 500)
             ),
+            snackbarHostState = remember { SnackbarHostState() },
             onEvent = {},
             onBackClick = {}
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AdminStudentListContent(
-    state: AdminStudentListUiState,
-    filteredStudents: List<Student>,
-    onEvent: (AdminStudentListUiEvent) -> Unit,
-    onBackClick: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Administrar estudiantes") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = { onEvent(AdminStudentListUiEvent.SearchChanged(it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                placeholder = { Text("Buscar por nombre...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                singleLine = true
-            )
-
-            if (state.isLoading && !state.isRefreshing) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (state.errorMessage != null) {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(text = state.errorMessage, color = MaterialTheme.colorScheme.error)
-                    Button(
-                        onClick = { onEvent(AdminStudentListUiEvent.Load) },
-                        modifier = Modifier.padding(top = 16.dp)
-                    ) {
-                        Text("Reintentar")
-                    }
-                }
-            } else if (filteredStudents.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No hay estudiantes registrados.")
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(filteredStudents) { student ->
-                        StudentItem(
-                            student = student,
-                            isPromoting = state.promotingStudentId == student.id,
-                            onPromoteClick = { onEvent(AdminStudentListUiEvent.RequestPromotion(student.id)) }
-                        )
-                    }
-                }
-            }
-        }
     }
 }

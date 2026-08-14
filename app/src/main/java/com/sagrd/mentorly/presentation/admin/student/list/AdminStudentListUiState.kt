@@ -13,5 +13,5 @@ data class AdminStudentListUiState(
     val errorMessage: String? = null,
     val hasSession: Boolean = true,
     val hasAdminAccess: Boolean = true,
-    val currentAdminId: String? = null
+    val currentAdminId: String? = null,
 )
