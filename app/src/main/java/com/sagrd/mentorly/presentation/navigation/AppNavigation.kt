@@ -18,6 +18,8 @@ import com.sagrd.mentorly.presentation.admin.content.activity.ActivityFormScreen
 import com.sagrd.mentorly.presentation.admin.content.theme.ThemeFormScreen
 import com.sagrd.mentorly.presentation.admin.content.unit.UnitFormScreen
 import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
+import com.sagrd.mentorly.presentation.admin.peerreview.audit.PeerReviewAuditScreen
+import com.sagrd.mentorly.presentation.admin.peerreview.list.AdminPeerReviewListScreen
 import com.sagrd.mentorly.presentation.admin.quiz.AdminQuizQuestionScreen
 import com.sagrd.mentorly.presentation.admin.student.list.AdminStudentListScreen
 import com.sagrd.mentorly.presentation.auth.LoginScreen
@@ -150,7 +152,7 @@ private fun NavigationContent(
                                 Screen.Home
                             }
                         )
-                    }
+                    },
                 )
             }
 
@@ -246,7 +248,7 @@ private fun NavigationContent(
                                 activityId = activityId
                             )
                         )
-                    }
+                    },
                 )
             }
 
@@ -297,7 +299,7 @@ private fun NavigationContent(
                                 submissionId = submissionId
                             )
                         )
-                    }
+                    },
                 )
             }
 
@@ -390,12 +392,34 @@ private fun NavigationContent(
                     onStudentsClick = {
                         backStack.add(Screen.AdminStudentList)
                     },
-                    onPeerReviewsClick = {},
+                    onPeerReviewsClick = {
+                        backStack.add(Screen.AdminPeerReviewList)
+                    },
                     onEscalatedSubmissionsClick = {},
                     onAnalyticsClick = {},
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
                     },
+                )
+            }
+
+            entry<Screen.AdminPeerReviewList> {
+                AdminPeerReviewListScreen(
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onPeerReviewClick = { peerReviewId ->
+                        backStack.add(Screen.PeerReviewAudit(peerReviewId))
+                    }
+                )
+            }
+
+            entry<Screen.PeerReviewAudit> { destination ->
+                PeerReviewAuditScreen(
+                    peerReviewId = destination.peerReviewId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    }
                 )
             }
 
