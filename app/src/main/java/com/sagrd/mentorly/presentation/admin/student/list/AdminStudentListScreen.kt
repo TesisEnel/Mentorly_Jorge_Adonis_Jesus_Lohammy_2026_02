@@ -1,5 +1,6 @@
 package com.sagrd.mentorly.presentation.admin.student.list
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,22 +29,14 @@ fun AdminStudentListScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val filteredStudents by viewModel.filteredStudents.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(state.successMessage) {
         state.successMessage?.let {
-            snackbarHostState.showSnackbar(it)
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.onEvent(AdminStudentListUiEvent.ClearSuccessMessage)
         }
     }
-
-    AdminStudentListContent(
-        state = state,
-        filteredStudents = filteredStudents,
-        snackbarHostState = snackbarHostState,
-        onEvent = viewModel::onEvent,
-        onBackClick = onBackClick
-    )
 
     if (state.studentPendingPromotion != null) {
         AlertDialog(
@@ -61,6 +55,13 @@ fun AdminStudentListScreen(
             }
         )
     }
+
+    AdminStudentListContent(
+        state = state,
+        filteredStudents = filteredStudents,
+        onEvent = viewModel::onEvent,
+        onBackClick = onBackClick
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,12 +69,10 @@ fun AdminStudentListScreen(
 private fun AdminStudentListContent(
     state: AdminStudentListUiState,
     filteredStudents: List<Student>,
-    snackbarHostState: SnackbarHostState,
     onEvent: (AdminStudentListUiEvent) -> Unit,
     onBackClick: () -> Unit
 ) {
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Administrar estudiantes") },
@@ -250,7 +249,6 @@ fun AdminStudentListScreenPreview() {
                 Student("1", "juan@example.com", "Juan Perez", StudentRole.STUDENT, true, 100),
                 Student("2", "admin@example.com", "Admin Sistema", StudentRole.ADMIN, true, 500)
             ),
-            snackbarHostState = remember { SnackbarHostState() },
             onEvent = {},
             onBackClick = {}
         )
