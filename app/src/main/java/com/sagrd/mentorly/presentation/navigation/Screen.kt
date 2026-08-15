@@ -20,7 +20,7 @@ sealed class Screen : NavKey {
 
     @Serializable
     data class CourseDetail(
-        val courseId: String
+        val courseId: String,
     ) : Screen()
 
     @Serializable
@@ -105,4 +105,10 @@ sealed class Screen : NavKey {
 
     @Serializable
     data object AdminStudentList : Screen()
+
+    @Serializable
+    data object AdminPeerReviewList : Screen()
+
+    @Serializable
+    data class PeerReviewAudit(val peerReviewId: String) : Screen()
 }
