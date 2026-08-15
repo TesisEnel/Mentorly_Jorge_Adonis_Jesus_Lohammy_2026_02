@@ -22,6 +22,8 @@ import com.sagrd.mentorly.presentation.admin.peerreview.audit.PeerReviewAuditScr
 import com.sagrd.mentorly.presentation.admin.peerreview.list.AdminPeerReviewListScreen
 import com.sagrd.mentorly.presentation.admin.quiz.AdminQuizQuestionScreen
 import com.sagrd.mentorly.presentation.admin.student.list.AdminStudentListScreen
+import com.sagrd.mentorly.presentation.admin.submission.audit.AdminSubmissionAuditScreen
+import com.sagrd.mentorly.presentation.admin.submission.list.AdminSubmissionListScreen
 import com.sagrd.mentorly.presentation.auth.LoginScreen
 import com.sagrd.mentorly.presentation.community.leaderboard.LeaderboardScreen
 import com.sagrd.mentorly.presentation.community.members.CourseMembersScreen
@@ -395,7 +397,9 @@ private fun NavigationContent(
                     onPeerReviewsClick = {
                         backStack.add(Screen.AdminPeerReviewList)
                     },
-                    onEscalatedSubmissionsClick = {},
+                    onEscalatedSubmissionsClick = {
+                        backStack.add(Screen.AdminSubmissionList)
+                    },
                     onAnalyticsClick = {},
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
@@ -410,6 +414,32 @@ private fun NavigationContent(
                     },
                     onPeerReviewClick = { peerReviewId ->
                         backStack.add(Screen.PeerReviewAudit(peerReviewId))
+                    }
+                )
+            }
+
+            entry<Screen.AdminSubmissionList> {
+                AdminSubmissionListScreen(
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onSubmissionClick = { submissionId ->
+                        backStack.add(Screen.AdminSubmissionAudit(submissionId))
+                    }
+                )
+            }
+
+            entry<Screen.AdminSubmissionAudit> { destination ->
+                AdminSubmissionAuditScreen(
+                    submissionId = destination.submissionId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
+                    onDecisionCompleted = {
+                        // Volver a la lista sin duplicarla
+                        if (backStack.size > 1) {
+                            backStack.removeLastOrNull()
+                        }
                     }
                 )
             }
