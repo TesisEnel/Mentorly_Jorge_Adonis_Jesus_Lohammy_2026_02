@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -58,6 +60,8 @@ fun CourseDetailScreen(
     onBackClick: () -> Unit,
     onEnrollmentCreated: (String) -> Unit,
     onActiveEnrollmentClick: (String) -> Unit,
+    onMembersClick: (String) -> Unit,
+    onLeaderboardClick: (String) -> Unit,
     viewModel: CourseDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -75,6 +79,8 @@ fun CourseDetailScreen(
         onBackClick = onBackClick,
         onEnroll = { viewModel.onEvent(CourseDetailUiEvent.Enroll) },
         onActiveEnrollmentClick = onActiveEnrollmentClick,
+        onMembersClick = { onMembersClick(courseId) },
+        onLeaderboardClick = { onLeaderboardClick(courseId) },
         onDismissEnrollmentError = {
             viewModel.onEvent(CourseDetailUiEvent.ClearEnrollmentError)
         },
@@ -91,6 +97,8 @@ private fun CourseDetailContent(
     onBackClick: () -> Unit,
     onEnroll: () -> Unit,
     onActiveEnrollmentClick: (String) -> Unit,
+    onMembersClick: () -> Unit,
+    onLeaderboardClick: () -> Unit,
     onDismissEnrollmentError: () -> Unit,
     onRetry: () -> Unit
 ) {
@@ -106,6 +114,22 @@ private fun CourseDetailContent(
                             imageVector = Icons.Outlined.ArrowBack,
                             contentDescription = "Volver"
                         )
+                    }
+                },
+                actions = {
+                    if (state.course != null) {
+                        IconButton(onClick = onMembersClick) {
+                            Icon(
+                                imageVector = Icons.Outlined.Group,
+                                contentDescription = "Compañeros"
+                            )
+                        }
+                        IconButton(onClick = onLeaderboardClick) {
+                            Icon(
+                                imageVector = Icons.Outlined.EmojiEvents,
+                                contentDescription = "Ranking"
+                            )
+                        }
                     }
                 }
             )
@@ -512,6 +536,8 @@ private fun CourseDetailPreview() {
             onBackClick = {},
             onEnroll = {},
             onActiveEnrollmentClick = {},
+            onMembersClick = {},
+            onLeaderboardClick = {},
             onDismissEnrollmentError = {},
             onRetry = {}
         )
