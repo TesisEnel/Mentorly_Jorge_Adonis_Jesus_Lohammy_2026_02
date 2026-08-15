@@ -19,7 +19,10 @@ import com.sagrd.mentorly.presentation.admin.content.theme.ThemeFormScreen
 import com.sagrd.mentorly.presentation.admin.content.unit.UnitFormScreen
 import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
 import com.sagrd.mentorly.presentation.admin.quiz.AdminQuizQuestionScreen
+import com.sagrd.mentorly.presentation.admin.student.list.AdminStudentListScreen
 import com.sagrd.mentorly.presentation.auth.LoginScreen
+import com.sagrd.mentorly.presentation.community.leaderboard.LeaderboardScreen
+import com.sagrd.mentorly.presentation.community.members.CourseMembersScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
 import com.sagrd.mentorly.presentation.enrollment.detail.EnrollmentDetailScreen
@@ -46,7 +49,7 @@ fun AppNavigation() {
 
 @Composable
 private fun AppNavigationDisplay(
-    backStack: NavBackStack<NavKey>
+    backStack: NavBackStack<NavKey>,
 ) {
     val currentDestination = backStack.lastOrNull()
     val showBottomNavigation = currentDestination is Screen.Home ||
@@ -185,6 +188,12 @@ private fun NavigationContent(
                     },
                     onActiveEnrollmentClick = { enrollmentId ->
                         backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                    },
+                    onMembersClick = { courseId ->
+                        backStack.add(Screen.CourseMembers(courseId))
+                    },
+                    onLeaderboardClick = { courseId ->
+                        backStack.add(Screen.CourseLeaderboard(courseId))
                     }
                 )
             }
@@ -355,18 +364,46 @@ private fun NavigationContent(
                 )
             }
 
+            entry<Screen.CourseMembers> { destination ->
+                CourseMembersScreen(
+                    courseId = destination.courseId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    }
+                )
+            }
+
+            entry<Screen.CourseLeaderboard> { destination ->
+                LeaderboardScreen(
+                    courseId = destination.courseId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    }
+                )
+            }
+
             entry<Screen.AdminDashboard> {
                 AdminDashboardScreen(
                     onCoursesClick = {
                         backStack.add(Screen.AdminCourseList)
                     },
-                    onStudentsClick = {},
+                    onStudentsClick = {
+                        backStack.add(Screen.AdminStudentList)
+                    },
                     onPeerReviewsClick = {},
                     onEscalatedSubmissionsClick = {},
                     onAnalyticsClick = {},
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
                     },
+                )
+            }
+
+            entry<Screen.AdminStudentList> {
+                AdminStudentListScreen(
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    }
                 )
             }
 
