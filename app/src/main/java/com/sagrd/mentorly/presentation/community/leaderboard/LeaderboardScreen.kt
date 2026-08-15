@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.community.LeaderboardEntry
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
@@ -28,8 +29,8 @@ fun LeaderboardScreen(
     onStudentClick: ((String) -> Unit)? = null,
     viewModel: LeaderboardViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
-    val filteredEntries by viewModel.filteredEntries.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val filteredEntries by viewModel.filteredEntries.collectAsStateWithLifecycle()
 
     LaunchedEffect(courseId) {
         viewModel.setCourseId(courseId)
@@ -59,7 +60,10 @@ fun LeaderboardContent(
                 title = { Text("Ranking del curso") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Atrás"
+                        )
                     }
                 }
             )
@@ -95,7 +99,11 @@ fun LeaderboardContent(
                     onRetry = { onEvent(LeaderboardUiEvent.Load) }
                 )
             } else if (filteredEntries.isEmpty() && !state.isLoading) {
-                EmptyView(message = if (state.searchQuery.isEmpty()) "Todavía no hay estudiantes visibles en el ranking." else "No se encontraron estudiantes.")
+                EmptyView(
+                    message = if (state.searchQuery.isEmpty())
+                        "Todavía no hay estudiantes visibles en el ranking."
+                    else "No se encontraron estudiantes."
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -121,7 +129,9 @@ fun OwnPositionCard(entry: LeaderboardEntry) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = "Tu posición", style = MaterialTheme.typography.labelLarge)
@@ -187,25 +197,25 @@ fun LeaderboardItem(entry: LeaderboardEntry, isOwn: Boolean, onClick: () -> Unit
                     Text(text = entry.rank.toString(), fontWeight = FontWeight.Bold)
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
                 modifier = Modifier.size(32.dp),
                 tint = if (isOwn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             Text(
                 text = entry.displayName,
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (isOwn) FontWeight.Bold else FontWeight.Normal
             )
-            
+
             Text(
                 text = "${entry.totalPoints} pts",
                 style = MaterialTheme.typography.bodyMedium,
@@ -218,7 +228,9 @@ fun LeaderboardItem(entry: LeaderboardEntry, isOwn: Boolean, onClick: () -> Unit
 @Composable
 fun ErrorView(message: String, onRetry: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

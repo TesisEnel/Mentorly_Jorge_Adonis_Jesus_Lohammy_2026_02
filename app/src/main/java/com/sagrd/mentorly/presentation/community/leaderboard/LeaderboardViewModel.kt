@@ -47,7 +47,12 @@ class LeaderboardViewModel @Inject constructor(
         viewModelScope.launch {
             val session = sessionRepository.session.firstOrNull()
             if (session == null) {
-                _state.update { it.copy(hasSession = false, errorMessage = "No se encontró una sesión activa.") }
+                _state.update {
+                    it.copy(
+                        hasSession = false,
+                        errorMessage = "No se encontró una sesión activa."
+                    )
+                }
                 return@launch
             }
 
@@ -57,13 +62,11 @@ class LeaderboardViewModel @Inject constructor(
             launch {
                 communityRepository.getLeaderboard(courseId, viewerId).collect { result ->
                     when (result) {
-                        is Resource.Loading -> {
-                            if (isRefreshing) {
-                                _state.update { it.copy(isRefreshing = true) }
-                            } else {
-                                _state.update { it.copy(isLoading = true) }
-                            }
+                        is Resource.Loading<*> -> {
+                            if (isRefreshing) _state.update { it.copy(isRefreshing = true) }
+                            else _state.update { it.copy(isLoading = true) }
                         }
+
                         is Resource.Success -> {
                             _state.update {
                                 it.copy(
@@ -74,12 +77,14 @@ class LeaderboardViewModel @Inject constructor(
                                 )
                             }
                         }
+
                         is Resource.Error -> {
                             _state.update {
                                 it.copy(
                                     isLoading = false,
                                     isRefreshing = false,
-                                    errorMessage = result.message ?: "No se pudo cargar el ranking del curso."
+                                    errorMessage = result.message
+                                        ?: "No se pudo cargar el ranking del curso."
                                 )
                             }
                         }

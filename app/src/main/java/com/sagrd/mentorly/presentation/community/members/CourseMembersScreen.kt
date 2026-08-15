@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.community.CourseMember
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
@@ -25,8 +26,8 @@ fun CourseMembersScreen(
     onStudentClick: ((String) -> Unit)? = null,
     viewModel: CourseMembersViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
-    val filteredMembers by viewModel.filteredMembers.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val filteredMembers by viewModel.filteredMembers.collectAsStateWithLifecycle()
 
     LaunchedEffect(courseId) {
         viewModel.setCourseId(courseId)
@@ -56,7 +57,10 @@ fun CourseMembersContent(
                 title = { Text("Compañeros del curso") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Atrás"
+                        )
                     }
                 }
             )
@@ -88,7 +92,11 @@ fun CourseMembersContent(
                     onRetry = { onEvent(CourseMembersUiEvent.Load) }
                 )
             } else if (filteredMembers.isEmpty() && !state.isLoading) {
-                EmptyView(message = if (state.searchQuery.isEmpty()) "Aún no hay compañeros visibles en este curso." else "No se encontraron compañeros.")
+                EmptyView(
+                    message = if (state.searchQuery.isEmpty())
+                        "Aún no hay compañeros visibles en este curso."
+                    else "No se encontraron compañeros."
+                )
             } else {
                 Text(
                     text = "${filteredMembers.size} compañeros visibles",
@@ -101,7 +109,10 @@ fun CourseMembersContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(filteredMembers) { member ->
-                        MemberItem(member = member, onClick = { onStudentClick(member.studentId) })
+                        MemberItem(
+                            member = member,
+                            onClick = { onStudentClick(member.studentId) }
+                        )
                     }
                 }
             }
@@ -112,8 +123,7 @@ fun CourseMembersContent(
 @Composable
 fun MemberItem(member: CourseMember, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         onClick = onClick
     ) {
         Row(
@@ -130,8 +140,15 @@ fun MemberItem(member: CourseMember, onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = member.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(text = "${member.totalPoints} puntos", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = member.displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${member.totalPoints} puntos",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
@@ -140,7 +157,9 @@ fun MemberItem(member: CourseMember, onClick: () -> Unit) {
 @Composable
 fun ErrorView(message: String, onRetry: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

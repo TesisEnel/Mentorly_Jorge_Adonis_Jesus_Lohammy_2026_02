@@ -3,6 +3,7 @@ package com.sagrd.mentorly.presentation.community.members
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
+import com.sagrd.mentorly.domain.model.community.CourseMember
 import com.sagrd.mentorly.domain.repository.community.CourseCommunityRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,19 +48,24 @@ class CourseMembersViewModel @Inject constructor(
         viewModelScope.launch {
             val session = sessionRepository.session.firstOrNull()
             if (session == null) {
-                _state.update { it.copy(hasSession = false, errorMessage = "No se encontró una sesión activa.") }
+                _state.update {
+                    it.copy(
+                        hasSession = false,
+                        errorMessage = "No se encontró una sesión activa."
+                    )
+                }
                 return@launch
             }
 
             communityRepository.getCourseMembers(courseId, session.studentId).collect { result ->
                 when (result) {
-                    is Resource.Loading -> {
-                        if (isRefreshing) {
-                            _state.update { it.copy(isRefreshing = true) }
-                        } else {
-                            _state.update { it.copy(isLoading = true) }
+                    is Resource.Loading<*> -> {
+                        _state.update {
+                            if (isRefreshing) it.copy(isRefreshing = true)
+                            else it.copy(isLoading = true)
                         }
                     }
+
                     is Resource.Success -> {
                         _state.update {
                             it.copy(
@@ -70,12 +76,14 @@ class CourseMembersViewModel @Inject constructor(
                             )
                         }
                     }
+
                     is Resource.Error -> {
                         _state.update {
                             it.copy(
                                 isLoading = false,
                                 isRefreshing = false,
-                                errorMessage = result.message ?: "No se pudieron cargar los compañeros del curso."
+                                errorMessage = result.message
+                                    ?: "No se pudieron cargar los compañeros del curso."
                             )
                         }
                     }
