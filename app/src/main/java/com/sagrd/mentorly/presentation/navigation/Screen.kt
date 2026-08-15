@@ -96,4 +96,13 @@ sealed class Screen : NavKey {
 
     @Serializable
     data class AdminQuizQuestion(val activityId: String) : Screen()
+
+    @Serializable
+    data class CourseMembers(val courseId: String) : Screen()
+
+    @Serializable
+    data class CourseLeaderboard(val courseId: String) : Screen()
+
+    @Serializable
+    data object AdminStudentList : Screen()
 }
