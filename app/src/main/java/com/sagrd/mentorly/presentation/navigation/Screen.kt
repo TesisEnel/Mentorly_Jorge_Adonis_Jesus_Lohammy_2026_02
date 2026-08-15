@@ -28,7 +28,7 @@ sealed class Screen : NavKey {
 
     @Serializable
     data class EnrollmentDetail(
-        val enrollmentId: String
+        val enrollmentId: String,
     ) : Screen()
 
     @Serializable
@@ -117,4 +117,7 @@ sealed class Screen : NavKey {
 
     @Serializable
     data class AdminSubmissionAudit(val submissionId: String) : Screen()
+
+    @Serializable
+    data object AdminAnalytics : Screen()
 }
