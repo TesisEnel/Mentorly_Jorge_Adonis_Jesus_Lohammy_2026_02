@@ -1,5 +1,7 @@
 package com.sagrd.mentorly.domain.model.peerreview
 
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
+
 data class PeerReviewAudit(
     val peerReviewId: String,
     val submissionId: String,
@@ -8,5 +10,7 @@ data class PeerReviewAudit(
     val isApproved: Boolean,
     val feedbackComment: String,
     val createdAt: String,
-    val evidenceUrl: String
-)
+    val evidenceType: EvidenceType,
+    val evidenceContent: String
+) {
+}
