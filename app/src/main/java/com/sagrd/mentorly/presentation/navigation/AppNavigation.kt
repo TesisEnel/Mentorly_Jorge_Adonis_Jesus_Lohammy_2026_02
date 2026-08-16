@@ -372,6 +372,9 @@ private fun NavigationContent(
 
             entry<Screen.Profile> {
                 ProfileScreen(
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    },
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
                     },
