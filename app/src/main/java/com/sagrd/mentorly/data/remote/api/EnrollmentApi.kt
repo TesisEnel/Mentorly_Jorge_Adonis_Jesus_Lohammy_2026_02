@@ -24,6 +24,12 @@ interface EnrollmentApi {
         @Path("studentId") studentId: String
     ): Response<List<EnrollmentDto>>
 
+    @GET("api/admins/{adminId}/students/{studentId}/enrollments")
+    suspend fun getAdminStudentEnrollments(
+        @Path("adminId") adminId: String,
+        @Path("studentId") studentId: String
+    ): Response<List<EnrollmentDto>>
+
     @GET("api/enrollments/{enrollmentId}")
     suspend fun getEnrollmentById(
         @Path("enrollmentId") enrollmentId: String

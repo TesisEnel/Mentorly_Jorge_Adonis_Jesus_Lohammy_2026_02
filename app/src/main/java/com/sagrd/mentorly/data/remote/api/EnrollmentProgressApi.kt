@@ -13,6 +13,12 @@ interface EnrollmentProgressApi {
         @Path("enrollmentId") enrollmentId: String
     ): Response<EnrollmentProgressDto>
 
+    @GET("api/admins/{adminId}/enrollments/{enrollmentId}/progress")
+    suspend fun getAdminEnrollmentProgress(
+        @Path("adminId") adminId: String,
+        @Path("enrollmentId") enrollmentId: String
+    ): Response<EnrollmentProgressDto>
+
     @POST("api/enrollments/{enrollmentId}/themes/{themeId}/complete")
     suspend fun completeTheme(
         @Path("enrollmentId") enrollmentId: String,

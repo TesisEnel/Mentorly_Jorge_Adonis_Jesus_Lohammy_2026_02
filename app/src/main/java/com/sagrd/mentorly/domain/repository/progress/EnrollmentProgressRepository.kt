@@ -10,6 +10,11 @@ interface EnrollmentProgressRepository {
         enrollmentId: String
     ): Flow<Resource<EnrollmentProgress>>
 
+    fun getAdminEnrollmentProgress(
+        adminId: String,
+        enrollmentId: String
+    ): Flow<Resource<EnrollmentProgress>>
+
     fun completeTheme(
         enrollmentId: String,
         themeId: String

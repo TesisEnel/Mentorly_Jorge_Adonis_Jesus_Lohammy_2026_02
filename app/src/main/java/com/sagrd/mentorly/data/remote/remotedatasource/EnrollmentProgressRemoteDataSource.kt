@@ -27,6 +27,25 @@ class EnrollmentProgressRemoteDataSource @Inject constructor(
         }
     }
 
+    suspend fun getAdminEnrollmentProgress(
+        adminId: String,
+        enrollmentId: String
+    ): Result<EnrollmentProgressDto> {
+        return try {
+            val response = api.getAdminEnrollmentProgress(adminId, enrollmentId)
+
+            if (!response.isSuccessful) {
+                Result.failure(Exception("Error de red ${response.code()}"))
+            } else {
+                Result.success(response.body()!!)
+            }
+        } catch (exception: HttpException) {
+            Result.failure(Exception("Error de servidor", exception))
+        } catch (exception: Exception) {
+            Result.failure(Exception("Error desconocido", exception))
+        }
+    }
+
     suspend fun completeTheme(
         enrollmentId: String,
         themeId: String

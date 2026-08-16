@@ -41,6 +41,21 @@ class EnrollmentRepositoryImpl @Inject constructor(
             }
     }
 
+    override fun getAdminStudentEnrollments(
+        adminId: String,
+        studentId: String
+    ): Flow<Resource<List<Enrollment>>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.getAdminStudentEnrollments(adminId, studentId)
+            .onSuccess { enrollments ->
+                emit(Resource.Success(enrollments.map { it.toDomain() }))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudieron cargar las inscripciones del estudiante."))
+            }
+    }
+
     override fun getEnrollmentById(enrollmentId: String): Flow<Resource<Enrollment>> = flow {
         emit(Resource.Loading())
 
