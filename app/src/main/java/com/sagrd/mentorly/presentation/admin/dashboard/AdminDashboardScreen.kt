@@ -3,26 +3,25 @@ package com.sagrd.mentorly.presentation.admin.dashboard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,10 +32,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.School
 import com.sagrd.mentorly.domain.model.analytics.AnalyticsOverview
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
@@ -98,16 +108,27 @@ private fun AdminDashboardContent(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Panel administrativo", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Admin Control Panel",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menú")
+                    }
+                },
                 actions = {
-                    TextButton(
+                    IconButton(
                         onClick = onRefresh,
                         enabled = uiState.hasAdminAccess && !uiState.isRefreshing
                     ) {
-                        Text("Recargar")
+                        Icon(Icons.Default.Refresh, contentDescription = "Actualizar información")
                     }
-                    TextButton(onClick = onShowSignOutDialog) {
-                        Text("Cerrar sesión")
+                    IconButton(onClick = onShowSignOutDialog) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar sesión")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors()
@@ -193,37 +214,28 @@ private fun DashboardContent(
     modifier: Modifier = Modifier
 ) {
     val metrics = listOf(
-        "Cursos" to overview.courses.toString(),
-        "Inscripciones activas" to overview.activeEnrollments.toString(),
-        "Cursos completados" to overview.completedEnrollments.toString(),
-        "Inscripciones expiradas" to overview.expiredEnrollments.toString(),
-        "Revisiones pendientes" to overview.pendingPeerReviewSubmissions.toString()
+        DashboardMetric("TOTAL ESTUDIANTES", overview.activeEnrollments.toString(), Icons.Default.Groups),
+        DashboardMetric("CURSOS ACTIVOS", overview.courses.toString(), Icons.Default.Book),
+        DashboardMetric("INSCRIPCIONES ACTIVAS", overview.activeEnrollments.toString(), Icons.Default.School),
+        DashboardMetric("CURSOS COMPLETADOS", overview.completedEnrollments.toString(), Icons.Default.Assignment),
+        DashboardMetric("INSCRIPCIONES EXPIRADAS", overview.expiredEnrollments.toString(), Icons.Default.Close, true),
+        DashboardMetric("REVISIONES PENDIENTES", overview.pendingPeerReviewSubmissions.toString(), Icons.Default.Groups),
     )
     val actions = listOf(
-        "Cursos" to onCoursesClick,
-        "Estudiantes" to onStudentsClick,
-        "Revisiones" to onPeerReviewsClick,
-        "Entregas escaladas" to onEscalatedSubmissionsClick,
-        "Analíticas" to onAnalyticsClick
+        DashboardAction("Cursos", Icons.Default.School, onCoursesClick),
+        DashboardAction("Estudiantes", Icons.Default.Groups, onStudentsClick),
+        DashboardAction("Revisiones por pares", Icons.Default.Assignment, onPeerReviewsClick),
+        DashboardAction("Auditorías", Icons.Default.Assignment, onEscalatedSubmissionsClick),
+        DashboardAction("Analíticas", Icons.Default.Analytics, onAnalyticsClick),
     )
 
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Column {
-                Text(
-                    text = if (adminName.isBlank()) "Bienvenido" else "Bienvenido, $adminName",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Resumen general de Mentorly",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            AdminStatusBanner(adminName)
         }
 
         if (isRefreshing) {
@@ -246,7 +258,13 @@ private fun DashboardContent(
         }
 
         item {
-            Text("Resumen", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Métricas del sistema", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onRefresh, enabled = !isRefreshing) {
+                    Text("Actualizar información")
+                }
+            }
         }
 
         item {
@@ -254,51 +272,105 @@ private fun DashboardContent(
         }
 
         item {
-            Text("Gestión", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        }
-
-        items(actions, key = { it.first }) { action ->
-            OutlinedButton(
-                onClick = action.second,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(action.first)
-            }
+            Text("Gestión administrativa", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
 
         item {
-            Button(
-                onClick = onRefresh,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isRefreshing
-            ) {
-                Text("Actualizar información")
+            ManagementGrid(actions)
+        }
+    }
+}
+
+@Composable
+private fun MetricGrid(metrics: List<DashboardMetric>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        metrics.chunked(2).forEach { rowMetrics ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowMetrics.forEach { metric -> MetricCard(metric, Modifier.weight(1f)) }
+                if (rowMetrics.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MetricGrid(metrics: List<Pair<String, String>>) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+private fun AdminStatusBanner(adminName: String) {
+    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF6EF08A))) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Default.School, contentDescription = null, tint = Color(0xFF08752F))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = if (adminName.isBlank()) "Modo administrador activo" else "Modo administrador activo · $adminName",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color(0xFF08752F),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetricCard(metric: DashboardMetric, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = if (metric.isAlert) Color(0xFFFFF1F2) else MaterialTheme.colorScheme.surfaceVariant,
+        ),
     ) {
-        metrics.forEach { metric ->
-            Card(
-                modifier = Modifier.width(160.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Text(metric.second, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(4.dp))
-                    Text(metric.first, style = MaterialTheme.typography.bodyMedium)
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Icon(metric.icon, contentDescription = null, tint = if (metric.isAlert) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+            Text(metric.label, style = MaterialTheme.typography.labelSmall)
+            Text(
+                metric.value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (metric.isAlert) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ManagementGrid(actions: List<DashboardAction>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        actions.chunked(2).forEach { rowActions ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowActions.forEach { action ->
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        onClick = action.onClick,
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp, horizontal = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(action.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Text(action.label, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
                 }
+                if (rowActions.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }
 }
+
+private data class DashboardMetric(
+    val label: String,
+    val value: String,
+    val icon: ImageVector,
+    val isAlert: Boolean = false,
+)
+
+private data class DashboardAction(
+    val label: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+)
 
 @Composable
 private fun LoadingContent(modifier: Modifier = Modifier) {
