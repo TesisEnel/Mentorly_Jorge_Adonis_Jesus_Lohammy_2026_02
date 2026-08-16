@@ -69,62 +69,61 @@ class HomeViewModel @Inject constructor(
                         hasSession = false
                     )
                 }
-                return@launch
-            }
-
-            val authUser = authRepository.getCurrentUser()
-            _state.update {
-                it.copy(
-                    studentName = session.displayName,
-                    userPhotoUrl = authUser?.photoUrl,
-                    hasSession = true
-                )
-            }
-
-            var hasError = false
-
-            enrollmentRepository.getEnrollments(session.studentId).collect { resource ->
-                when (resource) {
-                    is Resource.Loading -> Unit
-                    is Resource.Success -> {
-                        val activeList = resource.data.orEmpty().filter { enrollment ->
-                            enrollment.status == EnrollmentStatus.ACTIVE
-                        }
-                        _state.update {
-                            it.copy(activeEnrollments = activeList)
-                        }
-                        activeList.forEach { enrollment ->
-                            loadProgressForEnrollment(enrollment.id)
-                        }
-                    }
-                    is Resource.Error -> hasError = true
+            } else {
+                val authUser = authRepository.getCurrentUser()
+                _state.update {
+                    it.copy(
+                        studentName = session.displayName,
+                        userPhotoUrl = authUser?.photoUrl,
+                        hasSession = true
+                    )
                 }
-            }
 
-            courseRepository.getCourses().collect { resource ->
-                when (resource) {
-                    is Resource.Loading -> Unit
-                    is Resource.Success -> _state.update {
-                        it.copy(
-                            publishedCourses = resource.data.orEmpty().filter { course ->
-                                course.isPublished
+                var hasError = false
+
+                enrollmentRepository.getEnrollments(session.studentId).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> Unit
+                        is Resource.Success -> {
+                            val activeList = resource.data.orEmpty().filter { enrollment ->
+                                enrollment.status == EnrollmentStatus.ACTIVE
                             }
-                        )
+                            _state.update {
+                                it.copy(activeEnrollments = activeList)
+                            }
+                            activeList.forEach { enrollment ->
+                                loadProgressForEnrollment(enrollment.id)
+                            }
+                        }
+                        is Resource.Error -> hasError = true
                     }
-                    is Resource.Error -> hasError = true
                 }
-            }
 
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    errorMessage = when {
-                        !hasError -> null
-                        isRefresh -> "No se pudieron actualizar los datos."
-                        else -> "No se pudo cargar el inicio. Inténtalo nuevamente."
+                courseRepository.getCourses().collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> Unit
+                        is Resource.Success -> _state.update {
+                            it.copy(
+                                publishedCourses = resource.data.orEmpty().filter { course ->
+                                    course.isPublished
+                                }
+                            )
+                        }
+                        is Resource.Error -> hasError = true
                     }
-                )
+                }
+
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        errorMessage = when {
+                            !hasError -> null
+                            isRefresh -> "No se pudieron actualizar los datos."
+                            else -> "No se pudo cargar el inicio. Inténtalo nuevamente."
+                        }
+                    )
+                }
             }
         }
     }
