@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.peerreview.ReviewQueueItem
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 import com.sagrd.mentorly.util.DateFormatter
 
@@ -117,7 +118,7 @@ private fun QueueItemCard(item: ReviewQueueItem, onClick: () -> Unit) {
             Text(item.activityTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text("Entrega anónima", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
             Text(
-                text = item.evidenceUrl,
+                text = item.evidenceContent,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -169,7 +170,14 @@ private fun PeerReviewQueuePreview() {
         PeerReviewQueueContent(
             uiState = PeerReviewQueueUiState(
                 queueItems = listOf(
-                    ReviewQueueItem("submission-1", "activity-1", "Repositorio de Compose", "https://github.com/example/repo", "2026-08-12")
+                    ReviewQueueItem(
+                        submissionId = "submission-1",
+                        activityId = "activity-1",
+                        activityTitle = "Repositorio de Compose",
+                        evidenceType = EvidenceType.URL,
+                        evidenceContent = "https://github.com/example/repo",
+                        submittedAtUtc = "2026-08-12"
+                    )
                 )
             ),
             onSubmissionClick = {},

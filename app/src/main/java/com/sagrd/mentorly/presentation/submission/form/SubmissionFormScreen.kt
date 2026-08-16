@@ -3,6 +3,7 @@ package com.sagrd.mentorly.presentation.submission.form
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
 @Composable
@@ -102,16 +104,39 @@ private fun SubmissionFormContent(
                 .padding(innerPadding)
                 .padding(24.dp)
         ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                TextButton(
+                    onClick = { onEvent(SubmissionFormUiEvent.EvidenceTypeChanged(EvidenceType.URL)) },
+                    enabled = state.evidenceType != EvidenceType.URL
+                ) {
+                    Text("Enlace")
+                }
+                TextButton(
+                    onClick = { onEvent(SubmissionFormUiEvent.EvidenceTypeChanged(EvidenceType.TEXT)) },
+                    enabled = state.evidenceType != EvidenceType.TEXT
+                ) {
+                    Text("Texto")
+                }
+            }
+
             OutlinedTextField(
-                value = state.evidenceUrl,
-                onValueChange = { onEvent(SubmissionFormUiEvent.EvidenceUrlChanged(it)) },
-                label = { Text("Enlace de evidencia") },
-                placeholder = { Text("https://github.com/usuario/repositorio") },
-                isError = state.evidenceUrlError != null,
-                supportingText = {
-                    state.evidenceUrlError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                value = state.evidenceContent,
+                onValueChange = { onEvent(SubmissionFormUiEvent.EvidenceContentChanged(it)) },
+                label = { Text(if (state.evidenceType == EvidenceType.URL) "Enlace de evidencia" else "Evidencia textual") },
+                placeholder = {
+                    Text(
+                        if (state.evidenceType == EvidenceType.URL) {
+                            "https://github.com/usuario/repositorio"
+                        } else {
+                            "Describe o pega tu evidencia"
+                        }
+                    )
                 },
-                singleLine = true,
+                isError = state.evidenceContentError != null,
+                supportingText = {
+                    state.evidenceContentError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                },
+                singleLine = state.evidenceType == EvidenceType.URL,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -150,7 +175,8 @@ private fun SubmissionFormPreview() {
         SubmissionFormContent(
             state = SubmissionFormUiState(
                 isEditing = false,
-                evidenceUrl = "https://github.com/usuario/repositorio"
+                evidenceType = EvidenceType.URL,
+                evidenceContent = "https://github.com/usuario/repositorio"
             ),
             onEvent = {},
             onBackClick = {}

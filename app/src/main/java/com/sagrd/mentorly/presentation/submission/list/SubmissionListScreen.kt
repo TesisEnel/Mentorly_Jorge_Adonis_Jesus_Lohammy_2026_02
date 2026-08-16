@@ -38,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.submission.Submission
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 import com.sagrd.mentorly.util.DateFormatter
@@ -160,7 +161,7 @@ private fun SubmissionCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = submission.evidenceUrl,
+                text = submission.evidenceContent,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -260,7 +261,8 @@ private fun SubmissionListPreview() {
                         enrollmentId = "e1",
                         activityId = "activity-1",
                         activityTitle = "Crear consultas SQL para una base de datos",
-                        evidenceUrl = "https://github.com/user/repo",
+                        evidenceType = EvidenceType.URL,
+                        evidenceContent = "https://github.com/user/repo",
                         status = SubmissionStatus.PENDING,
                         submittedAt = "2026-08-01"
                     )

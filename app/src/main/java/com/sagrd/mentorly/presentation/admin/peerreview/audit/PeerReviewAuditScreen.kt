@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.peerreview.PeerReviewAudit
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
 @Composable
@@ -132,7 +133,7 @@ private fun AuditDetails(audit: PeerReviewAudit) {
 
         AuditSection(title = "Entrega", icon = Icons.Default.Assignment) {
             AuditField(label = "ID de Entrega", value = audit.submissionId)
-            AuditField(label = "Evidencia", value = audit.evidenceUrl)
+            AuditField(label = "Evidencia", value = audit.evidenceContent)
         }
 
         AuditSection(title = "Participantes", icon = Icons.Default.Person) {
@@ -236,7 +237,8 @@ private fun PeerReviewAuditScreenPreview() {
                     isApproved = true,
                     feedbackComment = "El repositorio de GitHub contiene todos los requerimientos solicitados para la Unidad 1.",
                     createdAt = "2026-08-14 10:30",
-                    evidenceUrl = "https://github.com/example/repo"
+                    evidenceType = EvidenceType.URL,
+                    evidenceContent = "https://github.com/example/repo"
                 )
             ),
             onBackClick = {},

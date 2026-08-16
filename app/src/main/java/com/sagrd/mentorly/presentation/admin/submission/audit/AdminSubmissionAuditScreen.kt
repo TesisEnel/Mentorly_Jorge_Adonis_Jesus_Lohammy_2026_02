@@ -24,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.submission.AdminPeerReviewAuditItem
 import com.sagrd.mentorly.domain.model.submission.AdminSubmissionAudit
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
@@ -184,7 +185,7 @@ private fun AuditDetails(
             AuditField(label = "ID de Entrega", value = audit.submissionId)
             AuditField(label = "Estado Actual", value = audit.status.name)
             AuditField(label = "Fecha de Envío", value = audit.submittedAtUtc)
-            AuditField(label = "Evidencia", value = audit.evidenceUrl)
+            AuditField(label = "Evidencia", value = audit.evidenceContent)
         }
 
         AuditSection(title = "Revisiones por Pares", icon = Icons.Default.Group) {
@@ -355,7 +356,8 @@ private fun AdminSubmissionAuditScreenPreview() {
                 courseTitle = "Android con Compose",
                 activityId = "a1",
                 activityTitle = "Laboratorio 1",
-                evidenceUrl = "https://github.com/juan/repo",
+                evidenceType = EvidenceType.URL,
+                evidenceContent = "https://github.com/juan/repo",
                 status = SubmissionStatus.ESCALATED,
                 submittedAtUtc = "2026-08-14",
                 reviewedAtUtc = null,
