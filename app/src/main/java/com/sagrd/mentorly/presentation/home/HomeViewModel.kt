@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.domain.model.enrollment.EnrollmentStatus
+import com.sagrd.mentorly.domain.repository.auth.AuthRepository
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
+import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -20,11 +22,13 @@ import kotlinx.coroutines.launch
 class HomeViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
     private val enrollmentRepository: EnrollmentRepository,
+    private val enrollmentProgressRepository: EnrollmentProgressRepository,
+    private val authRepository: AuthRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(HomeUiState())
+    val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init {
         onEvent(HomeUiEvent.Load)
@@ -34,15 +38,15 @@ class HomeViewModel @Inject constructor(
         when (event) {
             HomeUiEvent.Load -> loadHome()
             HomeUiEvent.Refresh -> loadHome(isRefresh = true)
-            HomeUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            HomeUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun loadHome(isRefresh: Boolean = false) {
-        if (_uiState.value.isLoading || _uiState.value.isRefreshing) return
+        if (_state.value.isLoading || _state.value.isRefreshing) return
 
         viewModelScope.launch {
-            _uiState.update {
+            _state.update {
                 it.copy(
                     isLoading = !isRefresh,
                     isRefreshing = isRefresh,
@@ -52,12 +56,14 @@ class HomeViewModel @Inject constructor(
 
             val session = sessionRepository.session.first()
             if (session == null) {
-                _uiState.update {
+                _state.update {
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
                         studentName = "",
+                        userPhotoUrl = null,
                         activeEnrollments = emptyList(),
+                        enrollmentProgressMap = emptyMap(),
                         publishedCourses = emptyList(),
                         errorMessage = "No se encontró una sesión activa.",
                         hasSession = false
@@ -66,62 +72,73 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
 
-            _uiState.update {
+            val authUser = authRepository.getCurrentUser()
+            _state.update {
                 it.copy(
                     studentName = session.displayName,
+                    userPhotoUrl = authUser?.photoUrl,
                     hasSession = true
                 )
             }
 
-            var enrollmentFailed = false
-            var coursesFailed = false
+            var hasError = false
 
-            try {
-                enrollmentRepository.getEnrollments(session.studentId).collect { resource ->
-                    when (resource) {
-                        is Resource.Loading -> Unit
-                        is Resource.Success -> _uiState.update {
-                            it.copy(
-                                activeEnrollments = resource.data.orEmpty().filter { enrollment ->
-                                    enrollment.status == EnrollmentStatus.ACTIVE
-                                }
-                            )
+            enrollmentRepository.getEnrollments(session.studentId).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> Unit
+                    is Resource.Success -> {
+                        val activeList = resource.data.orEmpty().filter { enrollment ->
+                            enrollment.status == EnrollmentStatus.ACTIVE
                         }
-                        is Resource.Error -> enrollmentFailed = true
+                        _state.update {
+                            it.copy(activeEnrollments = activeList)
+                        }
+                        activeList.forEach { enrollment ->
+                            loadProgressForEnrollment(enrollment.id)
+                        }
                     }
+                    is Resource.Error -> hasError = true
                 }
-            } catch (_: Exception) {
-                enrollmentFailed = true
             }
 
-            try {
-                courseRepository.getCourses().collect { resource ->
-                    when (resource) {
-                        is Resource.Loading -> Unit
-                        is Resource.Success -> _uiState.update {
-                            it.copy(
-                                publishedCourses = resource.data.orEmpty().filter { course ->
-                                    course.isPublished
-                                }
-                            )
-                        }
-                        is Resource.Error -> coursesFailed = true
+            courseRepository.getCourses().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> Unit
+                    is Resource.Success -> _state.update {
+                        it.copy(
+                            publishedCourses = resource.data.orEmpty().filter { course ->
+                                course.isPublished
+                            }
+                        )
                     }
+                    is Resource.Error -> hasError = true
                 }
-            } catch (_: Exception) {
-                coursesFailed = true
             }
 
-            _uiState.update {
+            _state.update {
                 it.copy(
                     isLoading = false,
                     isRefreshing = false,
                     errorMessage = when {
-                        !enrollmentFailed && !coursesFailed -> null
+                        !hasError -> null
                         isRefresh -> "No se pudieron actualizar los datos."
                         else -> "No se pudo cargar el inicio. Inténtalo nuevamente."
                     }
                 )
+            }
+        }
+    }
+
+    private fun loadProgressForEnrollment(enrollmentId: String) {
+        viewModelScope.launch {
+            enrollmentProgressRepository.getEnrollmentProgress(enrollmentId).collect { resource ->
+                if (resource is Resource.Success && resource.data != null) {
+                    _state.update { current ->
+                        val updatedMap = current.enrollmentProgressMap.toMutableMap()
+                        updatedMap[enrollmentId] = resource.data.percentage
+                        current.copy(enrollmentProgressMap = updatedMap)
+                    }
+                }
             }
         }
     }
