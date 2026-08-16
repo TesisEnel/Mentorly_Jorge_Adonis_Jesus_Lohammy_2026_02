@@ -1,6 +1,7 @@
 package com.sagrd.mentorly.data.remote.dto.submission
 
 import com.sagrd.mentorly.domain.model.submission.Submission
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 
 data class SubmissionDto(
@@ -8,7 +9,8 @@ data class SubmissionDto(
     val enrollmentId: String,
     val activityId: String,
     val activityTitle: String,
-    val evidenceUrl: String,
+    val evidenceType: Int,
+    val evidenceContent: String,
     val status: Int,
     val submittedAt: String
 ) {
@@ -17,7 +19,8 @@ data class SubmissionDto(
         enrollmentId = enrollmentId,
         activityId = activityId,
         activityTitle = activityTitle,
-        evidenceUrl = evidenceUrl,
+        evidenceType = EvidenceType.fromApi(evidenceType),
+        evidenceContent = evidenceContent,
         status = SubmissionStatus.fromApi(status),
         submittedAt = submittedAt
     )

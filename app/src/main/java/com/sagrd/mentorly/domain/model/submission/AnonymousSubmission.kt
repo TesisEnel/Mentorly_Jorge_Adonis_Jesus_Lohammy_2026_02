@@ -4,6 +4,8 @@ data class AnonymousSubmission(
     val submissionId: String,
     val activityId: String,
     val activityTitle: String,
-    val evidenceUrl: String,
+    val evidenceType: EvidenceType,
+    val evidenceContent: String,
     val submittedAtUtc: String
-)
+) {
+}

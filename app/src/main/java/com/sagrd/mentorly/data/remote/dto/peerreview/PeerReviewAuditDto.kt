@@ -1,6 +1,7 @@
 package com.sagrd.mentorly.data.remote.dto.peerreview
 
 import com.sagrd.mentorly.domain.model.peerreview.PeerReviewAudit
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 
 data class PeerReviewAuditDto(
     val peerReviewId: String,
@@ -10,7 +11,8 @@ data class PeerReviewAuditDto(
     val isApproved: Boolean,
     val feedbackComment: String,
     val createdAtUtc: String,
-    val evidenceUrl: String
+    val evidenceType: Int,
+    val evidenceContent: String
 ) {
     fun toDomain() = PeerReviewAudit(
         peerReviewId = peerReviewId,
@@ -20,6 +22,7 @@ data class PeerReviewAuditDto(
         isApproved = isApproved,
         feedbackComment = feedbackComment,
         createdAt = createdAtUtc,
-        evidenceUrl = evidenceUrl
+        evidenceType = EvidenceType.fromApi(evidenceType),
+        evidenceContent = evidenceContent
     )
 }

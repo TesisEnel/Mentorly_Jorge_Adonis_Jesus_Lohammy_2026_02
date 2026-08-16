@@ -9,9 +9,11 @@ data class AdminEscalatedSubmission(
     val courseTitle: String,
     val activityId: String,
     val activityTitle: String,
-    val evidenceUrl: String,
+    val evidenceType: EvidenceType,
+    val evidenceContent: String,
     val submittedAtUtc: String,
     val escalatedAtUtc: String,
     val positiveReviews: Int,
     val rejectedReviews: Int
-)
+) {
+}

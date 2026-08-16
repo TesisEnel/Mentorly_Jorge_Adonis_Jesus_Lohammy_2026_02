@@ -1,6 +1,7 @@
 package com.sagrd.mentorly.data.remote.dto.submission
 
 import com.sagrd.mentorly.domain.model.submission.AdminEscalatedSubmission
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 
 data class AdminEscalatedSubmissionDto(
     val submissionId: String,
@@ -11,7 +12,8 @@ data class AdminEscalatedSubmissionDto(
     val courseTitle: String,
     val activityId: String,
     val activityTitle: String,
-    val evidenceUrl: String,
+    val evidenceType: Int,
+    val evidenceContent: String,
     val submittedAtUtc: String,
     val escalatedAtUtc: String,
     val positiveReviews: Int,
@@ -26,7 +28,8 @@ data class AdminEscalatedSubmissionDto(
         courseTitle = courseTitle,
         activityId = activityId,
         activityTitle = activityTitle,
-        evidenceUrl = evidenceUrl,
+        evidenceType = EvidenceType.fromApi(evidenceType),
+        evidenceContent = evidenceContent,
         submittedAtUtc = submittedAtUtc,
         escalatedAtUtc = escalatedAtUtc,
         positiveReviews = positiveReviews,

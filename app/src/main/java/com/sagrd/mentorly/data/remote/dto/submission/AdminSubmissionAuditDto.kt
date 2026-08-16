@@ -1,6 +1,7 @@
 package com.sagrd.mentorly.data.remote.dto.submission
 
 import com.sagrd.mentorly.domain.model.submission.AdminSubmissionAudit
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 
 data class AdminSubmissionAuditDto(
@@ -13,7 +14,8 @@ data class AdminSubmissionAuditDto(
     val courseTitle: String,
     val activityId: String,
     val activityTitle: String,
-    val evidenceUrl: String,
+    val evidenceType: Int,
+    val evidenceContent: String,
     val status: Int,
     val submittedAtUtc: String,
     val reviewedAtUtc: String?,
@@ -29,7 +31,8 @@ data class AdminSubmissionAuditDto(
         courseTitle = courseTitle,
         activityId = activityId,
         activityTitle = activityTitle,
-        evidenceUrl = evidenceUrl,
+        evidenceType = EvidenceType.fromApi(evidenceType),
+        evidenceContent = evidenceContent,
         status = SubmissionStatus.fromApi(status),
         submittedAtUtc = submittedAtUtc,
         reviewedAtUtc = reviewedAtUtc,

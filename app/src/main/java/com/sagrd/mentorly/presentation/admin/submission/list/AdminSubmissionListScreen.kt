@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.submission.AdminEscalatedSubmission
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
 @Composable
@@ -271,7 +272,8 @@ fun AdminSubmissionListScreenPreview() {
                     courseTitle = "Android con Compose",
                     activityId = "a1",
                     activityTitle = "Laboratorio 1",
-                    evidenceUrl = "url",
+                    evidenceType = EvidenceType.URL,
+                    evidenceContent = "https://github.com/juan/repo",
                     submittedAtUtc = "2026-08-14",
                     escalatedAtUtc = "2026-08-14",
                     positiveReviews = 2,

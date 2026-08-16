@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.submission.Submission
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionReview
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
@@ -138,7 +139,7 @@ private fun SubmissionDetailContent(
                             Column(Modifier.padding(16.dp)) {
                                 Text("Evidencia", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                                 Spacer(Modifier.height(4.dp))
-                                Text(submission.evidenceUrl, style = MaterialTheme.typography.bodyMedium)
+                                Text(submission.evidenceContent, style = MaterialTheme.typography.bodyMedium)
                                 Spacer(Modifier.height(8.dp))
                                 Text(
                                     "Estado: ${submission.status.displayName()}",
@@ -288,7 +289,8 @@ private fun SubmissionDetailPreview() {
                     enrollmentId = "e1",
                     activityId = "activity-1",
                     activityTitle = "Crear consultas SQL para una base de datos",
-                    evidenceUrl = "https://github.com/user/repo",
+                    evidenceType = EvidenceType.URL,
+                    evidenceContent = "https://github.com/user/repo",
                     status = SubmissionStatus.PENDING,
                     submittedAt = "2026-08-01"
                 ),

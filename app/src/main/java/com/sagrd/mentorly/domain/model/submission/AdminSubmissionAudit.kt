@@ -10,9 +10,11 @@ data class AdminSubmissionAudit(
     val courseTitle: String,
     val activityId: String,
     val activityTitle: String,
-    val evidenceUrl: String,
+    val evidenceType: EvidenceType,
+    val evidenceContent: String,
     val status: SubmissionStatus,
     val submittedAtUtc: String,
     val reviewedAtUtc: String?,
     val peerReviews: List<AdminPeerReviewAuditItem>
-)
+) {
+}

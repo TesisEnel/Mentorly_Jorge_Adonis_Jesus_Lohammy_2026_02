@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.sagrd.mentorly.domain.model.peerreview.PeerReviewResult
 import com.sagrd.mentorly.domain.model.submission.AnonymousSubmission
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 import com.sagrd.mentorly.util.DateFormatter
@@ -122,7 +123,7 @@ private fun ReviewForm(
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(submission.activityTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text("Entrega anónima", color = MaterialTheme.colorScheme.primary)
-                Text(submission.evidenceUrl, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Text(submission.evidenceContent, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 Text("Enviada: ${DateFormatter.format(submission.submittedAtUtc)}", style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -227,7 +228,14 @@ private fun PeerReviewDetailPreview() {
     MentorlyTheme {
         PeerReviewDetailContent(
             uiState = PeerReviewDetailUiState(
-                submission = AnonymousSubmission("submission-1", "activity-1", "Repositorio de Compose", "https://github.com/example/repo", "2026-08-12"),
+                submission = AnonymousSubmission(
+                    submissionId = "submission-1",
+                    activityId = "activity-1",
+                    activityTitle = "Repositorio de Compose",
+                    evidenceType = EvidenceType.URL,
+                    evidenceContent = "https://github.com/example/repo",
+                    submittedAtUtc = "2026-08-12"
+                ),
                 isApproved = true,
                 feedbackComment = "La estructura del proyecto está bien organizada y cumple los requisitos."
             ),

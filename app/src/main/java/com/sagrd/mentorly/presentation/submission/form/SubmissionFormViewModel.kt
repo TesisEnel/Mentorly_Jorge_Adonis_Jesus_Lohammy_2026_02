@@ -6,6 +6,7 @@ import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.submission.CreateSubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.UpdateSubmissionDto
 import com.sagrd.mentorly.domain.model.submission.Submission
+import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.repository.submission.SubmissionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +31,11 @@ class SubmissionFormViewModel @Inject constructor(
     fun onEvent(event: SubmissionFormUiEvent) {
         when (event) {
             is SubmissionFormUiEvent.Load -> load(event.enrollmentId, event.activityId, event.submissionId)
-            is SubmissionFormUiEvent.EvidenceUrlChanged -> _uiState.update {
-                it.copy(evidenceUrl = event.value, evidenceUrlError = null)
+            is SubmissionFormUiEvent.EvidenceTypeChanged -> _uiState.update {
+                it.copy(evidenceType = event.value, evidenceContentError = null)
+            }
+            is SubmissionFormUiEvent.EvidenceContentChanged -> _uiState.update {
+                it.copy(evidenceContent = event.value, evidenceContentError = null)
             }
             is SubmissionFormUiEvent.Save -> save()
             is SubmissionFormUiEvent.DismissError -> _uiState.update { it.copy(errorMessage = null) }
@@ -47,7 +51,8 @@ class SubmissionFormViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     isEditing = false,
-                    evidenceUrl = "",
+                    evidenceType = EvidenceType.URL,
+                    evidenceContent = "",
                     savedSubmissionId = null
                 )
             }
@@ -67,7 +72,11 @@ class SubmissionFormViewModel @Inject constructor(
                 when (resource) {
                     is Resource.Loading -> _uiState.update { it.copy(isLoading = true) }
                     is Resource.Success -> _uiState.update {
-                        it.copy(isLoading = false, evidenceUrl = resource.data?.evidenceUrl ?: "")
+                        it.copy(
+                            isLoading = false,
+                            evidenceType = resource.data?.evidenceType ?: EvidenceType.URL,
+                            evidenceContent = resource.data?.evidenceContent.orEmpty()
+                        )
                     }
                     is Resource.Error -> _uiState.update {
                         it.copy(isLoading = false, errorMessage = resource.message)
@@ -79,10 +88,10 @@ class SubmissionFormViewModel @Inject constructor(
 
     private fun save() {
         val state = _uiState.value
-        val validationError = validateEvidenceUrl(state.evidenceUrl)
+        val validationError = validateEvidence(state.evidenceType, state.evidenceContent)
 
         if (validationError != null) {
-            _uiState.update { it.copy(evidenceUrlError = validationError) }
+            _uiState.update { it.copy(evidenceContentError = validationError) }
             return
         }
 
@@ -101,12 +110,18 @@ class SubmissionFormViewModel @Inject constructor(
                 submissionRepository.createSubmission(
                     enrollmentId,
                     activityId,
-                    CreateSubmissionDto(evidenceUrl = state.evidenceUrl)
+                    CreateSubmissionDto(
+                        evidenceType = state.evidenceType.apiValue,
+                        evidenceContent = state.evidenceContent.trim()
+                    )
                 ).collect(::handleCreateResult)
             } else {
                 submissionRepository.updateSubmission(
                     currentSubmissionId,
-                    UpdateSubmissionDto(evidenceUrl = state.evidenceUrl)
+                    UpdateSubmissionDto(
+                        evidenceType = state.evidenceType.apiValue,
+                        evidenceContent = state.evidenceContent.trim()
+                    )
                 ).collect { resource ->
                     handleUpdateResult(resource, currentSubmissionId)
                 }
@@ -153,14 +168,16 @@ class SubmissionFormViewModel @Inject constructor(
         }
     }
 
-    private fun validateEvidenceUrl(url: String): String? {
-        val trimmed = url.trim()
+    private fun validateEvidence(type: EvidenceType, content: String): String? {
+        val trimmed = content.trim()
         if (trimmed.isEmpty()) {
-            return "El enlace de evidencia es obligatorio."
+            return "La evidencia es obligatoria."
         }
-        val isAbsoluteHttp = trimmed.startsWith("http://") || trimmed.startsWith("https://")
-        if (!isAbsoluteHttp) {
-            return "El enlace debe ser una URL absoluta http o https."
+        if (type == EvidenceType.URL) {
+            val isAbsoluteHttp = trimmed.startsWith("http://") || trimmed.startsWith("https://")
+            if (!isAbsoluteHttp) {
+                return "El enlace debe ser una URL absoluta http o https."
+            }
         }
         return null
     }
