@@ -42,6 +42,7 @@ import com.sagrd.mentorly.presentation.startup.StartupScreen
 import com.sagrd.mentorly.presentation.submission.detail.SubmissionDetailScreen
 import com.sagrd.mentorly.presentation.submission.form.SubmissionFormScreen
 import com.sagrd.mentorly.presentation.submission.list.SubmissionListScreen
+import com.sagrd.mentorly.presentation.theme.detail.ThemeDetailScreen
 import com.sagrd.mentorly.domain.model.student.StudentRole
 
 @Composable
@@ -247,6 +248,24 @@ private fun NavigationContent(
                             )
                         )
                     },
+                    onThemeClick = { themeId ->
+                        backStack.add(
+                            Screen.ThemeDetail(
+                                enrollmentId = destination.enrollmentId,
+                                themeId = themeId
+                            )
+                        )
+                    }
+                )
+            }
+
+            entry<Screen.ThemeDetail> { destination ->
+                ThemeDetailScreen(
+                    enrollmentId = destination.enrollmentId,
+                    themeId = destination.themeId,
+                    onBackClick = {
+                        backStack.removeLastOrNull()
+                    }
                 )
             }
 
