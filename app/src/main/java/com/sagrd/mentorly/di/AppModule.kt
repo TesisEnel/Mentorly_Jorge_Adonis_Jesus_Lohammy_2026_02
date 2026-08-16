@@ -24,7 +24,6 @@ import com.sagrd.mentorly.data.remote.remotedatasource.StudentRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.SubmissionRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.ThemeRemoteDataSource
 import com.sagrd.mentorly.data.remote.remotedatasource.UnitRemoteDataSource
-import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.data.repository.activity.ActivityRepositoryImpl
 import com.sagrd.mentorly.data.repository.analytics.AnalyticsRepositoryImpl
 import com.sagrd.mentorly.data.repository.course.CourseRepositoryImpl
@@ -351,9 +350,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSessionRepository(
-        sessionPreferences: SessionPreferences
-    ): SessionRepository {
-        return SessionRepositoryImpl(sessionPreferences)
+    fun provideSessionRepository(): SessionRepository {
+        return SessionRepositoryImpl()
     }
 }
