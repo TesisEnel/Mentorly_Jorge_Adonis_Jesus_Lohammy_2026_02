@@ -26,6 +26,21 @@ class EnrollmentProgressRepositoryImpl @Inject constructor(
             }
     }
 
+    override fun getAdminEnrollmentProgress(
+        adminId: String,
+        enrollmentId: String
+    ): Flow<Resource<EnrollmentProgress>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.getAdminEnrollmentProgress(adminId, enrollmentId)
+            .onSuccess { progress ->
+                emit(Resource.Success(progress.toDomain()))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo cargar el progreso administrativo."))
+            }
+    }
+
     override fun completeTheme(
         enrollmentId: String,
         themeId: String
