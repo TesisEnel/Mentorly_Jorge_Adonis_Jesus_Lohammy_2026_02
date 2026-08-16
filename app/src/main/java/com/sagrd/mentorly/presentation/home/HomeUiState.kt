@@ -7,7 +7,9 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val studentName: String = "",
+    val userPhotoUrl: String? = null,
     val activeEnrollments: List<Enrollment> = emptyList(),
+    val enrollmentProgressMap: Map<String, Int> = emptyMap(),
     val publishedCourses: List<Course> = emptyList(),
     val errorMessage: String? = null,
     val hasSession: Boolean = true
