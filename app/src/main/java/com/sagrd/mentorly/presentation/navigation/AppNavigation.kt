@@ -183,6 +183,12 @@ private fun NavigationContent(
                 CourseListScreen(
                     onCourseClick = { courseId ->
                         backStack.add(Screen.CourseDetail(courseId))
+                    },
+                    onEnrollmentClick = { enrollmentId ->
+                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                    },
+                    onProfileClick = {
+                        replaceRoot(backStack, Screen.Profile)
                     }
                 )
             }
