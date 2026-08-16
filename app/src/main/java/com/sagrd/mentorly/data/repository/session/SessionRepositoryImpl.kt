@@ -1,22 +1,23 @@
 package com.sagrd.mentorly.data.repository.session
 
-import com.sagrd.mentorly.data.local.session.SessionPreferences
 import com.sagrd.mentorly.domain.model.session.AppSession
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
-class SessionRepositoryImpl @Inject constructor(
-    private val sessionPreferences: SessionPreferences
-) : SessionRepository {
+class SessionRepositoryImpl @Inject constructor() : SessionRepository {
 
-    override val session: Flow<AppSession?> = sessionPreferences.session
+    private val _session = MutableStateFlow<AppSession?>(null)
+
+    override val session: StateFlow<AppSession?> = _session.asStateFlow()
 
     override suspend fun saveSession(session: AppSession) {
-        sessionPreferences.save(session)
+        _session.value = session
     }
 
     override suspend fun clearSession() {
-        sessionPreferences.clear()
+        _session.value = null
     }
 }
