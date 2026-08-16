@@ -32,6 +32,12 @@ sealed class Screen : NavKey {
     ) : Screen()
 
     @Serializable
+    data class ThemeDetail(
+        val enrollmentId: String,
+        val themeId: String
+    ) : Screen()
+
+    @Serializable
     data object SubmissionList : Screen()
 
     @Serializable
