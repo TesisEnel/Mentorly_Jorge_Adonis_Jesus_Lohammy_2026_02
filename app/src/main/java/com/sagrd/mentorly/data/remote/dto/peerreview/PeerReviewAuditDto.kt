@@ -10,6 +10,7 @@ data class PeerReviewAuditDto(
     val reviewerStudentId: String,
     val isApproved: Boolean,
     val feedbackComment: String,
+    val criterionScores: List<PeerReviewCriterionScoreDto>,
     val createdAtUtc: String,
     val evidenceType: Int,
     val evidenceContent: String
@@ -21,6 +22,7 @@ data class PeerReviewAuditDto(
         reviewerStudentId = reviewerStudentId,
         isApproved = isApproved,
         feedbackComment = feedbackComment,
+        criterionScores = criterionScores.map { it.toDomain() },
         createdAt = createdAtUtc,
         evidenceType = EvidenceType.fromApi(evidenceType),
         evidenceContent = evidenceContent
