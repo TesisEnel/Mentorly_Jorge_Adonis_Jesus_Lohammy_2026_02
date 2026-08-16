@@ -169,6 +169,12 @@ private fun NavigationContent(
                     },
                     onProfileClick = {
                         replaceRoot(backStack, Screen.Profile)
+                    },
+                    onSeeAllEnrollments = {
+                        replaceRoot(backStack, Screen.EnrollmentList)
+                    },
+                    onSeeAllCourses = {
+                        replaceRoot(backStack, Screen.CourseList)
                     }
                 )
             }
