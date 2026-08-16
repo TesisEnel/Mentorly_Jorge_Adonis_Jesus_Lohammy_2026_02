@@ -48,6 +48,25 @@ class EnrollmentRemoteDataSource @Inject constructor(
         }
     }
 
+    suspend fun getAdminStudentEnrollments(
+        adminId: String,
+        studentId: String
+    ): Result<List<EnrollmentDto>> {
+        return try {
+            val response = api.getAdminStudentEnrollments(adminId, studentId)
+
+            if (!response.isSuccessful) {
+                Result.failure(Exception("Error de red ${response.code()}"))
+            } else {
+                Result.success(response.body()!!)
+            }
+        } catch (exception: HttpException) {
+            Result.failure(Exception("Error de servidor", exception))
+        } catch (exception: Exception) {
+            Result.failure(Exception("Error desconocido", exception))
+        }
+    }
+
     suspend fun getEnrollmentById(enrollmentId: String): Result<EnrollmentDto> {
         return try {
             val response = api.getEnrollmentById(enrollmentId)
