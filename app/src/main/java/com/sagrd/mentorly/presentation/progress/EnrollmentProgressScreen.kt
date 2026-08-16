@@ -772,6 +772,9 @@ private fun ActivityItemRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 12.dp)
+            .clickable {
+                if (isQuiz) onQuizClick() else onActivityClick()
+            }
     ) {
         Row(
             modifier = Modifier
