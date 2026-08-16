@@ -10,13 +10,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -25,35 +24,35 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.R
 import com.sagrd.mentorly.domain.model.student.Student
-import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
 private val MentorlyBlue = Color(0xFF168FCA)
 private val GoogleButtonBorder = Color(0xFFDADCE0)
-private val DividerColor = Color(0xFFEAEAEA)
 
 @Composable
 fun LoginScreen(
     onLoginCompleted: (Student) -> Unit = {},
     viewModel: LoginViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(state.student?.id) {
@@ -83,54 +82,69 @@ private fun LoginContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0xFFF8F9FC))
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 44.dp, y = (-58).dp)
-                .size(118.dp)
-                .clip(CircleShape)
-                .background(MentorlyBlue)
-        )
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .offset(x = (-45).dp, y = 45.dp)
-                .size(90.dp)
-                .clip(CircleShape)
-                .background(MentorlyBlue)
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 42.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 36.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(66.dp))
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clipToBounds(),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = painterResource(R.drawable.logo),
+                    contentDescription = "Logo de Mentorly",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(scaleX = 2.8f, scaleY = 2.8f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(22.dp))
 
             Text(
-                text = "Mentorly",
-                color = MentorlyBlue,
+                text = "Bienvenido a Mentorly",
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF202124),
+                textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Beyond imagination.",
-                color = Color(0xFF333333),
-                style = MaterialTheme.typography.labelMedium,
-                fontStyle = FontStyle.Italic
+                text = "Tu experiencia de aprendizaje\npersonalizada comienza aquí.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF4C5567),
+                textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(30.dp))
+
+            androidx.compose.foundation.Image(
+                painter = painterResource(R.drawable.login_learning_hero),
+                contentDescription = "Estudiante aprendiendo con Mentorly",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(208.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             when {
                 state.isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier
+                            .size(32.dp),
                         color = MentorlyBlue,
                         strokeWidth = 3.dp
                     )
@@ -155,31 +169,10 @@ private fun LoginContent(
                             text = error,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
                         )
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(34.dp))
-
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                color = DividerColor
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            TextButton(
-                onClick = onSignInClick
-            ) {
-                Text(
-                    text = "¿Eres Administrador?\nInicia sesión con Google.",
-                    color = Color(0xFF79BFE5),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontStyle = FontStyle.Italic,
-                    textAlign = TextAlign.Center
-                )
             }
         }
     }
@@ -192,9 +185,9 @@ private fun GoogleSignInButton(
     OutlinedButton(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .height(54.dp),
         onClick = onClick,
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(28.dp),
         border = BorderStroke(
             width = 1.dp,
             color = GoogleButtonBorder
@@ -214,12 +207,12 @@ private fun GoogleSignInButton(
                 modifier = Modifier.size(20.dp)
             )
 
-            Spacer(modifier = Modifier.size(10.dp))
+            Spacer(modifier = Modifier.size(12.dp))
 
             Text(
-                text = "Iniciar sesión con Google",
-                style = MaterialTheme.typography.labelMedium,
-                fontStyle = FontStyle.Italic
+                text = "Continuar con Google",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -258,23 +251,3 @@ private fun LoginScreenPreview() {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-private fun LoginScreenSuccessPreview() {
-    MentorlyTheme {
-        LoginContent(
-            state = LoginUiState(
-                student = Student(
-                    id = "student-id",
-                    email = "estudiante@mentorly.com",
-                    displayName = "Adonis Mercado",
-                    role = StudentRole.STUDENT,
-                    isLeaderboardPublic = true,
-                    totalPoints = 0
-                )
-            ),
-            onSignInClick = {},
-            onSignOutClick = {}
-        )
-    }
-}
