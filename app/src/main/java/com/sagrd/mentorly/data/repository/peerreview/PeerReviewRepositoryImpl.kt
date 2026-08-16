@@ -2,11 +2,14 @@ package com.sagrd.mentorly.data.repository.peerreview
 
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.peerreview.CreatePeerReviewRequestDto
+import com.sagrd.mentorly.data.remote.dto.peerreview.CreatePeerReviewRubricCriterionDto
+import com.sagrd.mentorly.data.remote.dto.peerreview.UpdatePeerReviewRubricCriterionDto
 import com.sagrd.mentorly.data.remote.remotedatasource.PeerReviewRemoteDataSource
 import com.sagrd.mentorly.domain.model.submission.AnonymousSubmission
 import com.sagrd.mentorly.domain.model.peerreview.PeerReview
 import com.sagrd.mentorly.domain.model.peerreview.PeerReviewAudit
 import com.sagrd.mentorly.domain.model.peerreview.PeerReviewResult
+import com.sagrd.mentorly.domain.model.peerreview.PeerReviewRubricCriterion
 import com.sagrd.mentorly.domain.model.peerreview.ReviewQueueItem
 import com.sagrd.mentorly.domain.repository.peerreview.PeerReviewRepository
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +19,61 @@ import javax.inject.Inject
 class PeerReviewRepositoryImpl @Inject constructor(
     private val remoteDataSource: PeerReviewRemoteDataSource
 ) : PeerReviewRepository {
+
+    override fun getRubric(activityId: String): Flow<Resource<List<PeerReviewRubricCriterion>>> = flow {
+        emit(Resource.Loading())
+        remoteDataSource.getRubric(activityId)
+            .onSuccess { criteria ->
+                emit(Resource.Success(criteria.map { it.toDomain() }))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo cargar la rúbrica."))
+            }
+    }
+
+    override fun createRubricCriterion(
+        adminId: String,
+        activityId: String,
+        dto: CreatePeerReviewRubricCriterionDto
+    ): Flow<Resource<PeerReviewRubricCriterion>> = flow {
+        emit(Resource.Loading())
+        remoteDataSource.createRubricCriterion(adminId, activityId, dto)
+            .onSuccess { criterion ->
+                emit(Resource.Success(criterion.toDomain()))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo crear el criterio."))
+            }
+    }
+
+    override fun updateRubricCriterion(
+        adminId: String,
+        criterionId: String,
+        dto: UpdatePeerReviewRubricCriterionDto
+    ): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        remoteDataSource.updateRubricCriterion(adminId, criterionId, dto)
+            .onSuccess {
+                emit(Resource.Success(Unit))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo actualizar el criterio."))
+            }
+    }
+
+    override fun deleteRubricCriterion(
+        adminId: String,
+        criterionId: String
+    ): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        remoteDataSource.deleteRubricCriterion(adminId, criterionId)
+            .onSuccess {
+                emit(Resource.Success(Unit))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo eliminar el criterio."))
+            }
+    }
 
     override fun getQueue(studentId: String): Flow<Resource<List<ReviewQueueItem>>> = flow {
         emit(Resource.Loading())
