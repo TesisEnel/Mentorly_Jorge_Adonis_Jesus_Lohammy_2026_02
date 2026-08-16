@@ -8,6 +8,7 @@ data class CourseDetailUiState(
     val isCheckingActiveEnrollment: Boolean = false,
     val course: Course? = null,
     val activeEnrollmentId: String? = null,
+    val progressPercentage: Int = 0,
     val errorMessage: String? = null,
     val enrollmentErrorMessage: String? = null,
     val createdEnrollmentId: String? = null
