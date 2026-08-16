@@ -236,6 +236,7 @@ private fun PeerReviewAuditScreenPreview() {
                     reviewerStudentId = "student-reviewer",
                     isApproved = true,
                     feedbackComment = "El repositorio de GitHub contiene todos los requerimientos solicitados para la Unidad 1.",
+                    criterionScores = emptyList(),
                     createdAt = "2026-08-14 10:30",
                     evidenceType = EvidenceType.URL,
                     evidenceContent = "https://github.com/example/repo"

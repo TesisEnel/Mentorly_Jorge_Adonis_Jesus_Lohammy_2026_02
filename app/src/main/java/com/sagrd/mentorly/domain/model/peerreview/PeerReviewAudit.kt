@@ -9,6 +9,7 @@ data class PeerReviewAudit(
     val reviewerStudentId: String,
     val isApproved: Boolean,
     val feedbackComment: String,
+    val criterionScores: List<PeerReviewCriterionScore>,
     val createdAt: String,
     val evidenceType: EvidenceType,
     val evidenceContent: String
