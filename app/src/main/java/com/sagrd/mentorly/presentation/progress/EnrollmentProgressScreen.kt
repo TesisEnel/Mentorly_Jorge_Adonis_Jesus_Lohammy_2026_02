@@ -96,6 +96,7 @@ fun EnrollmentProgressScreen(
     onBackClick: () -> Unit,
     onActivityClick: (String) -> Unit,
     onQuizClick: (String) -> Unit = {},
+    onThemeClick: (String) -> Unit = {},
     viewModel: EnrollmentProgressViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -109,6 +110,7 @@ fun EnrollmentProgressScreen(
         onBackClick = onBackClick,
         onActivityClick = onActivityClick,
         onQuizClick = onQuizClick,
+        onThemeClick = onThemeClick,
         onToggleUnitExpansion = { unitId ->
             viewModel.onEvent(EnrollmentProgressUiEvent.ToggleUnitExpansion(unitId))
         },
@@ -126,6 +128,7 @@ private fun EnrollmentProgressContent(
     onBackClick: () -> Unit,
     onActivityClick: (String) -> Unit,
     onQuizClick: (String) -> Unit,
+    onThemeClick: (String) -> Unit,
     onToggleUnitExpansion: (String) -> Unit,
     onCompleteTheme: (String) -> Unit,
     onRetry: () -> Unit
@@ -207,6 +210,7 @@ private fun EnrollmentProgressContent(
                     completingThemeIds = uiState.completingThemeIds,
                     errorMessage = uiState.errorMessage,
                     onToggleUnitExpansion = onToggleUnitExpansion,
+                    onThemeClick = onThemeClick,
                     onActivityClick = onActivityClick,
                     onQuizClick = onQuizClick,
                     onCompleteTheme = onCompleteTheme,
@@ -230,6 +234,7 @@ private fun ProgressScrollableList(
     completingThemeIds: Set<String>,
     errorMessage: String?,
     onToggleUnitExpansion: (String) -> Unit,
+    onThemeClick: (String) -> Unit,
     onActivityClick: (String) -> Unit,
     onQuizClick: (String) -> Unit,
     onCompleteTheme: (String) -> Unit,
@@ -384,6 +389,7 @@ private fun ProgressScrollableList(
                 isExpanded = isExpanded,
                 completingThemeIds = completingThemeIds,
                 onToggleExpand = { onToggleUnitExpansion(unit.unitId) },
+                onThemeClick = onThemeClick,
                 onActivityClick = onActivityClick,
                 onQuizClick = onQuizClick,
                 onCompleteTheme = onCompleteTheme
@@ -511,6 +517,7 @@ private fun UnitCurriculumCard(
     isExpanded: Boolean,
     completingThemeIds: Set<String>,
     onToggleExpand: () -> Unit,
+    onThemeClick: (String) -> Unit,
     onActivityClick: (String) -> Unit,
     onQuizClick: (String) -> Unit,
     onCompleteTheme: (String) -> Unit
@@ -625,6 +632,7 @@ private fun UnitCurriculumCard(
                         ThemeItemRow(
                             theme = theme,
                             isCompleting = isThemeCompleting,
+                            onThemeClick = { onThemeClick(theme.themeId) },
                             onCompleteTheme = { onCompleteTheme(theme.themeId) }
                         )
 
@@ -646,13 +654,16 @@ private fun UnitCurriculumCard(
 private fun ThemeItemRow(
     theme: EnrollmentThemeProgress,
     isCompleting: Boolean,
+    onThemeClick: () -> Unit,
     onCompleteTheme: () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onThemeClick)
     ) {
         Row(
             modifier = Modifier
@@ -976,6 +987,7 @@ private fun EnrollmentProgressPreview() {
             onBackClick = {},
             onActivityClick = {},
             onQuizClick = {},
+            onThemeClick = {},
             onToggleUnitExpansion = {},
             onCompleteTheme = {},
             onRetry = {}
