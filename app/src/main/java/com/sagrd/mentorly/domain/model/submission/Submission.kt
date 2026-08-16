@@ -5,7 +5,9 @@ data class Submission(
     val enrollmentId: String,
     val activityId: String,
     val activityTitle: String,
-    val evidenceUrl: String,
+    val evidenceType: EvidenceType,
+    val evidenceContent: String,
     val status: SubmissionStatus,
     val submittedAt: String
-)
+) {
+}
