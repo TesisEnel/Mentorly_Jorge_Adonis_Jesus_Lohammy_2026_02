@@ -17,6 +17,11 @@ interface EnrollmentRepository {
 
     fun getEnrollments(studentId: String): Flow<Resource<List<Enrollment>>>
 
+    fun getAdminStudentEnrollments(
+        adminId: String,
+        studentId: String
+    ): Flow<Resource<List<Enrollment>>>
+
     fun getEnrollmentById(enrollmentId: String): Flow<Resource<Enrollment>>
 
     fun restartEnrollment(
