@@ -30,7 +30,6 @@ import com.sagrd.mentorly.presentation.community.leaderboard.LeaderboardScreen
 import com.sagrd.mentorly.presentation.community.members.CourseMembersScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
-import com.sagrd.mentorly.presentation.enrollment.detail.EnrollmentDetailScreen
 import com.sagrd.mentorly.presentation.enrollment.list.EnrollmentListScreen
 import com.sagrd.mentorly.presentation.home.HomeScreen
 import com.sagrd.mentorly.presentation.peerreview.detail.PeerReviewDetailScreen
@@ -165,7 +164,7 @@ private fun NavigationContent(
                         backStack.add(Screen.CourseDetail(courseId))
                     },
                     onEnrollmentClick = { enrollmentId ->
-                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     },
                     onProfileClick = {
                         replaceRoot(backStack, Screen.Profile)
@@ -185,7 +184,7 @@ private fun NavigationContent(
                         backStack.add(Screen.CourseDetail(courseId))
                     },
                     onEnrollmentClick = { enrollmentId ->
-                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     },
                     onProfileClick = {
                         replaceRoot(backStack, Screen.Profile)
@@ -201,10 +200,10 @@ private fun NavigationContent(
                     },
                     onEnrollmentCreated = { enrollmentId ->
                         backStack.removeLastOrNull()
-                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     },
                     onActiveEnrollmentClick = { enrollmentId ->
-                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     },
                     onMembersClick = { courseId ->
                         backStack.add(Screen.CourseMembers(courseId))
@@ -218,26 +217,10 @@ private fun NavigationContent(
             entry<Screen.EnrollmentList> {
                 EnrollmentListScreen(
                     onEnrollmentClick = { enrollmentId ->
-                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
+                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     },
                     onSubmissionsClick = {
                         backStack.add(Screen.SubmissionList)
-                    }
-                )
-            }
-
-            entry<Screen.EnrollmentDetail> { destination ->
-                EnrollmentDetailScreen(
-                    enrollmentId = destination.enrollmentId,
-                    onBackClick = {
-                        backStack.removeLastOrNull()
-                    },
-                    onRestarted = { enrollmentId ->
-                        backStack.removeLastOrNull()
-                        backStack.add(Screen.EnrollmentDetail(enrollmentId))
-                    },
-                    onProgressClick = { enrollmentId ->
-                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     }
                 )
             }
