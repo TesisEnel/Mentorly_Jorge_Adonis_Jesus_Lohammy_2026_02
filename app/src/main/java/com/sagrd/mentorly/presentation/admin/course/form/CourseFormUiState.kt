@@ -12,5 +12,6 @@ data class CourseFormUiState(
     val errorMessage: String? = null,
     val fieldErrors: Map<String, String> = emptyMap(),
     val savedCourseId: String? = null,
-    val hasAdminAccess: Boolean = true
+    val hasSession: Boolean = true,
+    val hasAdminAccess: Boolean = true,
 )

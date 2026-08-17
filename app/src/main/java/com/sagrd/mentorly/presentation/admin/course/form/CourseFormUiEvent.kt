@@ -8,4 +8,5 @@ sealed interface CourseFormUiEvent {
     data class RequiredPeerReviewsChanged(val value: String) : CourseFormUiEvent
     data object Save : CourseFormUiEvent
     data object ClearError : CourseFormUiEvent
+    data object SavedHandled : CourseFormUiEvent
 }
