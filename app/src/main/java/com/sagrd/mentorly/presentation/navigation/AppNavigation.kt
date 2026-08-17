@@ -179,6 +179,9 @@ private fun NavigationContent(
                     onEnrollmentClick = { enrollmentId ->
                         backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     },
+                    onSubmissionsClick = {
+                        backStack.add(Screen.SubmissionList)
+                    },
                     onProfileClick = {
                         replaceRoot(backStack, Screen.Profile)
                     }
