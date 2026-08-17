@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.peerreview.CreatePeerReviewRequestDto
+import com.sagrd.mentorly.data.remote.dto.peerreview.PeerReviewCriterionScoreDto
+import com.sagrd.mentorly.domain.model.peerreview.PeerReviewRubricCriterion
 import com.sagrd.mentorly.domain.repository.peerreview.PeerReviewRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +36,12 @@ class PeerReviewDetailViewModel @Inject constructor(
 
     fun onEvent(event: PeerReviewDetailUiEvent) {
         when (event) {
+            is PeerReviewDetailUiEvent.CriterionScoreChanged -> _uiState.update { state ->
+                val newScores = state.criterionScores + (event.criterionId to event.score)
+                val newErrors = state.criterionErrors - event.criterionId
+                state.copy(criterionScores = newScores, criterionErrors = newErrors)
+            }
+
             is PeerReviewDetailUiEvent.DecisionChanged -> _uiState.update {
                 it.copy(isApproved = event.isApproved, decisionError = null)
             }
@@ -70,8 +78,18 @@ class PeerReviewDetailViewModel @Inject constructor(
                         it.copy(isLoading = true, errorMessage = null, hasSession = true)
                     }
 
-                    is Resource.Success -> _uiState.update {
-                        it.copy(isLoading = false, submission = resource.data, errorMessage = null)
+                    is Resource.Success -> {
+                        val submission = resource.data
+                        if (submission != null) {
+                            loadRubricAndSetState(submission.activityId, submission)
+                        } else {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    errorMessage = "No se encontraron datos de la entrega."
+                                )
+                            }
+                        }
                     }
 
                     is Resource.Error -> _uiState.update {
@@ -85,24 +103,85 @@ class PeerReviewDetailViewModel @Inject constructor(
         }
     }
 
+    private suspend fun loadRubricAndSetState(
+        activityId: String,
+        submission: com.sagrd.mentorly.domain.model.submission.AnonymousSubmission
+    ) {
+        peerReviewRepository.getRubric(activityId).collect { rubricResource ->
+            val criteria = when (rubricResource) {
+                is Resource.Success -> {
+                    if (rubricResource.data.isNullOrEmpty()) {
+                        getDefaultCriteria(activityId)
+                    } else {
+                        rubricResource.data
+                    }
+                }
+                else -> getDefaultCriteria(activityId)
+            }
+
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    submission = submission,
+                    criteria = criteria,
+                    errorMessage = null
+                )
+            }
+        }
+    }
+
+    private fun getDefaultCriteria(activityId: String): List<PeerReviewRubricCriterion> = listOf(
+        PeerReviewRubricCriterion(
+            id = "crit-1",
+            activityId = activityId,
+            title = "Complejidad Técnica",
+            description = "Evalúa la eficiencia y el uso de estructuras de datos adecuadas.",
+            maxScore = 5,
+            orderIndex = 1
+        ),
+        PeerReviewRubricCriterion(
+            id = "crit-2",
+            activityId = activityId,
+            title = "Calidad del Código",
+            description = "Evalúa la legibilidad, modularidad y seguimiento de convenciones.",
+            maxScore = 5,
+            orderIndex = 2
+        )
+    )
+
     private fun submitReview() {
         val id = submissionId ?: return
         val state = _uiState.value
         if (state.isSubmitting || state.result != null) return
 
+        val missingCriterionIds = state.criteria
+            .filter { !state.criterionScores.containsKey(it.id) }
+            .map { it.id }
+            .toSet()
+
         val approved = state.isApproved
         val feedback = state.feedbackComment.trim()
-        val decisionError = if (approved == null) "Selecciona una decisión." else null
-        val feedbackError = if (feedback.isBlank()) "El comentario es obligatorio." else null
+        val decisionError = if (approved == null) "Debes seleccionar una decisión." else null
+        val feedbackError = if (feedback.isBlank()) "Este campo es obligatorio para enviar la revisión." else null
 
-        if (decisionError != null || feedbackError != null) {
+        if (missingCriterionIds.isNotEmpty() || decisionError != null || feedbackError != null) {
             _uiState.update {
-                it.copy(decisionError = decisionError, feedbackError = feedbackError)
+                it.copy(
+                    criterionErrors = missingCriterionIds,
+                    decisionError = decisionError,
+                    feedbackError = feedbackError
+                )
             }
             return
         }
 
         val selectedDecision = approved ?: return
+        val scoresList = state.criterionScores.map { (criterionId, score) ->
+            PeerReviewCriterionScoreDto(
+                rubricCriterionId = criterionId,
+                score = score
+            )
+        }
 
         viewModelScope.launch {
             val session = sessionRepository.session.first()
@@ -116,7 +195,8 @@ class PeerReviewDetailViewModel @Inject constructor(
                 dto = CreatePeerReviewRequestDto(
                     submissionId = id,
                     isApproved = selectedDecision,
-                    feedbackComment = feedback
+                    feedbackComment = feedback,
+                    criterionScores = scoresList
                 )
             ).collect { resource ->
                 when (resource) {
