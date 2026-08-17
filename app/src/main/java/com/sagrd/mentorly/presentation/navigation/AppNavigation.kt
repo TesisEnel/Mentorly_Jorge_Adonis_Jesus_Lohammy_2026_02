@@ -117,9 +117,7 @@ private fun NavigationContent(
             .fillMaxSize()
             .padding(innerPadding),
         onBack = {
-            if (backStack.size > 1) {
-                backStack.removeLastOrNull()
-            }
+            popBackStackSafely(backStack)
         },
         entryProvider = entryProvider {
             entry<Screen.Startup> {
@@ -192,10 +190,10 @@ private fun NavigationContent(
                 CourseDetailScreen(
                     courseId = destination.courseId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onEnrollmentCreated = { enrollmentId ->
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                         backStack.add(Screen.EnrollmentProgress(enrollmentId))
                     },
                     onActiveEnrollmentClick = { enrollmentId ->
@@ -214,7 +212,7 @@ private fun NavigationContent(
                 EnrollmentProgressScreen(
                     enrollmentId = destination.enrollmentId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onActivityClick = { activityId ->
                         backStack.add(
@@ -248,7 +246,7 @@ private fun NavigationContent(
                     enrollmentId = destination.enrollmentId,
                     themeId = destination.themeId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -258,10 +256,10 @@ private fun NavigationContent(
                     enrollmentId = destination.enrollmentId,
                     activityId = destination.activityId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onQuizSubmitted = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                         val currentDestination = backStack.lastOrNull()
                         if (
                             currentDestination !is Screen.EnrollmentProgress ||
@@ -278,7 +276,7 @@ private fun NavigationContent(
             entry<Screen.SubmissionList> {
                 SubmissionListScreen(
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onSubmissionClick = { submissionId ->
                         backStack.add(Screen.SubmissionDetail(submissionId))
@@ -290,7 +288,7 @@ private fun NavigationContent(
                 SubmissionDetailScreen(
                     submissionId = destination.submissionId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onEditClick = { submissionId, enrollmentId, activityId ->
                         backStack.add(
@@ -310,10 +308,10 @@ private fun NavigationContent(
                     activityId = destination.activityId,
                     submissionId = destination.submissionId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onSaved = { submissionId ->
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                         val currentDestination = backStack.lastOrNull()
                         if (
                             currentDestination !is Screen.SubmissionDetail ||
@@ -340,7 +338,7 @@ private fun NavigationContent(
                 PeerReviewDetailScreen(
                     submissionId = destination.submissionId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onReviewCompleted = {
                         replaceRoot(backStack, Screen.PeerReviewQueue)
@@ -351,7 +349,7 @@ private fun NavigationContent(
             entry<Screen.PeerReviewHistory> {
                 PeerReviewHistoryScreen(
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -359,7 +357,9 @@ private fun NavigationContent(
             entry<Screen.Profile> {
                 ProfileScreen(
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        if (!popBackStackSafely(backStack)) {
+                            replaceRoot(backStack, Screen.Home)
+                        }
                     },
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
@@ -374,7 +374,7 @@ private fun NavigationContent(
                 CourseMembersScreen(
                     courseId = destination.courseId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -383,7 +383,7 @@ private fun NavigationContent(
                 LeaderboardScreen(
                     courseId = destination.courseId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -414,7 +414,7 @@ private fun NavigationContent(
             entry<Screen.AdminPeerReviewList> {
                 AdminPeerReviewListScreen(
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onPeerReviewClick = { peerReviewId ->
                         backStack.add(Screen.PeerReviewAudit(peerReviewId))
@@ -425,7 +425,7 @@ private fun NavigationContent(
             entry<Screen.AdminAnalytics> {
                 AnalyticsScreen(
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -433,7 +433,7 @@ private fun NavigationContent(
             entry<Screen.AdminSubmissionList> {
                 AdminSubmissionListScreen(
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onSubmissionClick = { submissionId ->
                         backStack.add(Screen.AdminSubmissionAudit(submissionId))
@@ -445,13 +445,11 @@ private fun NavigationContent(
                 AdminSubmissionAuditScreen(
                     submissionId = destination.submissionId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onDecisionCompleted = {
                         // Volver a la lista sin duplicarla
-                        if (backStack.size > 1) {
-                            backStack.removeLastOrNull()
-                        }
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -460,7 +458,7 @@ private fun NavigationContent(
                 PeerReviewAuditScreen(
                     peerReviewId = destination.peerReviewId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -468,7 +466,7 @@ private fun NavigationContent(
             entry<Screen.AdminStudentList> {
                 AdminStudentListScreen(
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -483,7 +481,7 @@ private fun NavigationContent(
                     },
                     onManageContentClick = { courseId -> backStack.add(Screen.ContentManagement(courseId)) },
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -492,10 +490,10 @@ private fun NavigationContent(
                 CourseFormScreen(
                     courseId = destination.courseId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onSaved = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                         if (backStack.lastOrNull() !is Screen.AdminCourseList) {
                             backStack.add(Screen.AdminCourseList)
                         }
@@ -507,7 +505,7 @@ private fun NavigationContent(
                 ContentManagementScreen(
                     courseId = destination.courseId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onCreateUnitClick = { courseId ->
                         backStack.add(Screen.UnitForm(courseId, unitId = null))
@@ -538,10 +536,10 @@ private fun NavigationContent(
                     courseId = destination.courseId,
                     unitId = destination.unitId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onSaved = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                 )
             }
@@ -551,10 +549,10 @@ private fun NavigationContent(
                     unitId = destination.unitId,
                     themeId = destination.themeId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onSaved = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                 )
             }
@@ -564,10 +562,10 @@ private fun NavigationContent(
                     themeId = destination.themeId,
                     activityId = destination.activityId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onSaved = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                 )
             }
@@ -576,7 +574,7 @@ private fun NavigationContent(
                 AdminQuizQuestionScreen(
                     activityId = destination.activityId,
                     onBackClick = {
-                        backStack.removeLastOrNull()
+                        popBackStackSafely(backStack)
                     },
                     onQuestionCreated = {
                         // La pantalla conserva el formulario para crear otra pregunta.
@@ -593,4 +591,13 @@ private fun replaceRoot(
 ) {
     backStack.clear()
     backStack.add(screen)
+}
+
+private fun popBackStackSafely(backStack: NavBackStack<NavKey>): Boolean {
+    if (backStack.size <= 1) {
+        return false
+    }
+
+    backStack.removeLastOrNull()
+    return true
 }
