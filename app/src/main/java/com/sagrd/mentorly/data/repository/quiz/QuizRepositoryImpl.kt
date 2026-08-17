@@ -1,10 +1,12 @@
 package com.sagrd.mentorly.data.repository.quiz
 
 import com.sagrd.mentorly.data.remote.Resource
+import com.sagrd.mentorly.data.remote.dto.quiz.UpdateQuizQuestionDto
 import com.sagrd.mentorly.data.remote.dto.quiz.CreateQuizQuestionDto
 import com.sagrd.mentorly.data.remote.dto.quiz.SubmitQuizAttemptDto
 import com.sagrd.mentorly.data.remote.remotedatasource.QuizRemoteDataSource
 import com.sagrd.mentorly.domain.model.quiz.QuizAttempt
+import com.sagrd.mentorly.domain.model.quiz.AdminQuizQuestion
 import com.sagrd.mentorly.domain.model.quiz.QuizQuestion
 import com.sagrd.mentorly.domain.repository.quiz.QuizRepository
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +44,52 @@ class QuizRepositoryImpl @Inject constructor(
             }
             .onFailure {
                 emit(Resource.Error(it.message ?: "No se pudo crear la pregunta."))
+            }
+    }
+
+    override fun getAdminQuizQuestions(
+        adminId: String,
+        activityId: String
+    ): Flow<Resource<List<AdminQuizQuestion>>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.getAdminQuizQuestions(adminId, activityId)
+            .onSuccess { questions ->
+                emit(Resource.Success(questions.map { it.toDomain() }))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudieron cargar las preguntas."))
+            }
+    }
+
+    override fun updateQuizQuestion(
+        adminId: String,
+        questionId: String,
+        question: UpdateQuizQuestionDto
+    ): Flow<Resource<AdminQuizQuestion>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.updateQuizQuestion(adminId, questionId, question)
+            .onSuccess { updatedQuestion ->
+                emit(Resource.Success(updatedQuestion.toDomain()))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo actualizar la pregunta."))
+            }
+    }
+
+    override fun deleteQuizQuestion(
+        adminId: String,
+        questionId: String
+    ): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+
+        remoteDataSource.deleteQuizQuestion(adminId, questionId)
+            .onSuccess {
+                emit(Resource.Success(Unit))
+            }
+            .onFailure {
+                emit(Resource.Error(it.message ?: "No se pudo eliminar la pregunta."))
             }
     }
 
