@@ -9,5 +9,7 @@ data class AdminCourseListUiState(
     val deletingCourseId: String? = null,
     val publishingCourseId: String? = null,
     val errorMessage: String? = null,
-    val hasAdminAccess: Boolean = true
+    val hasSession: Boolean = true,
+    val hasAdminAccess: Boolean = true,
+    val searchQuery: String = "",
 )
