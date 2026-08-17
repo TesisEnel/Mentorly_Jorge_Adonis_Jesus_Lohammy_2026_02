@@ -6,5 +6,8 @@ sealed interface ThemeFormUiEvent {
     data class ContentChanged(val value: String) : ThemeFormUiEvent
     data class OrderChanged(val value: String) : ThemeFormUiEvent
     data object Save : ThemeFormUiEvent
+    data object DeleteTheme : ThemeFormUiEvent
     data object ClearError : ThemeFormUiEvent
+    data object SavedHandled : ThemeFormUiEvent
+    data object DeletedHandled : ThemeFormUiEvent
 }
