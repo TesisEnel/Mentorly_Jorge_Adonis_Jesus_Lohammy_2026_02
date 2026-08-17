@@ -9,5 +9,6 @@ data class ContentManagementUiState(
     val deletingItemId: String? = null,
     val reorderingItemId: String? = null,
     val errorMessage: String? = null,
-    val hasAdminAccess: Boolean = true
+    val hasSession: Boolean = true,
+    val hasAdminAccess: Boolean = true,
 )

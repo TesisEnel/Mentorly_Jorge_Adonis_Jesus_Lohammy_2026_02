@@ -12,125 +12,159 @@ import com.sagrd.mentorly.domain.repository.theme.ThemeRepository
 import com.sagrd.mentorly.domain.repository.unit.UnitRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class ContentManagementViewModel
-@Inject
-constructor(
+class ContentManagementViewModel @Inject constructor(
     private val courseRepository: CourseRepository,
     private val unitRepository: UnitRepository,
     private val themeRepository: ThemeRepository,
     private val activityRepository: ActivityRepository,
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(ContentManagementUiState())
-    val uiState: StateFlow<ContentManagementUiState> = _uiState.asStateFlow()
+
+    private val _state = MutableStateFlow(ContentManagementUiState())
+    val state: StateFlow<ContentManagementUiState> = _state.asStateFlow()
+
     private var courseId = ""
 
-    fun onEvent(e: ContentManagementUiEvent) {
-        when (e) {
-            ContentManagementUiEvent.Load -> load(false)
-            ContentManagementUiEvent.Refresh -> load(true)
-            is ContentManagementUiEvent.DeleteUnit ->
-                write(e.id) { a -> unitRepository.deleteUnit(a, e.id) }
-            is ContentManagementUiEvent.DeleteTheme ->
-                write(e.id) { a -> themeRepository.deleteTheme(a, e.id) }
-            is ContentManagementUiEvent.DeleteActivity ->
-                write(e.id) { a -> activityRepository.deleteActivity(a, e.id) }
-            is ContentManagementUiEvent.MoveUnit -> moveUnit(e)
-            is ContentManagementUiEvent.MoveTheme -> moveTheme(e)
-            is ContentManagementUiEvent.MoveActivity -> moveActivity(e)
-            ContentManagementUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+    fun onEvent(event: ContentManagementUiEvent) {
+        when (event) {
+            ContentManagementUiEvent.Load -> load(isRefresh = false)
+            ContentManagementUiEvent.Refresh -> load(isRefresh = true)
+            is ContentManagementUiEvent.DeleteUnit -> {
+                deleteItem(event.id) { adminId -> unitRepository.deleteUnit(adminId, event.id) }
+            }
+            is ContentManagementUiEvent.DeleteTheme -> {
+                deleteItem(event.id) { adminId -> themeRepository.deleteTheme(adminId, event.id) }
+            }
+            is ContentManagementUiEvent.DeleteActivity -> {
+                deleteItem(event.id) { adminId -> activityRepository.deleteActivity(adminId, event.id) }
+            }
+            is ContentManagementUiEvent.MoveUnit -> moveUnit(event)
+            is ContentManagementUiEvent.MoveTheme -> moveTheme(event)
+            is ContentManagementUiEvent.MoveActivity -> moveActivity(event)
+            ContentManagementUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     fun setCourseId(id: String) {
         if (courseId != id) {
             courseId = id
-            load(false)
+            load(isRefresh = false)
         }
     }
 
-    private fun load(refresh: Boolean) =
+    private fun load(isRefresh: Boolean) {
         viewModelScope.launch {
-            if (admin() == null) return@launch
-            _uiState.update {
-                it.copy(
-                    isLoading = !refresh && it.courseContent == null,
-                    isRefreshing = refresh,
-                    errorMessage = null,
-                )
-            }
-            courseRepository.getCourseContent(courseId).collect { r ->
-                when (r) {
-                    is Resource.Loading -> Unit
-                    is Resource.Success ->
-                        _uiState.update {
-                            it.copy(isLoading = false, isRefreshing = false, courseContent = r.data)
+            val session = sessionRepository.session.first()
+
+            if (session == null) {
+                updateMissingSession()
+            } else if (session.role != StudentRole.ADMIN) {
+                updateMissingAdminAccess()
+            } else {
+                _state.update {
+                    it.copy(
+                        isLoading = !isRefresh && it.courseContent == null,
+                        isRefreshing = isRefresh,
+                        hasSession = true,
+                        hasAdminAccess = true,
+                        errorMessage = null,
+                    )
+                }
+
+                courseRepository.getCourseContent(courseId).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> Unit
+                        is Resource.Success -> _state.update {
+                            it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                courseContent = resource.data,
+                            )
                         }
-                    is Resource.Error ->
-                        _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(
                                 isLoading = false,
                                 isRefreshing = false,
                                 errorMessage =
-                                    r.message ?: "No se pudo cargar el contenido del curso.",
+                                    resource.message ?: "No se pudo cargar el contenido del curso.",
                             )
                         }
+                    }
                 }
             }
         }
+    }
 
-    private fun write(id: String, block: (String) -> Flow<Resource<Unit>>) =
+    private fun deleteItem(id: String, action: (String) -> Flow<Resource<Unit>>) {
         viewModelScope.launch {
-            val a = admin() ?: return@launch
-            _uiState.update { it.copy(deletingItemId = id) }
-            block(a).collect { r ->
-                when (r) {
-                    is Resource.Success -> {
-                        _uiState.update { it.copy(deletingItemId = null) }
-                        load(true)
-                    }
-                    is Resource.Error ->
-                        _uiState.update {
+            val session = sessionRepository.session.first()
+
+            if (session == null) {
+                updateMissingSession()
+            } else if (session.role != StudentRole.ADMIN) {
+                updateMissingAdminAccess()
+            } else if (_state.value.deletingItemId == null) {
+                _state.update { it.copy(deletingItemId = id, errorMessage = null) }
+                action(session.studentId).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> Unit
+                        is Resource.Success -> {
+                            _state.update { it.copy(deletingItemId = null) }
+                            load(isRefresh = true)
+                        }
+                        is Resource.Error -> _state.update {
                             it.copy(
                                 deletingItemId = null,
-                                errorMessage = r.message ?: "No se pudo eliminar el elemento.",
+                                errorMessage = resource.message ?: "No se pudo eliminar el elemento.",
                             )
                         }
-                    is Resource.Loading -> Unit
+                    }
                 }
             }
         }
+    }
 
-    private fun moveUnit(e: ContentManagementUiEvent.MoveUnit) {
-        val list = _uiState.value.courseContent?.units.orEmpty()
-        move(list.map { it.id }, e.id, e.up) { ids, a ->
-            unitRepository.reorderUnits(a, courseId, ReorderItemsDto(ids))
+    private fun moveUnit(event: ContentManagementUiEvent.MoveUnit) {
+        val ids = _state.value.courseContent?.units.orEmpty().map { it.id }
+        move(ids, event.id, event.up) { orderedIds, adminId ->
+            unitRepository.reorderUnits(adminId, courseId, ReorderItemsDto(orderedIds))
         }
     }
 
-    private fun moveTheme(e: ContentManagementUiEvent.MoveTheme) {
-        val list =
-            _uiState.value.courseContent?.units?.firstOrNull { it.id == e.unitId }?.themes.orEmpty()
-        move(list.map { it.id }, e.id, e.up) { ids, a ->
-            themeRepository.reorderThemes(a, e.unitId, ReorderItemsDto(ids))
+    private fun moveTheme(event: ContentManagementUiEvent.MoveTheme) {
+        val ids =
+            _state.value.courseContent
+                ?.units
+                ?.firstOrNull { it.id == event.unitId }
+                ?.themes
+                .orEmpty()
+                .map { it.id }
+        move(ids, event.id, event.up) { orderedIds, adminId ->
+            themeRepository.reorderThemes(adminId, event.unitId, ReorderItemsDto(orderedIds))
         }
     }
 
-    private fun moveActivity(e: ContentManagementUiEvent.MoveActivity) {
-        val list =
-            _uiState.value.courseContent
+    private fun moveActivity(event: ContentManagementUiEvent.MoveActivity) {
+        val ids =
+            _state.value.courseContent
                 ?.units
                 .orEmpty()
                 .flatMap { it.themes }
-                .firstOrNull { it.id == e.themeId }
+                .firstOrNull { it.id == event.themeId }
                 ?.activities
                 .orEmpty()
-        move(list.map { it.id }, e.id, e.up) { ids, a ->
-            activityRepository.reorderActivities(a, e.themeId, ReorderItemsDto(ids))
+                .map { it.id }
+        move(ids, event.id, event.up) { orderedIds, adminId ->
+            activityRepository.reorderActivities(adminId, event.themeId, ReorderItemsDto(orderedIds))
         }
     }
 
@@ -138,47 +172,65 @@ constructor(
         ids: List<String>,
         id: String,
         up: Boolean,
-        block: (List<String>, String) -> Flow<Resource<Unit>>,
-    ) =
-        viewModelScope.launch {
-            val index = ids.indexOf(id)
-            val target = if (up) index - 1 else index + 1
-            if (index < 0 || target !in ids.indices) return@launch
-            val a = admin() ?: return@launch
-            val ordered = ids.toMutableList().also { java.util.Collections.swap(it, index, target) }
-            _uiState.update { it.copy(reorderingItemId = id) }
-            block(ordered, a).collect { r ->
-                when (r) {
-                    is Resource.Success -> {
-                        _uiState.update { it.copy(reorderingItemId = null) }
-                        load(true)
+        action: (List<String>, String) -> Flow<Resource<Unit>>,
+    ) {
+        val currentIndex = ids.indexOf(id)
+        val targetIndex = if (up) currentIndex - 1 else currentIndex + 1
+
+        if (currentIndex in ids.indices && targetIndex in ids.indices) {
+            viewModelScope.launch {
+                val session = sessionRepository.session.first()
+
+                if (session == null) {
+                    updateMissingSession()
+                } else if (session.role != StudentRole.ADMIN) {
+                    updateMissingAdminAccess()
+                } else {
+                    val orderedIds = ids.toMutableList().also {
+                        java.util.Collections.swap(it, currentIndex, targetIndex)
                     }
-                    is Resource.Error ->
-                        _uiState.update {
-                            it.copy(
-                                reorderingItemId = null,
-                                errorMessage = r.message ?: "No se pudo cambiar el orden.",
-                            )
+                    _state.update { it.copy(reorderingItemId = id) }
+                    action(orderedIds, session.studentId).collect { resource ->
+                        when (resource) {
+                            is Resource.Loading -> Unit
+                            is Resource.Success -> {
+                                _state.update { it.copy(reorderingItemId = null) }
+                                load(isRefresh = true)
+                            }
+                            is Resource.Error -> _state.update {
+                                it.copy(
+                                    reorderingItemId = null,
+                                    errorMessage = resource.message ?: "No se pudo cambiar el orden.",
+                                )
+                            }
                         }
-                    is Resource.Loading -> Unit
+                    }
                 }
             }
         }
+    }
 
-    private suspend fun admin(): String? =
-        sessionRepository.session
-            .first()
-            ?.takeIf { it.role == StudentRole.ADMIN }
-            ?.studentId
-            .also {
-                if (it == null)
-                    _uiState.update { s ->
-                        s.copy(
-                            isLoading = false,
-                            hasAdminAccess = false,
-                            errorMessage =
-                                "No tienes permisos para administrar el contenido del curso.",
-                        )
-                    }
-            }
+    private fun updateMissingSession() {
+        _state.update {
+            it.copy(
+                isLoading = false,
+                isRefreshing = false,
+                hasSession = false,
+                hasAdminAccess = false,
+                errorMessage = "No se encontró una sesión activa.",
+            )
+        }
+    }
+
+    private fun updateMissingAdminAccess() {
+        _state.update {
+            it.copy(
+                isLoading = false,
+                isRefreshing = false,
+                hasSession = true,
+                hasAdminAccess = false,
+                errorMessage = "No tienes permisos para administrar el contenido del curso.",
+            )
+        }
+    }
 }
