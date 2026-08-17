@@ -3,40 +3,50 @@ package com.sagrd.mentorly.presentation.admin.dashboard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.School
 import com.sagrd.mentorly.domain.model.analytics.AnalyticsOverview
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
@@ -50,17 +60,17 @@ fun AdminDashboardScreen(
     onSignOutCompleted: () -> Unit,
     viewModel: AdminDashboardViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(uiState.isSignedOut) {
-        if (uiState.isSignedOut) {
+    LaunchedEffect(state.isSignedOut) {
+        if (state.isSignedOut) {
             viewModel.onEvent(AdminDashboardUiEvent.SignOutHandled)
             onSignOutCompleted()
         }
     }
 
     AdminDashboardContent(
-        uiState = uiState,
+        state = state,
         onRefresh = { viewModel.onEvent(AdminDashboardUiEvent.Refresh) },
         onClearError = { viewModel.onEvent(AdminDashboardUiEvent.ClearError) },
         onCoursesClick = onCoursesClick,
@@ -83,7 +93,7 @@ fun AdminDashboardScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AdminDashboardContent(
-    uiState: AdminDashboardUiState,
+    state: AdminDashboardUiState,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
     onCoursesClick: () -> Unit,
@@ -98,16 +108,23 @@ private fun AdminDashboardContent(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Panel administrativo", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Panel administrativo",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                navigationIcon = {
+                    Icon(
+                        Icons.Default.AccountCircle,
+                        contentDescription = "Avatar de administrador",
+                        modifier = Modifier.padding(start = 16.dp),
+                    )
+                },
                 actions = {
-                    TextButton(
-                        onClick = onRefresh,
-                        enabled = uiState.hasAdminAccess && !uiState.isRefreshing
-                    ) {
-                        Text("Recargar")
-                    }
-                    TextButton(onClick = onShowSignOutDialog) {
-                        Text("Cerrar sesión")
+                    IconButton(onClick = onShowSignOutDialog) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar sesión")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors()
@@ -115,37 +132,34 @@ private fun AdminDashboardContent(
         }
     ) { innerPadding ->
         when {
-            !uiState.hasSession -> MessageContent(
+            !state.hasSession -> MessageContent(
                 message = "No se encontró una sesión activa.",
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
 
-            !uiState.hasAdminAccess -> MessageContent(
-                message = "No tienes permisos para acceder al panel administrativo.",
+            !state.hasAdminAccess -> RestrictedAccessContent(
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
 
-            uiState.isLoading && uiState.overview == null -> LoadingContent(
+            state.isLoading && state.overview == null -> DashboardSkeleton(
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
 
-            uiState.errorMessage != null && uiState.overview == null -> ErrorContent(
-                message = uiState.errorMessage,
+            state.errorMessage != null && state.overview == null -> ErrorContent(
                 onRetry = onRefresh,
-                onDismiss = onClearError,
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
 
-            uiState.overview == null -> MessageContent(
+            state.overview == null -> MessageContent(
                 message = "No hay información administrativa disponible.",
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
 
             else -> DashboardContent(
-                adminName = uiState.adminName,
-                overview = uiState.overview,
-                isRefreshing = uiState.isRefreshing,
-                errorMessage = uiState.errorMessage,
+                adminName = state.adminName,
+                overview = state.overview,
+                isRefreshing = state.isRefreshing,
+                errorMessage = state.errorMessage,
                 onRefresh = onRefresh,
                 onClearError = onClearError,
                 onCoursesClick = onCoursesClick,
@@ -158,7 +172,7 @@ private fun AdminDashboardContent(
         }
     }
 
-    if (uiState.isSignOutDialogVisible) {
+    if (state.isSignOutDialogVisible) {
         AlertDialog(
             onDismissRequest = onDismissSignOutDialog,
             title = { Text("Cerrar sesión") },
@@ -193,37 +207,27 @@ private fun DashboardContent(
     modifier: Modifier = Modifier
 ) {
     val metrics = listOf(
-        "Cursos" to overview.courses.toString(),
-        "Inscripciones activas" to overview.activeEnrollments.toString(),
-        "Cursos completados" to overview.completedEnrollments.toString(),
-        "Inscripciones expiradas" to overview.expiredEnrollments.toString(),
-        "Revisiones pendientes" to overview.pendingPeerReviewSubmissions.toString()
+        DashboardMetric("Cursos", overview.courses.toString(), Icons.Default.Book),
+        DashboardMetric("Inscripciones activas", overview.activeEnrollments.toString(), Icons.Default.School),
+        DashboardMetric("Cursos completados", overview.completedEnrollments.toString(), Icons.Default.Assignment),
+        DashboardMetric("Inscripciones expiradas", overview.expiredEnrollments.toString(), Icons.Default.Close, true),
+        DashboardMetric("Entregas pendientes de revisión", overview.pendingPeerReviewSubmissions.toString(), Icons.Default.Groups),
     )
     val actions = listOf(
-        "Cursos" to onCoursesClick,
-        "Estudiantes" to onStudentsClick,
-        "Revisiones" to onPeerReviewsClick,
-        "Entregas escaladas" to onEscalatedSubmissionsClick,
-        "Analíticas" to onAnalyticsClick
+        DashboardAction("Cursos", "Crear y administrar contenido académico", Icons.Default.School, onCoursesClick),
+        DashboardAction("Estudiantes", "Consultar progreso y gestionar roles", Icons.Default.Groups, onStudentsClick),
+        DashboardAction("Revisiones por pares", "Auditar revisiones y resolver casos", Icons.Default.Assignment, onPeerReviewsClick),
+        DashboardAction("Entregas escaladas", "Revisar solicitudes pendientes de decisión", Icons.Default.Assignment, onEscalatedSubmissionsClick),
+        DashboardAction("Analíticas", "Consultar abandono, tiempos y cuellos de botella", Icons.Default.Analytics, onAnalyticsClick),
     )
 
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Column {
-                Text(
-                    text = if (adminName.isBlank()) "Bienvenido" else "Bienvenido, $adminName",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Resumen general de Mentorly",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            WelcomeHeader(adminName)
         }
 
         if (isRefreshing) {
@@ -246,7 +250,13 @@ private fun DashboardContent(
         }
 
         item {
-            Text("Resumen", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Resumen general", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onRefresh, enabled = !isRefreshing) {
+                    Text("Actualizar información")
+                }
+            }
         }
 
         item {
@@ -254,46 +264,25 @@ private fun DashboardContent(
         }
 
         item {
-            Text("Gestión", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        }
-
-        items(actions, key = { it.first }) { action ->
-            OutlinedButton(
-                onClick = action.second,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(action.first)
-            }
+            Text("Gestión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
 
         item {
-            Button(
-                onClick = onRefresh,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isRefreshing
-            ) {
-                Text("Actualizar información")
-            }
+            ManagementGrid(actions)
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MetricGrid(metrics: List<Pair<String, String>>) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        metrics.forEach { metric ->
-            Card(
-                modifier = Modifier.width(160.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Text(metric.second, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(4.dp))
-                    Text(metric.first, style = MaterialTheme.typography.bodyMedium)
+private fun MetricGrid(metrics: List<DashboardMetric>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        metrics.chunked(2).forEach { rowMetrics ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowMetrics.forEach { metric ->
+                    MetricCard(
+                        metric,
+                        if (rowMetrics.size == 1) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -301,10 +290,108 @@ private fun MetricGrid(metrics: List<Pair<String, String>>) {
 }
 
 @Composable
-private fun LoadingContent(modifier: Modifier = Modifier) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
+private fun WelcomeHeader(adminName: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = "Hola, ${adminName.ifBlank { "Adonis" }}",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = "Resumen general de Mentorly",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
+}
+
+@Composable
+private fun MetricCard(metric: DashboardMetric, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = if (metric.isAlert) Color(0xFFFFF1F2) else MaterialTheme.colorScheme.surfaceVariant,
+        ),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Icon(metric.icon, contentDescription = null, tint = if (metric.isAlert) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+            Text(metric.label, style = MaterialTheme.typography.labelSmall)
+            Text(
+                metric.value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (metric.isAlert) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ManagementGrid(actions: List<DashboardAction>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        actions.forEach { action ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = action.onClick,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(action.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(action.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            action.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = "Abrir ${action.label}",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardSkeleton(modifier: Modifier = Modifier) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item { SkeletonBlock(Modifier.fillMaxWidth().height(56.dp)) }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                repeat(3) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        SkeletonBlock(Modifier.weight(1f).height(100.dp))
+                        SkeletonBlock(Modifier.weight(1f).height(100.dp))
+                    }
+                }
+            }
+        }
+        item {
+            repeat(5) {
+                SkeletonBlock(Modifier.fillMaxWidth().height(84.dp).padding(bottom = 10.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonBlock(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {}
 }
 
 @Composable
@@ -315,10 +402,28 @@ private fun MessageContent(message: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun RestrictedAccessContent(modifier: Modifier = Modifier) {
+    Box(modifier.padding(24.dp), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                Icons.Default.Lock,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                "No tienes permisos para acceder al panel administrativo",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ErrorContent(
-    message: String,
     onRetry: () -> Unit,
-    onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier.padding(24.dp), contentAlignment = Alignment.Center) {
@@ -326,9 +431,11 @@ private fun ErrorContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(message, color = MaterialTheme.colorScheme.error)
+            Text(
+                "No se pudo cargar el resumen administrativo",
+                color = MaterialTheme.colorScheme.error,
+            )
             Button(onClick = onRetry) { Text("Reintentar") }
-            TextButton(onClick = onDismiss) { Text("Cerrar") }
         }
     }
 }
@@ -337,17 +444,17 @@ private fun ErrorContent(
 @Composable
 private fun AdminDashboardPreview() {
     MentorlyTheme {
-        AdminDashboardContent(
-            uiState = AdminDashboardUiState(
-                adminName = "Alex",
-                overview = AnalyticsOverview(
-                    courses = 8,
-                    activeEnrollments = 42,
-                    completedEnrollments = 18,
-                    expiredEnrollments = 5,
-                    pendingPeerReviewSubmissions = 7
-                )
+        DashboardContent(
+            adminName = "Adonis",
+            overview = AnalyticsOverview(
+                courses = 8,
+                activeEnrollments = 42,
+                completedEnrollments = 18,
+                expiredEnrollments = 5,
+                pendingPeerReviewSubmissions = 7,
             ),
+            isRefreshing = false,
+            errorMessage = null,
             onRefresh = {},
             onClearError = {},
             onCoursesClick = {},
@@ -355,9 +462,6 @@ private fun AdminDashboardPreview() {
             onPeerReviewsClick = {},
             onEscalatedSubmissionsClick = {},
             onAnalyticsClick = {},
-            onShowSignOutDialog = {},
-            onDismissSignOutDialog = {},
-            onConfirmSignOut = {},
         )
     }
 }
