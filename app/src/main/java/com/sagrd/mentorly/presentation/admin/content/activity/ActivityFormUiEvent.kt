@@ -11,5 +11,8 @@ sealed interface ActivityFormUiEvent {
     data class StrategyChanged(val value: ApprovalStrategy) : ActivityFormUiEvent
     data class OrderChanged(val value: String) : ActivityFormUiEvent
     data object Save : ActivityFormUiEvent
+    data object DeleteActivity : ActivityFormUiEvent
     data object ClearError : ActivityFormUiEvent
+    data object SavedHandled : ActivityFormUiEvent
+    data object DeletedHandled : ActivityFormUiEvent
 }
