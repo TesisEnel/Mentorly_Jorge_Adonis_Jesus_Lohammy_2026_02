@@ -30,7 +30,6 @@ import com.sagrd.mentorly.presentation.community.leaderboard.LeaderboardScreen
 import com.sagrd.mentorly.presentation.community.members.CourseMembersScreen
 import com.sagrd.mentorly.presentation.course.detail.CourseDetailScreen
 import com.sagrd.mentorly.presentation.course.list.CourseListScreen
-import com.sagrd.mentorly.presentation.enrollment.list.EnrollmentListScreen
 import com.sagrd.mentorly.presentation.home.HomeScreen
 import com.sagrd.mentorly.presentation.peerreview.detail.PeerReviewDetailScreen
 import com.sagrd.mentorly.presentation.peerreview.history.PeerReviewHistoryScreen
@@ -59,7 +58,6 @@ private fun AppNavigationDisplay(
     val currentDestination = backStack.lastOrNull()
     val showBottomNavigation = (currentDestination is Screen.Home ||
         currentDestination is Screen.CourseList ||
-        currentDestination is Screen.EnrollmentList ||
         currentDestination is Screen.PeerReviewQueue ||
         currentDestination is Screen.Profile)
 
@@ -70,7 +68,6 @@ private fun AppNavigationDisplay(
                     currentSection = when (currentDestination) {
                         is Screen.Home -> MentorlySection.HOME
                         is Screen.Profile -> MentorlySection.PROFILE
-                        is Screen.EnrollmentList -> MentorlySection.LEARNING
                         is Screen.PeerReviewQueue -> MentorlySection.REVIEWS
                         else -> MentorlySection.COURSES
                     },
@@ -89,11 +86,6 @@ private fun AppNavigationDisplay(
                             MentorlySection.PROFILE -> {
                                 if (currentDestination !is Screen.Profile) {
                                     replaceRoot(backStack, Screen.Profile)
-                                }
-                            }
-                            MentorlySection.LEARNING -> {
-                                if (currentDestination !is Screen.EnrollmentList) {
-                                    replaceRoot(backStack, Screen.EnrollmentList)
                                 }
                             }
                             MentorlySection.REVIEWS -> {
@@ -171,7 +163,7 @@ private fun NavigationContent(
                         replaceRoot(backStack, Screen.Profile)
                     },
                     onSeeAllEnrollments = {
-                        replaceRoot(backStack, Screen.EnrollmentList)
+                        replaceRoot(backStack, Screen.CourseList)
                     },
                     onSeeAllCourses = {
                         replaceRoot(backStack, Screen.CourseList)
@@ -211,17 +203,6 @@ private fun NavigationContent(
                     },
                     onLeaderboardClick = { courseId ->
                         backStack.add(Screen.CourseLeaderboard(courseId))
-                    }
-                )
-            }
-
-            entry<Screen.EnrollmentList> {
-                EnrollmentListScreen(
-                    onEnrollmentClick = { enrollmentId ->
-                        backStack.add(Screen.EnrollmentProgress(enrollmentId))
-                    },
-                    onSubmissionsClick = {
-                        backStack.add(Screen.SubmissionList)
                     }
                 )
             }
