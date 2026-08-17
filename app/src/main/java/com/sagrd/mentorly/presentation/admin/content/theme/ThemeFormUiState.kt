@@ -10,5 +10,8 @@ data class ThemeFormUiState(
     val errorMessage: String? = null,
     val fieldErrors: Map<String, String> = emptyMap(),
     val isSaved: Boolean = false,
-    val hasAdminAccess: Boolean = true
+    val isDeleting: Boolean = false,
+    val isDeleted: Boolean = false,
+    val hasSession: Boolean = true,
+    val hasAdminAccess: Boolean = true,
 )
