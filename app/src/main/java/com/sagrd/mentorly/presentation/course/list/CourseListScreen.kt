@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Star
@@ -73,6 +74,7 @@ private val AmberStar = Color(0xFFFFA000)
 fun CourseListScreen(
     onCourseClick: (String) -> Unit,
     onEnrollmentClick: (String) -> Unit = onCourseClick,
+    onSubmissionsClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     viewModel: CourseListViewModel = hiltViewModel()
 ) {
@@ -83,6 +85,7 @@ fun CourseListScreen(
         onEvent = viewModel::onEvent,
         onCourseClick = onCourseClick,
         onEnrollmentClick = onEnrollmentClick,
+        onSubmissionsClick = onSubmissionsClick,
         onProfileClick = onProfileClick
     )
 }
@@ -94,6 +97,7 @@ fun CourseListBody(
     onEvent: (CourseListUiEvent) -> Unit,
     onCourseClick: (String) -> Unit,
     onEnrollmentClick: (String) -> Unit = onCourseClick,
+    onSubmissionsClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -110,6 +114,13 @@ fun CourseListBody(
                     )
                 },
                 actions = {
+                    IconButton(onClick = onSubmissionsClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.Assignment,
+                            contentDescription = "Mis entregas",
+                            tint = PrimaryBlue
+                        )
+                    }
                     IconButton(
                         onClick = { onEvent(CourseListUiEvent.Refresh) },
                         enabled = !state.isLoading && !state.isRefreshing && state.hasSession
