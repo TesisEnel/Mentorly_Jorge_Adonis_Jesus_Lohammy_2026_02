@@ -5,5 +5,8 @@ sealed interface UnitFormUiEvent {
     data class TitleChanged(val value: String) : UnitFormUiEvent
     data class OrderChanged(val value: String) : UnitFormUiEvent
     data object Save : UnitFormUiEvent
+    data object DeleteUnit : UnitFormUiEvent
     data object ClearError : UnitFormUiEvent
+    data object SavedHandled : UnitFormUiEvent
+    data object DeletedHandled : UnitFormUiEvent
 }
