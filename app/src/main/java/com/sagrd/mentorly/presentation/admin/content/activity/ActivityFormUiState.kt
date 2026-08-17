@@ -6,6 +6,7 @@ import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 data class ActivityFormUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
+    val isDeleting: Boolean = false,
     val isEditMode: Boolean = false,
     val title: String = "",
     val type: ActivityType = ActivityType.EXERCISE,
@@ -15,5 +16,7 @@ data class ActivityFormUiState(
     val errorMessage: String? = null,
     val fieldErrors: Map<String, String> = emptyMap(),
     val isSaved: Boolean = false,
-    val hasAdminAccess: Boolean = true
+    val isDeleted: Boolean = false,
+    val hasSession: Boolean = true,
+    val hasAdminAccess: Boolean = true,
 )
