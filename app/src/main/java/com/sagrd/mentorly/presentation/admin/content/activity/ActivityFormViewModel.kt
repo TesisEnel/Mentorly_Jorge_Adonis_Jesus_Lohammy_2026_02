@@ -1,154 +1,240 @@
 package com.sagrd.mentorly.presentation.admin.content.activity
 
-import androidx.lifecycle.*
-import com.sagrd.mentorly.data.remote.*
-import com.sagrd.mentorly.data.remote.dto.activity.*
-import com.sagrd.mentorly.domain.model.content.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.sagrd.mentorly.data.remote.Resource
+import com.sagrd.mentorly.data.remote.dto.activity.CreateActivityDto
+import com.sagrd.mentorly.data.remote.dto.activity.UpdateActivityDto
+import com.sagrd.mentorly.domain.model.content.ActivityType
+import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.domain.repository.activity.ActivityRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class ActivityFormViewModel
-@Inject
-constructor(private val repo: ActivityRepository, private val session: SessionRepository) :
-    ViewModel() {
+class ActivityFormViewModel @Inject constructor(
+    private val activityRepository: ActivityRepository,
+    private val sessionRepository: SessionRepository,
+) : ViewModel() {
+
     private val _state = MutableStateFlow(ActivityFormUiState())
     val state: StateFlow<ActivityFormUiState> = _state.asStateFlow()
+
     private var themeId = ""
     private var activityId: String? = null
 
-    fun onEvent(e: ActivityFormUiEvent) {
-        when (e) {
-            is ActivityFormUiEvent.Load -> load(e.themeId, e.activityId)
-            is ActivityFormUiEvent.TitleChanged ->
-                _state.update { it.copy(title = e.value, fieldErrors = emptyMap()) }
-            is ActivityFormUiEvent.TypeChanged ->
-                _state.update {
-                    it.copy(
-                        type = e.value,
-                        approvalStrategy =
-                            if (e.value == ActivityType.QUIZ) ApprovalStrategy.AUTO
-                            else it.approvalStrategy,
-                    )
-                }
-            is ActivityFormUiEvent.MandatoryChanged ->
-                _state.update { it.copy(isMandatory = e.value) }
-            is ActivityFormUiEvent.StrategyChanged ->
-                _state.update {
-                    if (it.type == ActivityType.QUIZ) it else it.copy(approvalStrategy = e.value)
-                }
-            is ActivityFormUiEvent.OrderChanged -> _state.update { it.copy(orderIndex = e.value) }
+    fun onEvent(event: ActivityFormUiEvent) {
+        when (event) {
+            is ActivityFormUiEvent.Load -> load(event.themeId, event.activityId)
+            is ActivityFormUiEvent.TitleChanged -> _state.update {
+                it.copy(title = event.value, fieldErrors = emptyMap())
+            }
+            is ActivityFormUiEvent.TypeChanged -> _state.update {
+                it.copy(
+                    type = event.value,
+                    approvalStrategy = if (event.value == ActivityType.QUIZ) ApprovalStrategy.AUTO else it.approvalStrategy,
+                )
+            }
+            is ActivityFormUiEvent.MandatoryChanged -> _state.update { it.copy(isMandatory = event.value) }
+            is ActivityFormUiEvent.StrategyChanged -> _state.update {
+                if (it.type == ActivityType.QUIZ) it else it.copy(approvalStrategy = event.value)
+            }
+            is ActivityFormUiEvent.OrderChanged -> _state.update {
+                it.copy(orderIndex = event.value, fieldErrors = emptyMap())
+            }
             ActivityFormUiEvent.Save -> save()
+            ActivityFormUiEvent.DeleteActivity -> deleteActivity()
             ActivityFormUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
+            ActivityFormUiEvent.SavedHandled -> _state.update { it.copy(isSaved = false) }
+            ActivityFormUiEvent.DeletedHandled -> _state.update { it.copy(isDeleted = false) }
         }
     }
 
-    private fun load(theme: String, id: String?) =
+    private fun load(newThemeId: String, newActivityId: String?) {
         viewModelScope.launch {
-            if (admin() != true) return@launch
-            themeId = theme
-            activityId = id
-            _state.update { it.copy(isEditMode = id != null, isLoading = id != null) }
-            if (id != null)
-                repo.getActivities(theme).collect { r ->
-                    when (r) {
-                        is Resource.Success ->
-                            r.data
-                                ?.firstOrNull { it.id == id }
-                                ?.let { a ->
-                                    _state.update { s ->
-                                        s.copy(
+            val session = sessionRepository.session.first()
+
+            if (session == null) {
+                updateMissingSession()
+            } else if (session.role != StudentRole.ADMIN) {
+                updateMissingAdminAccess()
+            } else if (themeId != newThemeId || activityId != newActivityId) {
+                themeId = newThemeId
+                activityId = newActivityId
+                _state.update {
+                    ActivityFormUiState(
+                        isLoading = newActivityId != null,
+                        isEditMode = newActivityId != null,
+                        hasSession = true,
+                        hasAdminAccess = true,
+                    )
+                }
+
+                if (newActivityId != null) {
+                    activityRepository.getActivities(newThemeId).collect { resource ->
+                        when (resource) {
+                            is Resource.Loading -> Unit
+                            is Resource.Success -> _state.update { state ->
+                                resource.data
+                                    ?.firstOrNull { it.id == newActivityId }
+                                    ?.let { activity ->
+                                        state.copy(
                                             isLoading = false,
-                                            title = a.title,
-                                            type = a.type,
-                                            isMandatory = a.isMandatory,
-                                            approvalStrategy = a.approvalStrategy,
-                                            orderIndex = a.orderIndex.toString(),
+                                            title = activity.title,
+                                            type = activity.type,
+                                            isMandatory = activity.isMandatory,
+                                            approvalStrategy = activity.approvalStrategy,
+                                            orderIndex = activity.orderIndex.toString(),
                                         )
                                     }
-                                }
-                        is Resource.Error ->
-                            _state.update {
+                                    ?: state.copy(
+                                        isLoading = false,
+                                        errorMessage = "No se encontró la actividad.",
+                                    )
+                            }
+                            is Resource.Error -> _state.update {
                                 it.copy(
                                     isLoading = false,
-                                    errorMessage = r.message ?: "No se pudo cargar la actividad.",
+                                    errorMessage = resource.message ?: "No se pudo cargar la actividad.",
                                 )
                             }
-                        else -> Unit
+                        }
                     }
                 }
-        }
-
-    private fun save() =
-        viewModelScope.launch {
-            if (_state.value.isSaving || admin() != true) return@launch
-            val s = _state.value
-            val order = s.orderIndex.toIntOrNull()
-            if (s.title.isBlank() || order == null) {
-                _state.update {
-                    it.copy(
-                        fieldErrors =
-                            buildMap {
-                                if (s.title.isBlank()) put("title", "El título es obligatorio.")
-                                if (order == null) put("order", "El orden debe ser un entero.")
-                            }
-                    )
-                }
-                return@launch
             }
-            val a = session.session.first()!!.studentId
-            val type = if (s.type == ActivityType.EXERCISE) 1 else 2
-            val strategy =
-                when (
-                    if (s.type == ActivityType.QUIZ) ApprovalStrategy.AUTO else s.approvalStrategy
-                ) {
-                    ApprovalStrategy.AUTO -> 1
-                    ApprovalStrategy.PEER_REVIEW -> 2
-                    ApprovalStrategy.ADMIN -> 3
+        }
+    }
+
+    private fun save() {
+        viewModelScope.launch {
+            val session = sessionRepository.session.first()
+            val form = _state.value
+            val errors = validate(form)
+
+            if (session == null) {
+                updateMissingSession()
+            } else if (session.role != StudentRole.ADMIN) {
+                updateMissingAdminAccess()
+            } else if (form.isSaving || form.isDeleting) {
+                Unit
+            } else if (errors.isNotEmpty()) {
+                _state.update { it.copy(fieldErrors = errors) }
+            } else {
+                _state.update { it.copy(isSaving = true, errorMessage = null) }
+                val dto = form.toCreateDto()
+
+                if (activityId == null) {
+                    activityRepository
+                        .createActivity(session.studentId, themeId, dto)
+                        .collect(::handleSaveResult)
+                } else {
+                    activityRepository
+                        .updateActivity(session.studentId, activityId.orEmpty(), dto.toUpdateDto())
+                        .collect(::handleSaveResult)
                 }
-            _state.update { it.copy(isSaving = true) }
-            val flow =
-                if (activityId == null)
-                    repo.createActivity(
-                        a,
-                        themeId,
-                        CreateActivityDto(s.title.trim(), type, s.isMandatory, strategy, order),
-                    )
-                else
-                    repo.updateActivity(
-                        a,
-                        activityId!!,
-                        UpdateActivityDto(s.title.trim(), type, s.isMandatory, strategy, order),
-                    )
-            flow.collect { r ->
-                when (r) {
-                    is Resource.Success ->
-                        _state.update { it.copy(isSaving = false, isSaved = true) }
-                    is Resource.Error ->
-                        _state.update {
+            }
+        }
+    }
+
+    private fun deleteActivity() {
+        viewModelScope.launch {
+            val session = sessionRepository.session.first()
+
+            if (session == null) {
+                updateMissingSession()
+            } else if (session.role != StudentRole.ADMIN) {
+                updateMissingAdminAccess()
+            } else if (activityId != null && !_state.value.isDeleting) {
+                _state.update { it.copy(isDeleting = true, errorMessage = null) }
+                activityRepository.deleteActivity(session.studentId, activityId.orEmpty()).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> Unit
+                        is Resource.Success -> _state.update {
+                            it.copy(isDeleting = false, isDeleted = true)
+                        }
+                        is Resource.Error -> _state.update {
                             it.copy(
-                                isSaving = false,
-                                errorMessage = r.message ?: "No se pudo guardar la actividad.",
+                                isDeleting = false,
+                                errorMessage = resource.message ?: "No se pudo eliminar la actividad.",
                             )
                         }
-                    else -> Unit
+                    }
                 }
             }
         }
+    }
 
-    private suspend fun admin() =
-        (session.session.first()?.takeIf { it.role == StudentRole.ADMIN } != null).also {
-            if (!it)
-                _state.update { s ->
-                    s.copy(
-                        hasAdminAccess = false,
-                        errorMessage = "No tienes permisos para administrar el contenido del curso.",
-                    )
-                }
+    private fun handleSaveResult(resource: Resource<*>) {
+        when (resource) {
+            is Resource.Loading -> Unit
+            is Resource.Success -> _state.update { it.copy(isSaving = false, isSaved = true) }
+            is Resource.Error -> _state.update {
+                it.copy(
+                    isSaving = false,
+                    errorMessage = resource.message ?: "No se pudo guardar la actividad.",
+                )
+            }
         }
+    }
+
+    private fun validate(form: ActivityFormUiState): Map<String, String> = buildMap {
+        if (form.title.isBlank()) put("title", "El título es obligatorio.")
+        if (form.orderIndex.toIntOrNull() == null) put("order", "El orden debe ser un entero.")
+    }
+
+    private fun ActivityFormUiState.toCreateDto() = CreateActivityDto(
+        title = title.trim(),
+        type = if (type == ActivityType.EXERCISE) 1 else 2,
+        isMandatory = isMandatory,
+        approvalStrategy = approvalStrategy.toApiValue(),
+        orderIndex = orderIndex.toInt(),
+    )
+
+    private fun CreateActivityDto.toUpdateDto() = UpdateActivityDto(
+        title = title,
+        type = type,
+        isMandatory = isMandatory,
+        approvalStrategy = approvalStrategy,
+        orderIndex = orderIndex,
+    )
+
+    private fun ApprovalStrategy.toApiValue() = when (this) {
+        ApprovalStrategy.AUTO -> 1
+        ApprovalStrategy.PEER_REVIEW -> 2
+        ApprovalStrategy.ADMIN -> 3
+    }
+
+    private fun updateMissingSession() {
+        _state.update {
+            it.copy(
+                isLoading = false,
+                isSaving = false,
+                isDeleting = false,
+                hasSession = false,
+                hasAdminAccess = false,
+                errorMessage = "No se encontró una sesión activa.",
+            )
+        }
+    }
+
+    private fun updateMissingAdminAccess() {
+        _state.update {
+            it.copy(
+                isLoading = false,
+                isSaving = false,
+                isDeleting = false,
+                hasSession = true,
+                hasAdminAccess = false,
+                errorMessage = "No tienes permisos para administrar el contenido del curso.",
+            )
+        }
+    }
 }
