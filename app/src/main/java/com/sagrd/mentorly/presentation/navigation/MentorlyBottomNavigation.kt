@@ -5,7 +5,7 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.RateReview
-import androidx.compose.material.icons.outlined.School
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -33,11 +33,6 @@ private val bottomNavigationItems = listOf(
         icon = Icons.AutoMirrored.Outlined.MenuBook
     ),
     BottomNavigationItem(
-        section = MentorlySection.LEARNING,
-        label = "Aprendizaje",
-        icon = Icons.Outlined.School
-    ),
-    BottomNavigationItem(
         section = MentorlySection.REVIEWS,
         label = "Revisiones",
         icon = Icons.Outlined.RateReview
@@ -63,7 +58,7 @@ fun MentorlyBottomNavigation(
                     onSectionSelected(item.section)
                 },
                 icon = {
-                    androidx.compose.material3.Icon(
+                    Icon(
                         imageVector = item.icon,
                         contentDescription = item.label
                     )
