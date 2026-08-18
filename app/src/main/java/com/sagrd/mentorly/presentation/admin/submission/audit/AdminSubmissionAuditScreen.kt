@@ -3,6 +3,7 @@ package com.sagrd.mentorly.presentation.admin.submission.audit
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,6 +64,7 @@ fun AdminSubmissionAuditScreen(
         onBackClick = onBackClick,
         onRetry = { viewModel.onEvent(AdminSubmissionAuditUiEvent.Retry) },
         onClearError = { viewModel.onEvent(AdminSubmissionAuditUiEvent.ClearError) },
+        onCommentChanged = { viewModel.onEvent(AdminSubmissionAuditUiEvent.DecisionCommentChanged(it)) },
         onApproveClick = { viewModel.onEvent(AdminSubmissionAuditUiEvent.RequestDecision(true)) },
         onRejectClick = { viewModel.onEvent(AdminSubmissionAuditUiEvent.RequestDecision(false)) }
     )
@@ -93,6 +96,7 @@ private fun AdminSubmissionAuditContent(
     onBackClick: () -> Unit,
     onRetry: () -> Unit,
     onClearError: () -> Unit,
+    onCommentChanged: (String) -> Unit,
     onApproveClick: () -> Unit,
     onRejectClick: () -> Unit
 ) {
@@ -135,6 +139,8 @@ private fun AdminSubmissionAuditContent(
                     AuditDetails(
                         audit = state.audit,
                         isDeciding = state.isDeciding,
+                        decisionComment = state.decisionComment,
+                        onCommentChanged = onCommentChanged,
                         onApproveClick = onApproveClick,
                         onRejectClick = onRejectClick
                     )
@@ -148,9 +154,13 @@ private fun AdminSubmissionAuditContent(
 private fun AuditDetails(
     audit: AdminSubmissionAudit,
     isDeciding: Boolean,
+    decisionComment: String,
+    onCommentChanged: (String) -> Unit,
     onApproveClick: () -> Unit,
     onRejectClick: () -> Unit
 ) {
+    val uriHandler = LocalUriHandler.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -196,6 +206,22 @@ private fun AuditDetails(
             AuditField(label = "Actividad", value = audit.activityTitle, isBold = true)
             AuditField(label = "Autor", value = audit.authorDisplayName, isBold = true)
             AuditField(label = "Correo electrónico", value = audit.authorEmail, valueColor = MaterialTheme.colorScheme.primary)
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                AuditField(
+                    label = "Fecha de envío", 
+                    value = DateFormatter.format(audit.submittedAtUtc), 
+                    modifier = Modifier.weight(1f)
+                )
+                audit.reviewedAtUtc?.let {
+                    AuditField(
+                        label = "Fecha de revisión", 
+                        value = DateFormatter.format(it), 
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
 
         // Evidence
@@ -221,17 +247,20 @@ private fun AuditDetails(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            val isUrl = audit.evidenceType == EvidenceType.URL
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (isUrl) Modifier.clickable { uriHandler.openUri(audit.evidenceContent) } else Modifier)
             ) {
                 Text(
                     text = audit.evidenceContent,
                     modifier = Modifier.padding(12.dp),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
-                    textDecoration = if (audit.evidenceType == EvidenceType.URL) androidx.compose.ui.text.style.TextDecoration.Underline else null
+                    textDecoration = if (isUrl) androidx.compose.ui.text.style.TextDecoration.Underline else null
                 )
             }
         }
@@ -263,6 +292,18 @@ private fun AuditDetails(
                     text = "Como administrador, debes resolver este conflicto de evaluación. Revisa la evidencia directamente y determina si la entrega cumple con los criterios mínimos para ser aprobada o si debe ser rechazada.",
                     style = MaterialTheme.typography.bodySmall,
                     lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = decisionComment,
+                    onValueChange = onCommentChanged,
+                    label = { Text("Comentario de la decisión (Opcional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    minLines = 3,
+                    placeholder = { Text("Escribe una justificación para tu decisión...") }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -349,10 +390,11 @@ private fun AuditSection(
 private fun AuditField(
     label: String,
     value: String,
+    modifier: Modifier = Modifier,
     isBold: Boolean = false,
     valueColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+    Column(modifier = modifier.padding(vertical = 4.dp)) {
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
             text = value,
@@ -426,12 +468,12 @@ private fun ReviewAuditCard(review: AdminPeerReviewAuditItem) {
 
 @Composable
 private fun StatusBadge(status: SubmissionStatus) {
-    val color = when (status) {
-        SubmissionStatus.PENDING -> Color(0xFF9E9E9E)
-        SubmissionStatus.APPROVED -> Color(0xFF4CAF50)
-        SubmissionStatus.REJECTED -> Color(0xFFF44336)
-        SubmissionStatus.ESCALATED -> Color(0xFFE91E63)
-        SubmissionStatus.UNKNOWN -> Color(0xFF000000)
+    val (color, label) = when (status) {
+        SubmissionStatus.PENDING -> Color(0xFF9E9E9E) to "Pendiente"
+        SubmissionStatus.APPROVED -> Color(0xFF4CAF50) to "Aprobada"
+        SubmissionStatus.REJECTED -> Color(0xFFF44336) to "Rechazada"
+        SubmissionStatus.ESCALATED -> Color(0xFFE91E63) to "Escalada"
+        SubmissionStatus.UNKNOWN -> Color(0xFF000000) to "Desconocido"
     }
     Surface(
         color = color.copy(alpha = 0.1f),
@@ -445,7 +487,7 @@ private fun StatusBadge(status: SubmissionStatus) {
             Icon(imageVector = Icons.Default.Warning, contentDescription = null, modifier = Modifier.size(10.dp), tint = color)
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "Estado: ${status.name}",
+                text = "Estado: $label",
                 style = MaterialTheme.typography.labelSmall,
                 color = color,
                 fontWeight = FontWeight.Bold
@@ -517,6 +559,8 @@ private fun AdminSubmissionAuditScreenPreview() {
                 )
             ),
             isDeciding = false,
+            decisionComment = "",
+            onCommentChanged = {},
             onApproveClick = {},
             onRejectClick = {}
         )
