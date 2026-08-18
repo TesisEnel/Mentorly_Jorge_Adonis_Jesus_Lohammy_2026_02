@@ -402,7 +402,6 @@ private fun NavigationContent(
                         backStack.add(Screen.AdminSubmissionList)
                     },
                     onAnalyticsClick = {
-                        // La presentación de analíticas no está disponible actualmente.
                     },
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
@@ -439,7 +438,6 @@ private fun NavigationContent(
                         popBackStackSafely(backStack)
                     },
                     onDecisionCompleted = {
-                        // Volver a la lista sin duplicarla
                         popBackStackSafely(backStack)
                     }
                 )
@@ -568,7 +566,7 @@ private fun NavigationContent(
                         popBackStackSafely(backStack)
                     },
                     onQuestionCreated = {
-                        // La pantalla conserva el formulario para crear otra pregunta.
+
                     },
                 )
             }
