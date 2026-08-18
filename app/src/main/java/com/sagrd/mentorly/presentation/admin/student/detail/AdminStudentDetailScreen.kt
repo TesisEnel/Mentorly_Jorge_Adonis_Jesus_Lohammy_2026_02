@@ -129,7 +129,7 @@ private fun AdminStudentDetailContent(
                                 .fillMaxWidth()
                                 .padding(24.dp), contentAlignment = Alignment.Center
                         ) {
-                            Text("Sin inscripciones activas.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Este estudiante no tiene inscripciones.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 } else {
@@ -143,7 +143,8 @@ private fun AdminStudentDetailContent(
                             progress = progress,
                             error = error,
                             isExpanded = isExpanded,
-                            onToggleExpansion = { onEvent(AdminStudentDetailUiEvent.ToggleEnrollmentExpansion(enrollment.id)) }
+                            onToggleExpansion = { onEvent(AdminStudentDetailUiEvent.ToggleEnrollmentExpansion(enrollment.id)) },
+                            onRetry = { onEvent(AdminStudentDetailUiEvent.RetryEnrollmentProgress(enrollment.id)) }
                         )
                     }
                 }
@@ -259,7 +260,8 @@ private fun EnrollmentCard(
     progress: EnrollmentProgress?,
     error: String?,
     isExpanded: Boolean,
-    onToggleExpansion: () -> Unit
+    onToggleExpansion: () -> Unit,
+    onRetry: () -> Unit
 ) {
     val rotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "rotation")
 
@@ -320,7 +322,7 @@ private fun EnrollmentCard(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                            TextButton(onClick = onToggleExpansion) {
+                            TextButton(onClick = onRetry) {
                                 Text("Reintentar")
                             }
                         }
@@ -384,6 +386,19 @@ private fun ProgressContent(progress: EnrollmentProgress) {
             }
             Column {
                 Text("Actividades: ${progress.approvedMandatoryActivities}/${progress.totalMandatoryActivities}", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+
+        if (!progress.canSubmitNextUnit && !progress.blockedReason.isNullOrBlank()) {
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(text = "No puede avanzar:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    Text(text = progress.blockedReason!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
             }
         }
 
