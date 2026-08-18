@@ -8,7 +8,6 @@ import com.sagrd.mentorly.data.remote.dto.common.ReorderItemsDto
 import com.sagrd.mentorly.data.remote.dto.content.ActivityDto
 import com.sagrd.mentorly.data.remote.remotedatasource.ActivityRemoteDataSource
 import com.sagrd.mentorly.domain.model.content.ActivityType
-import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
