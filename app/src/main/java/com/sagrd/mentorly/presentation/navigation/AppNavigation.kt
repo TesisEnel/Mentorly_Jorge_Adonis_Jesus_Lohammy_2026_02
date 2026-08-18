@@ -21,6 +21,7 @@ import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
 import com.sagrd.mentorly.presentation.admin.peerreview.audit.PeerReviewAuditScreen
 import com.sagrd.mentorly.presentation.admin.peerreview.list.AdminPeerReviewListScreen
 import com.sagrd.mentorly.presentation.admin.quiz.AdminQuizQuestionScreen
+import com.sagrd.mentorly.presentation.admin.student.detail.AdminStudentDetailScreen
 import com.sagrd.mentorly.presentation.admin.student.list.AdminStudentListScreen
 import com.sagrd.mentorly.presentation.admin.submission.audit.AdminSubmissionAuditScreen
 import com.sagrd.mentorly.presentation.admin.submission.list.AdminSubmissionListScreen
@@ -452,6 +453,18 @@ private fun NavigationContent(
 
             entry<Screen.AdminStudentList> {
                 AdminStudentListScreen(
+                    onBackClick = {
+                        popBackStackSafely(backStack)
+                    },
+                    onStudentClick = { studentId ->
+                        backStack.add(Screen.AdminStudentDetail(studentId))
+                    }
+                )
+            }
+
+            entry<Screen.AdminStudentDetail> { destination ->
+                AdminStudentDetailScreen(
+                    studentId = destination.studentId,
                     onBackClick = {
                         popBackStackSafely(backStack)
                     }
