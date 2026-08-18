@@ -18,8 +18,8 @@ class AdminSubmissionListViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AdminSubmissionListUiState())
-    val uiState: StateFlow<AdminSubmissionListUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(AdminSubmissionListUiState())
+    val state: StateFlow<AdminSubmissionListUiState> = _state.asStateFlow()
 
     init {
         checkSessionAndLoad()
@@ -27,21 +27,22 @@ class AdminSubmissionListViewModel @Inject constructor(
 
     private fun checkSessionAndLoad() {
         viewModelScope.launch {
-            sessionRepository.session.firstOrNull()?.let { session ->
+            val session = sessionRepository.session.firstOrNull()
+            if (session != null) {
                 if (session.role == StudentRole.ADMIN) {
-                    _uiState.update { it.copy(
+                    _state.update { it.copy(
                         hasSession = true,
                         hasAdminAccess = true
                     ) }
                     loadSubmissions()
                 } else {
-                    _uiState.update { it.copy(
+                    _state.update { it.copy(
                         hasAdminAccess = false,
                         errorMessage = "No tienes permisos para administrar entregas escaladas."
                     ) }
                 }
-            } ?: run {
-                _uiState.update { it.copy(
+            } else {
+                _state.update { it.copy(
                     hasSession = false,
                     errorMessage = "No se encontró una sesión activa."
                 ) }
@@ -54,13 +55,13 @@ class AdminSubmissionListViewModel @Inject constructor(
             AdminSubmissionListUiEvent.Load -> loadSubmissions()
             AdminSubmissionListUiEvent.Refresh -> loadSubmissions(isRefreshing = true)
             is AdminSubmissionListUiEvent.SearchChanged -> {
-                _uiState.update { it.copy(searchQuery = event.value) }
+                _state.update { it.copy(searchQuery = event.value) }
             }
             is AdminSubmissionListUiEvent.FilterChanged -> {
-                _uiState.update { it.copy(selectedFilter = event.filter) }
+                _state.update { it.copy(selectedFilter = event.filter) }
             }
             AdminSubmissionListUiEvent.ClearError -> {
-                _uiState.update { it.copy(errorMessage = null) }
+                _state.update { it.copy(errorMessage = null) }
             }
         }
     }
@@ -68,41 +69,43 @@ class AdminSubmissionListViewModel @Inject constructor(
     private fun loadSubmissions(isRefreshing: Boolean = false) {
         viewModelScope.launch {
             val session = sessionRepository.session.firstOrNull()
-            val adminId = session?.studentId ?: return@launch
+            if (session != null) {
+                val adminId = session.studentId
 
-            submissionRepository.getEscalatedSubmissions(adminId).collect { result ->
-                when (result) {
-                    is Resource.Loading<*> -> {
-                        if (isRefreshing) _uiState.update { it.copy(isRefreshing = true) }
-                        else _uiState.update { it.copy(isLoading = true) }
-                    }
-                    is Resource.Success -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            submissions = result.data ?: emptyList(),
-                            errorMessage = null
-                        ) }
-                    }
-                    is Resource.Error -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            errorMessage = result.message ?: "No se pudieron cargar las entregas escaladas."
-                        ) }
+                submissionRepository.getEscalatedSubmissions(adminId).collect { result ->
+                    when (result) {
+                        is Resource.Loading<*> -> {
+                            if (isRefreshing) _state.update { it.copy(isRefreshing = true) }
+                            else _state.update { it.copy(isLoading = true) }
+                        }
+                        is Resource.Success -> {
+                            _state.update { it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                submissions = result.data ?: emptyList(),
+                                errorMessage = null
+                            ) }
+                        }
+                        is Resource.Error -> {
+                            _state.update { it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                errorMessage = result.message ?: "No se pudieron cargar las entregas escaladas."
+                            ) }
+                        }
                     }
                 }
             }
         }
     }
 
-    val filteredSubmissions = combine(_uiState, _uiState.map { it.submissions }) { state, submissions ->
+    val filteredSubmissions = combine(_state, _state.map { it.submissions }) { state, submissions ->
         submissions.filter { submission ->
             val matchesSearch = state.searchQuery.isBlank() ||
                 submission.authorDisplayName.contains(state.searchQuery, ignoreCase = true) ||
                 submission.courseTitle.contains(state.searchQuery, ignoreCase = true) ||
                 submission.activityTitle.contains(state.searchQuery, ignoreCase = true)
-            
+
             matchesSearch
         }.let { filtered ->
             when (state.selectedFilter) {

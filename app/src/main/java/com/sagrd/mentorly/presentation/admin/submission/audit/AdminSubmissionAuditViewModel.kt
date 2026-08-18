@@ -18,8 +18,8 @@ class AdminSubmissionAuditViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AdminSubmissionAuditUiState())
-    val uiState: StateFlow<AdminSubmissionAuditUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(AdminSubmissionAuditUiState())
+    val state: StateFlow<AdminSubmissionAuditUiState> = _state.asStateFlow()
 
     private var submissionId: String = ""
 
@@ -35,90 +35,108 @@ class AdminSubmissionAuditViewModel @Inject constructor(
             AdminSubmissionAuditUiEvent.Load -> loadAudit()
             AdminSubmissionAuditUiEvent.Retry -> loadAudit()
             is AdminSubmissionAuditUiEvent.RequestDecision -> {
-                _uiState.update { it.copy(pendingDecision = event.isApproved) }
+                _state.update { it.copy(pendingDecision = event.isApproved) }
+            }
+            is AdminSubmissionAuditUiEvent.DecisionCommentChanged -> {
+                _state.update { it.copy(decisionComment = event.value) }
             }
             AdminSubmissionAuditUiEvent.ConfirmDecision -> confirmDecision()
             AdminSubmissionAuditUiEvent.DismissDecisionDialog -> {
-                _uiState.update { it.copy(pendingDecision = null) }
+                _state.update { it.copy(pendingDecision = null, decisionComment = "") }
             }
             AdminSubmissionAuditUiEvent.ClearError -> {
-                _uiState.update { it.copy(errorMessage = null) }
+                _state.update { it.copy(errorMessage = null) }
             }
             AdminSubmissionAuditUiEvent.ClearSuccessMessage -> {
-                _uiState.update { it.copy(successMessage = null) }
+                _state.update { it.copy(successMessage = null) }
             }
         }
     }
 
     private fun loadAudit() {
-        if (submissionId.isBlank()) return
-
-        viewModelScope.launch {
-            val session = sessionRepository.session.firstOrNull()
-            if (session == null) {
-                _uiState.update { it.copy(hasSession = false, errorMessage = "No se encontró una sesión activa.") }
-                return@launch
-            }
-
-            if (session.role != StudentRole.ADMIN) {
-                _uiState.update { it.copy(hasAdminAccess = false, errorMessage = "No tienes permisos para consultar la auditoría.") }
-                return@launch
-            }
-
-            val adminId = session.studentId
-
-            submissionRepository.getEscalatedSubmissionAudit(adminId, submissionId).collect { result ->
-                when (result) {
-                    is Resource.Loading<*> -> {
-                        _uiState.update { it.copy(isLoading = true) }
+        if (submissionId.isNotBlank()) {
+            viewModelScope.launch {
+                val session = sessionRepository.session.firstOrNull()
+                if (session != null) {
+                    if (session.role == StudentRole.ADMIN) {
+                        val adminId = session.studentId
+                        submissionRepository.getEscalatedSubmissionAudit(adminId, submissionId).collect { result ->
+                            when (result) {
+                                is Resource.Loading<*> -> {
+                                    _state.update { it.copy(isLoading = true) }
+                                }
+                                is Resource.Success -> {
+                                    _state.update { it.copy(
+                                        isLoading = false,
+                                        audit = result.data,
+                                        errorMessage = null,
+                                    ) }
+                                }
+                                is Resource.Error -> {
+                                    _state.update { it.copy(
+                                        isLoading = false,
+                                        errorMessage = result.message ?: "No se pudo cargar la auditoría de la entrega."
+                                    ) }
+                                }
+                            }
+                        }
+                    } else {
+                        _state.update { it.copy(hasAdminAccess = false, errorMessage = "No tienes permisos para administrar entregas escaladas.") }
                     }
-                    is Resource.Success -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            audit = result.data,
-                            errorMessage = null,
-                        ) }
-                    }
-                    is Resource.Error -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            errorMessage = result.message ?: "No se pudo cargar la auditoría de la entrega."
-                        ) }
-                    }
+                } else {
+                    _state.update { it.copy(hasSession = false, errorMessage = "No se encontró una sesión activa.") }
                 }
             }
         }
     }
 
     private fun confirmDecision() {
-        val isApproved = _uiState.value.pendingDecision ?: return
-        _uiState.update { it.copy(pendingDecision = null, isDeciding = true) }
+        val isApproved = _state.value.pendingDecision
+        if (isApproved != null) {
+            _state.update { it.copy(isDeciding = true) }
 
-        viewModelScope.launch {
-            val session = sessionRepository.session.firstOrNull()
-            val adminId = session?.studentId ?: return@launch
+            viewModelScope.launch {
+                val session = sessionRepository.session.firstOrNull()
+                if (session != null) {
+                    if (session.role == StudentRole.ADMIN) {
+                        val adminId = session.studentId
+                        val customComment = _state.value.decisionComment.trim()
+                        val finalComment = if (customComment.isNotBlank()) {
+                            customComment
+                        } else {
+                            if (isApproved) "Aprobada por administración." else "Rechazada por administración."
+                        }
 
-            val decision = AdminSubmissionDecisionDto(
-                isApproved = isApproved,
-                feedbackComment = if (isApproved) "Aprobada por administración." else "Rechazada por administración."
-            )
+                        val decision = AdminSubmissionDecisionDto(
+                            isApproved = isApproved,
+                            feedbackComment = finalComment
+                        )
 
-            submissionRepository.decideSubmission(adminId, submissionId, decision).collect { result ->
-                when (result) {
-                    is Resource.Loading<*> -> { /* Handled by isDeciding */ }
-                    is Resource.Success -> {
-                        _uiState.update { it.copy(
-                            isDeciding = false,
-                            successMessage = if (isApproved) "La entrega fue aprobada." else "La entrega fue rechazada."
-                        ) }
-                        loadAudit()
+                        submissionRepository.decideSubmission(adminId, submissionId, decision).collect { result ->
+                            when (result) {
+                                is Resource.Loading<*> -> { /* Handled by isDeciding */ }
+                                is Resource.Success -> {
+                                    _state.update { it.copy(
+                                        isDeciding = false,
+                                        pendingDecision = null,
+                                        decisionComment = "",
+                                        successMessage = if (isApproved) "La entrega fue aprobada." else "La entrega fue rechazada."
+                                    ) }
+                                    loadAudit()
+                                }
+                                is Resource.Error -> {
+                                    _state.update { it.copy(
+                                        isDeciding = false,
+                                        errorMessage = result.message ?: "No se pudo registrar la decisión administrativa."
+                                    ) }
+                                }
+                            }
+                        }
+                    } else {
+                        _state.update { it.copy(isDeciding = false, hasAdminAccess = false, errorMessage = "No tienes permisos para realizar esta acción.") }
                     }
-                    is Resource.Error -> {
-                        _uiState.update { it.copy(
-                            isDeciding = false,
-                            errorMessage = result.message ?: "No se pudo registrar la decisión administrativa."
-                        ) }
-                    }
+                } else {
+                    _state.update { it.copy(isDeciding = false, hasSession = false, errorMessage = "No se encontró una sesión activa.") }
                 }
             }
         }
