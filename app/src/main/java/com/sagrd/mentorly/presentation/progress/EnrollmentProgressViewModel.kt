@@ -116,8 +116,13 @@ class EnrollmentProgressViewModel @Inject constructor(
                         val progressData = resource.data
                         _uiState.update { current ->
                             val defaultExpanded = if (current.expandedUnitIds.isEmpty() && progressData != null) {
-                                val activeUnit = progressData.units.firstOrNull { it.completedThemes < it.totalThemes }
-                                    ?: progressData.units.firstOrNull()
+                                val activeUnit = progressData.units.firstOrNull { unit ->
+                                    val isUnitCompleted = unit.totalThemes > 0 &&
+                                        unit.completedThemes == unit.totalThemes &&
+                                        (unit.totalMandatoryActivities == 0 || unit.approvedMandatoryActivities >= unit.totalMandatoryActivities)
+                                    !isUnitCompleted
+                                } ?: progressData.units.lastOrNull()
+
                                 if (activeUnit != null) setOf(activeUnit.unitId) else emptySet()
                             } else {
                                 current.expandedUnitIds
