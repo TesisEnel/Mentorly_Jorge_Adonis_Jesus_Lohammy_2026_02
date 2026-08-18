@@ -1,6 +1,8 @@
 package com.sagrd.mentorly.presentation.admin.peerreview.audit
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -8,24 +10,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Assignment
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.automirrored.filled.Rule
+import androidx.compose.material.icons.automirrored.filled.ShortText
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.peerreview.PeerReviewAudit
+import com.sagrd.mentorly.domain.model.peerreview.PeerReviewCriterionScore
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun PeerReviewAuditScreen(
@@ -33,14 +41,14 @@ fun PeerReviewAuditScreen(
     onBackClick: () -> Unit,
     viewModel: PeerReviewAuditViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(peerReviewId) {
         viewModel.setPeerReviewId(peerReviewId)
     }
 
     PeerReviewAuditContent(
-        uiState = uiState,
+        state = state,
         onBackClick = onBackClick,
         onRetry = { viewModel.onEvent(PeerReviewAuditUiEvent.Retry) },
         onClearError = { viewModel.onEvent(PeerReviewAuditUiEvent.ClearError) }
@@ -50,7 +58,7 @@ fun PeerReviewAuditScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PeerReviewAuditContent(
-    uiState: PeerReviewAuditUiState,
+    state: PeerReviewAuditUiState,
     onBackClick: () -> Unit,
     onRetry: () -> Unit,
     onClearError: () -> Unit
@@ -58,10 +66,15 @@ private fun PeerReviewAuditContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Auditoría de revisión") },
+                title = { Text("Auditoría de revisión", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* More options */ }) {
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Opciones")
                     }
                 }
             )
@@ -71,27 +84,28 @@ private fun PeerReviewAuditContent(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
         ) {
             when {
-                uiState.isLoading -> {
+                state.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-                uiState.errorMessage != null -> {
-                    ErrorContent(
-                        message = uiState.errorMessage,
+                state.errorMessage != null -> {
+                    ErrorView(
+                        message = state.errorMessage,
                         onRetry = onRetry,
                         onDismiss = onClearError,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                uiState.audit == null -> {
+                state.audit == null -> {
                     Text(
                         text = "No se encontró la revisión solicitada.",
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
                 else -> {
-                    AuditDetails(audit = uiState.audit)
+                    AuditDetailsList(audit = state.audit)
                 }
             }
         }
@@ -99,59 +113,193 @@ private fun PeerReviewAuditContent(
 }
 
 @Composable
-private fun AuditDetails(audit: PeerReviewAudit) {
+private fun AuditDetailsList(audit: PeerReviewAudit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+        // Red Confidential Banner
+        Surface(
+            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
         ) {
             Row(
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = Icons.Default.Security, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = "Auditoría administrativa — información confidencial",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
 
-        AuditSection(title = "Contexto", icon = Icons.Default.History) {
-            AuditField(label = "ID de Revisión", value = audit.peerReviewId)
-            AuditField(label = "Fecha", value = audit.createdAt)
+        // Course and Activity
+        AuditSection(title = "Curso y actividad", icon = Icons.Default.School) {
+            AuditField(label = "CURSO", value = audit.courseTitle, isBold = true)
+            AuditField(label = "ACTIVIDAD", value = audit.activityTitle, isBold = true)
+            AuditField(label = "FECHA DE REVISIÓN", value = DateFormatter.format(audit.createdAt))
         }
 
-        AuditSection(title = "Entrega", icon = Icons.Default.Assignment) {
-            AuditField(label = "ID de Entrega", value = audit.submissionId)
-            AuditField(label = "Evidencia", value = audit.evidenceContent)
+        // Participants
+        AuditSection(title = "Participantes (Confidencial)", icon = Icons.Default.Group) {
+            ParticipantInfo(label = "AUTOR DE LA ENTREGA", name = audit.authorDisplayName, email = audit.authorEmail)
+            Spacer(modifier = Modifier.height(12.dp))
+            ParticipantInfo(label = "REVISOR", name = audit.reviewerDisplayName, email = audit.reviewerEmail)
         }
 
-        AuditSection(title = "Participantes", icon = Icons.Default.Person) {
-            AuditField(label = "Autor (ID)", value = audit.authorStudentId)
-            AuditField(label = "Revisor (ID)", value = audit.reviewerStudentId)
-        }
-
-        AuditSection(title = "Decisión", icon = if (audit.isApproved) Icons.Default.Security else Icons.Default.Security) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Estado: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                StatusLabel(isApproved = audit.isApproved)
+        // Decision
+        AuditSection(title = "Decisión", icon = Icons.Default.Gavel) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                StatusBadge(isApproved = audit.isApproved)
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Comentario:", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-            Text(text = audit.feedbackComment, style = MaterialTheme.typography.bodyLarge)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "\"${audit.feedbackComment}\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Registrado: ${DateFormatter.format(audit.createdAt)}",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        // Evidence
+        AuditSection(title = "Evidencia de la entrega", icon = Icons.Default.Assignment) {
+            val uriHandler = LocalUriHandler.current
+            val isUrl = audit.evidenceType == EvidenceType.URL
+
+            Column {
+                Text(text = "ENLACE DE ENTREGA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .then(if (isUrl) Modifier.clickable { uriHandler.openUri(audit.evidenceContent) } else Modifier),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Link,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = audit.evidenceContent,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = if (isUrl) androidx.compose.ui.text.style.TextDecoration.Underline else null,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+
+        // Rubric Scores
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.Rule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = "Puntuaciones de rúbrica", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+
+            if (audit.criterionScores.isEmpty()) {
+                Text("No hay puntuaciones registradas.", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column {
+                        audit.criterionScores.forEach { score ->
+                            CriterionScoreItem(score = score)
+                            if (score != audit.criterionScores.last()) {
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+    }
+}
+
+@Composable
+private fun ParticipantInfo(label: String, name: String, email: String) {
+    Column {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        Text(text = email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+@Composable
+private fun CriterionScoreItem(score: PeerReviewCriterionScore) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = score.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = "${score.score} / ${score.maxScore}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = score.description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 18.sp
+        )
     }
 }
 
@@ -161,7 +309,7 @@ private fun AuditSection(
     icon: ImageVector,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.width(8.dp))
@@ -169,9 +317,12 @@ private fun AuditSection(
         }
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 content()
             }
         }
@@ -179,31 +330,49 @@ private fun AuditSection(
 }
 
 @Composable
-private fun AuditField(label: String, value: String) {
+private fun AuditField(
+    label: String,
+    value: String,
+    isBold: Boolean = false
+) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun StatusLabel(isApproved: Boolean) {
-    Surface(
-        color = if (isApproved) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
-        contentColor = if (isApproved) Color(0xFF2E7D32) else Color(0xFFC62828),
-        shape = CircleShape
-    ) {
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
-            text = if (isApproved) "Aprobada" else "Rechazada",
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
         )
     }
 }
 
 @Composable
-private fun ErrorContent(
+private fun StatusBadge(isApproved: Boolean) {
+    Surface(
+        color = if (isApproved) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
+        contentColor = if (isApproved) Color(0xFF2E7D32) else Color(0xFFC62828),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (isApproved) Icons.Default.CheckCircle else Icons.Default.Cancel,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = if (isApproved) "APROBADA" else "RECHAZADA",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorView(
     message: String,
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
@@ -214,7 +383,7 @@ private fun ErrorContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = message, color = MaterialTheme.colorScheme.error)
+        Text(text = message, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
         Row(modifier = Modifier.padding(top = 16.dp)) {
             Button(onClick = onRetry) { Text("Reintentar") }
             Spacer(modifier = Modifier.width(8.dp))
@@ -227,37 +396,29 @@ private fun ErrorContent(
 @Composable
 private fun PeerReviewAuditScreenPreview() {
     MentorlyTheme {
-        PeerReviewAuditContent(
-            uiState = PeerReviewAuditUiState(
-                audit = PeerReviewAudit(
-                    peerReviewId = "rev-123",
-                    submissionId = "sub-456",
-                    authorStudentId = "student-author",
-                    reviewerStudentId = "student-reviewer",
-                    isApproved = true,
-                    feedbackComment = "El repositorio de GitHub contiene todos los requerimientos solicitados para la Unidad 1.",
-                    criterionScores = emptyList(),
-                    createdAt = "2026-08-14 10:30",
-                    evidenceType = EvidenceType.URL,
-                    evidenceContent = "https://github.com/example/repo"
+        AuditDetailsList(
+            audit = PeerReviewAudit(
+                peerReviewId = "rev-123",
+                submissionId = "sub-456",
+                authorStudentId = "s1",
+                authorDisplayName = "Alejandro Garcia",
+                authorEmail = "alejandro.garcia@email.com",
+                reviewerStudentId = "s2",
+                reviewerDisplayName = "Dra. Elena Martinez",
+                reviewerEmail = "elena.martinez@mentorly.edu",
+                courseTitle = "Desarrollo Web Fullstack",
+                activityTitle = "Proyecto Final: API REST con Node.js",
+                isApproved = true,
+                feedbackComment = "El análisis de los algoritmos es sólido y cubre todos los casos de borde requeridos en el enunciado. La estructura del código es limpia, aunque se sugiere modularizar un poco más la función principal para futuras iteraciones.",
+                createdAt = "2023-10-24T14:32:00Z",
+                evidenceType = EvidenceType.URL,
+                evidenceContent = "github.com/mentorly/ent-4091-cs/pull/12",
+                criterionScores = listOf(
+                    PeerReviewCriterionScore("c1", "Claridad del código", "Evalúa la legibilidad y el uso de estándares de nomenclatura.", 4, 5),
+                    PeerReviewCriterionScore("c2", "Eficiencia algorítmica", "Optimización del tiempo de ejecución y uso de memoria.", 5, 5),
+                    PeerReviewCriterionScore("c3", "Documentación técnica", "Presencia de comentarios y README detallado.", 3, 5)
                 )
-            ),
-            onBackClick = {},
-            onRetry = {},
-            onClearError = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PeerReviewAuditErrorPreview() {
-    MentorlyTheme {
-        PeerReviewAuditContent(
-            uiState = PeerReviewAuditUiState(errorMessage = "Error al conectar con el servidor."),
-            onBackClick = {},
-            onRetry = {},
-            onClearError = {}
+            )
         )
     }
 }
