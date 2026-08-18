@@ -38,6 +38,7 @@ class AdminStudentDetailViewModel @Inject constructor(
             AdminStudentDetailUiEvent.Load -> checkSessionAndLoad()
             AdminStudentDetailUiEvent.Refresh -> checkSessionAndLoad()
             is AdminStudentDetailUiEvent.ToggleEnrollmentExpansion -> toggleExpansion(event.enrollmentId)
+            is AdminStudentDetailUiEvent.RetryEnrollmentProgress -> loadProgress(event.enrollmentId)
             AdminStudentDetailUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
@@ -69,43 +70,43 @@ class AdminStudentDetailViewModel @Inject constructor(
     }
 
     private fun loadData(adminId: String) {
-        if (studentId.isBlank()) return
+        if (studentId.isNotBlank()) {
+            _state.update { it.copy(isLoading = true, isLoadingEnrollments = true) }
 
-        _state.update { it.copy(isLoading = true, isLoadingEnrollments = true) }
-
-        viewModelScope.launch {
-            // Load Student Profile
-            launch {
-                studentRepository.getStudentById(studentId).collect { result ->
-                    when (result) {
-                        is Resource.Success -> _state.update { it.copy(student = result.data, isLoading = false) }
-                        is Resource.Error -> _state.update { it.copy(errorMessage = result.message, isLoading = false) }
-                        else -> {}
+            viewModelScope.launch {
+                // Load Student Profile
+                launch {
+                    studentRepository.getStudentById(studentId).collect { result ->
+                        when (result) {
+                            is Resource.Success -> _state.update { it.copy(student = result.data, isLoading = false) }
+                            is Resource.Error -> _state.update { it.copy(errorMessage = result.message, isLoading = false) }
+                            else -> {}
+                        }
                     }
                 }
-            }
 
-            // Load Enrollments
-            launch {
-                enrollmentRepository.getAdminStudentEnrollments(adminId, studentId).collect { result ->
-                    when (result) {
-                        is Resource.Success -> {
-                            _state.update {
-                                it.copy(
-                                    enrollments = result.data ?: emptyList(),
-                                    isLoadingEnrollments = false
-                                )
+                // Load Enrollments
+                launch {
+                    enrollmentRepository.getAdminStudentEnrollments(adminId, studentId).collect { result ->
+                        when (result) {
+                            is Resource.Success -> {
+                                _state.update {
+                                    it.copy(
+                                        enrollments = result.data ?: emptyList(),
+                                        isLoadingEnrollments = false
+                                    )
+                                }
                             }
-                        }
-                        is Resource.Error -> {
-                            _state.update {
-                                it.copy(
-                                    errorMessage = result.message,
-                                    isLoadingEnrollments = false
-                                )
+                            is Resource.Error -> {
+                                _state.update {
+                                    it.copy(
+                                        errorMessage = result.message,
+                                        isLoadingEnrollments = false
+                                    )
+                                }
                             }
+                            else -> {}
                         }
-                        else -> {}
                     }
                 }
             }
@@ -129,6 +130,13 @@ class AdminStudentDetailViewModel @Inject constructor(
                 val adminId = session.studentId
                 progressRepository.getAdminEnrollmentProgress(adminId, enrollmentId).collect { result ->
                     when (result) {
+                        is Resource.Loading<*> -> {
+                            _state.update { state ->
+                                state.copy(
+                                    enrollmentErrors = state.enrollmentErrors - enrollmentId
+                                )
+                            }
+                        }
                         is Resource.Success -> {
                             if (result.data != null) {
                                 _state.update { state ->
