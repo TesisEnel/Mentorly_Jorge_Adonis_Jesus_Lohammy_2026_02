@@ -47,6 +47,12 @@ class QuizViewModel @Inject constructor(
             QuizUiEvent.LoadQuiz,
             QuizUiEvent.Retry -> loadQuiz()
 
+            is QuizUiEvent.QuestionIndexChanged -> {
+                val maxIndex = (_uiState.value.questions.size - 1).coerceAtLeast(0)
+                val validIndex = event.index.coerceIn(0, maxIndex)
+                _uiState.update { it.copy(currentQuestionIndex = validIndex) }
+            }
+
             is QuizUiEvent.AnswerChanged -> updateAnswer(event.questionId, event.answer)
             QuizUiEvent.SubmitQuiz -> submitQuiz()
             QuizUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
@@ -87,6 +93,7 @@ class QuizViewModel @Inject constructor(
                                 questions = resource.data.orEmpty().sortedBy { question ->
                                     question.orderIndex
                                 },
+                                currentQuestionIndex = 0,
                                 errorMessage = null
                             )
                         }
@@ -112,12 +119,15 @@ class QuizViewModel @Inject constructor(
 
         if (state.isSubmitting || state.isSubmitted) return
 
-        val hasMissingAnswers = state.questions.isEmpty() || state.questions.any { question ->
-            state.answers[question.id].isNullOrBlank()
+        val firstUnansweredIndex = state.questions.indexOfFirst {
+            state.answers[it.id].isNullOrBlank()
         }
-        if (hasMissingAnswers) {
+        if (firstUnansweredIndex != -1) {
             _uiState.update {
-                it.copy(errorMessage = "Debes responder todas las preguntas antes de enviar.")
+                it.copy(
+                    currentQuestionIndex = firstUnansweredIndex,
+                    errorMessage = "Debes responder todas las preguntas antes de enviar."
+                )
             }
             return
         }
