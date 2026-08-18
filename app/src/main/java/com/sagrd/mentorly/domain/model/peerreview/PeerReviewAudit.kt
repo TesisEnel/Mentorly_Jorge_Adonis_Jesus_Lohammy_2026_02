@@ -13,5 +13,4 @@ data class PeerReviewAudit(
     val createdAt: String,
     val evidenceType: EvidenceType,
     val evidenceContent: String
-) {
-}
+)
