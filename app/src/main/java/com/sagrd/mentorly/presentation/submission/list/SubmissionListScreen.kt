@@ -23,11 +23,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Balance
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.RateReview
@@ -62,7 +65,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
@@ -87,6 +92,11 @@ fun SubmissionListScreen(
     viewModel: SubmissionListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(SubmissionListUiEvent.Refresh)
+        onPauseOrDispose { }
+    }
 
     SubmissionListContent(
         state = state,
@@ -124,6 +134,15 @@ private fun SubmissionListContent(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver atrás"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onRetry) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Actualizar entregas",
+                            tint = PrimaryBlue
                         )
                     }
                 },
@@ -375,22 +394,66 @@ private fun SubmissionItemCard(
                 }
             }
 
-            if (submission.status != SubmissionStatus.ESCALATED && (item.hasReviewsInfo || submission.status == SubmissionStatus.PENDING || submission.status == SubmissionStatus.APPROVED)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.RateReview,
-                        contentDescription = null,
-                        tint = Color(0xFF64748B),
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Text(
-                        text = "${item.positiveReviewsCount} de ${item.requiredReviewsCount} revisiones positivas",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF64748B)
-                    )
+            when (item.approvalStrategy) {
+                ApprovalStrategy.PEER_REVIEW -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.RateReview,
+                            contentDescription = null,
+                            tint = Color(0xFF64748B),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "${item.positiveReviewsCount} de ${item.requiredReviewsCount} revisiones positivas",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                ApprovalStrategy.AUTO -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AutoAwesome,
+                            contentDescription = null,
+                            tint = CompletedGreen,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "Aprobación automática",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                ApprovalStrategy.ADMIN -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Security,
+                            contentDescription = null,
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = "Revisión del instructor",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                null -> {
+                    // Cargando información de estrategia
                 }
             }
 
