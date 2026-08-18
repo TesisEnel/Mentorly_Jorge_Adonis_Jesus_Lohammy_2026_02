@@ -1040,112 +1040,93 @@ private fun SubmissionBottomBar(
     onEditClick: () -> Unit,
     onEscalateClick: () -> Unit
 ) {
+    val canEdit = status == SubmissionStatus.PENDING || status == SubmissionStatus.REJECTED
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (status == SubmissionStatus.REJECTED) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = onEditClick,
-                        enabled = !isEscalating,
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Editar evidencia",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-
-                    if (canEscalate) {
-                        OutlinedButton(
-                            onClick = onEscalateClick,
-                            enabled = !isEscalating,
-                            shape = RoundedCornerShape(14.dp),
-                            border = BorderStroke(1.5.dp, EscalatedBadgeText),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            if (isEscalating) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = EscalatedBadgeText,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Filled.Gavel,
-                                    contentDescription = null,
-                                    tint = EscalatedBadgeText,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Escalar entrega",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = EscalatedBadgeText
-                                )
-                            }
-                        }
-                    }
-
-                    OutlinedButton(
-                        onClick = onBackClick,
-                        enabled = !isEscalating,
-                        shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(46.dp)
-                    ) {
-                        Text(
-                            text = "VOLVER AL CURSO",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            } else {
-                OutlinedButton(
-                    onClick = onBackClick,
+            if (canEdit) {
+                Button(
+                    onClick = onEditClick,
                     enabled = !isEscalating,
                     shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.5.dp, PrimaryBlue),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "VOLVER AL CURSO",
+                        text = "Editar entrega",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
+                        color = Color.White
                     )
                 }
+            }
+
+            if (canEscalate && status != SubmissionStatus.APPROVED && status != SubmissionStatus.ESCALATED) {
+                OutlinedButton(
+                    onClick = onEscalateClick,
+                    enabled = !isEscalating,
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.5.dp, EscalatedBadgeText),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    if (isEscalating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = EscalatedBadgeText,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Gavel,
+                            contentDescription = null,
+                            tint = EscalatedBadgeText,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Escalar entrega",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = EscalatedBadgeText
+                        )
+                    }
+                }
+            }
+
+            OutlinedButton(
+                onClick = onBackClick,
+                enabled = !isEscalating,
+                shape = RoundedCornerShape(14.dp),
+                border = if (!canEdit) BorderStroke(1.5.dp, PrimaryBlue) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(if (!canEdit) 50.dp else 46.dp)
+            ) {
+                Text(
+                    text = "VOLVER AL CURSO",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (!canEdit) PrimaryBlue else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
