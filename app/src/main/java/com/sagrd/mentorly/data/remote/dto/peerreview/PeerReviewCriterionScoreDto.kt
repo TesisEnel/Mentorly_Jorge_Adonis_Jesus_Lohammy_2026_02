@@ -4,10 +4,16 @@ import com.sagrd.mentorly.domain.model.peerreview.PeerReviewCriterionScore
 
 data class PeerReviewCriterionScoreDto(
     val rubricCriterionId: String,
-    val score: Int
+    val title: String,
+    val description: String,
+    val score: Int,
+    val maxScore: Int
 ) {
     fun toDomain() = PeerReviewCriterionScore(
         rubricCriterionId = rubricCriterionId,
-        score = score
+        title = title,
+        description = description,
+        score = score,
+        maxScore = maxScore
     )
 }
