@@ -67,6 +67,7 @@ import com.sagrd.mentorly.domain.model.content.ActivityType
 import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 import com.sagrd.mentorly.domain.model.content.CourseUnit
 import com.sagrd.mentorly.domain.model.content.Theme
+import androidx.compose.material.icons.automirrored.filled.FactCheck
 import com.sagrd.mentorly.domain.model.course.Course
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
@@ -81,6 +82,7 @@ fun ContentManagementScreen(
     onCreateActivityClick: (String) -> Unit,
     onEditActivityClick: (String, String) -> Unit,
     onManageQuizQuestionsClick: (String) -> Unit,
+    onManageRubricClick: (String) -> Unit,
     viewModel: ContentManagementViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -102,6 +104,7 @@ fun ContentManagementScreen(
         onCreateActivityClick = onCreateActivityClick,
         onEditActivityClick = onEditActivityClick,
         onManageQuizQuestionsClick = onManageQuizQuestionsClick,
+        onManageRubricClick = onManageRubricClick,
     )
 }
 
@@ -118,6 +121,7 @@ private fun ContentManagementContent(
     onCreateActivityClick: (String) -> Unit,
     onEditActivityClick: (String, String) -> Unit,
     onManageQuizQuestionsClick: (String) -> Unit,
+    onManageRubricClick: (String) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -170,6 +174,7 @@ private fun ContentManagementContent(
                 onCreateActivityClick = onCreateActivityClick,
                 onEditActivityClick = onEditActivityClick,
                 onManageQuizQuestionsClick = onManageQuizQuestionsClick,
+                onManageRubricClick = onManageRubricClick,
                 modifier = Modifier.padding(paddingValues),
             )
         }
@@ -188,6 +193,7 @@ private fun CourseContent(
     onCreateActivityClick: (String) -> Unit,
     onEditActivityClick: (String, String) -> Unit,
     onManageQuizQuestionsClick: (String) -> Unit,
+    onManageRubricClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -288,6 +294,7 @@ private fun CourseContent(
                     onCreateActivityClick = onCreateActivityClick,
                     onEditActivityClick = onEditActivityClick,
                     onManageQuizQuestionsClick = onManageQuizQuestionsClick,
+                    onManageRubricClick = onManageRubricClick,
                 )
             }
         }
@@ -358,6 +365,7 @@ private fun UnitCard(
     onCreateActivityClick: (String) -> Unit,
     onEditActivityClick: (String, String) -> Unit,
     onManageQuizQuestionsClick: (String) -> Unit,
+    onManageRubricClick: (String) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -368,24 +376,23 @@ private fun UnitCard(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Unit Header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center,
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primary,
                 ) {
                     Text(
-                        (unit.orderIndex + 1).toString(),
-                        style = MaterialTheme.typography.labelMedium,
+                        text = "U${unit.orderIndex + 1}",
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                     )
                 }
                 Spacer(Modifier.width(10.dp))
@@ -414,7 +421,10 @@ private fun UnitCard(
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                modifier = Modifier.padding(vertical = 2.dp),
+            )
 
             // Themes List inside Unit
             if (unit.themes.isEmpty()) {
@@ -440,6 +450,7 @@ private fun UnitCard(
                         onCreateActivityClick = onCreateActivityClick,
                         onEditActivityClick = onEditActivityClick,
                         onManageQuizQuestionsClick = onManageQuizQuestionsClick,
+                        onManageRubricClick = onManageRubricClick,
                     )
                 }
             }
@@ -467,6 +478,7 @@ private fun ThemeContainer(
     onCreateActivityClick: (String) -> Unit,
     onEditActivityClick: (String, String) -> Unit,
     onManageQuizQuestionsClick: (String) -> Unit,
+    onManageRubricClick: (String) -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -554,6 +566,7 @@ private fun ThemeContainer(
                             onEvent = onEvent,
                             onEditActivityClick = onEditActivityClick,
                             onManageQuizQuestionsClick = onManageQuizQuestionsClick,
+                            onManageRubricClick = onManageRubricClick,
                         )
                     }
                 }
@@ -580,6 +593,7 @@ private fun ActivityCard(
     onEvent: (ContentManagementUiEvent) -> Unit,
     onEditActivityClick: (String, String) -> Unit,
     onManageQuizQuestionsClick: (String) -> Unit,
+    onManageRubricClick: (String) -> Unit,
 ) {
     val isQuiz = activity.type == ActivityType.QUIZ
     val iconBgColor = if (isQuiz) Color(0xFFF3E8FF) else Color(0xFFE3F2FD)
@@ -681,6 +695,23 @@ private fun ActivityCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text("Administrar preguntas")
+                }
+            } else if (activity.approvalStrategy == ApprovalStrategy.PEER_REVIEW) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                )
+                TextButton(
+                    onClick = { onManageRubricClick(activity.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.FactCheck,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Administrar rúbrica")
                 }
             }
         }
@@ -834,6 +865,7 @@ private fun ContentManagementPreview() {
             onCreateActivityClick = {},
             onEditActivityClick = { _, _ -> },
             onManageQuizQuestionsClick = {},
+            onManageRubricClick = {},
         )
     }
 }
