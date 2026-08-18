@@ -43,6 +43,7 @@ class AuthRepositoryImplTest {
     fun `signInWithGoogle retorna error cuando falla el credential manager`() = runTest {
         // Given
         val context = mockk<Context>(relaxed = true)
+        every { context.getString(any()) } returns "fake_client_id"
         coEvery {
             credentialManager.getCredential(any<Context>(), any<GetCredentialRequest>())
         } throws Exception("Error del gestor")
@@ -59,6 +60,7 @@ class AuthRepositoryImplTest {
     fun `signInWithGoogle retorna error cuando la credencial no es valida`() = runTest {
         // Given
         val context = mockk<Context>(relaxed = true)
+        every { context.getString(any()) } returns "fake_client_id"
         val getCredentialResponse = mockk<GetCredentialResponse>(relaxed = true)
         val credential = mockk<PasswordCredential>(relaxed = true)
 
