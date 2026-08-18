@@ -17,8 +17,8 @@ class PeerReviewAuditViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PeerReviewAuditUiState())
-    val uiState: StateFlow<PeerReviewAuditUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(PeerReviewAuditUiState())
+    val state: StateFlow<PeerReviewAuditUiState> = _state.asStateFlow()
 
     private var peerReviewId: String = ""
 
@@ -31,48 +31,51 @@ class PeerReviewAuditViewModel @Inject constructor(
 
     fun onEvent(event: PeerReviewAuditUiEvent) {
         when (event) {
-            PeerReviewAuditUiEvent.Load -> loadAudit()
-            PeerReviewAuditUiEvent.Retry -> loadAudit()
+            PeerReviewAuditUiEvent.Load -> checkSessionAndLoad()
+            PeerReviewAuditUiEvent.Retry -> checkSessionAndLoad()
             PeerReviewAuditUiEvent.ClearError -> {
-                _uiState.update { it.copy(errorMessage = null) }
+                _state.update { it.copy(errorMessage = null) }
             }
         }
     }
 
-    private fun loadAudit() {
-        if (peerReviewId.isBlank()) return
-
+    private fun checkSessionAndLoad() {
         viewModelScope.launch {
             val session = sessionRepository.session.firstOrNull()
-            if (session == null) {
-                _uiState.update { it.copy(hasSession = false, errorMessage = "No se encontró una sesión activa.") }
-                return@launch
+            if (session != null) {
+                if (session.role == StudentRole.ADMIN) {
+                    _state.update { it.copy(hasSession = true, hasAdminAccess = true) }
+                    loadAudit(session.studentId)
+                } else {
+                    _state.update { it.copy(hasAdminAccess = false, errorMessage = "No tienes permisos para consultar la auditoría.") }
+                }
+            } else {
+                _state.update { it.copy(hasSession = false, errorMessage = "No se encontró una sesión activa.") }
             }
+        }
+    }
 
-            if (session.role != StudentRole.ADMIN) {
-                _uiState.update { it.copy(hasAdminAccess = false, errorMessage = "No tienes permisos para consultar la auditoría.") }
-                return@launch
-            }
-
-            val adminId = session.studentId
-
-            peerReviewRepository.getAudit(adminId, peerReviewId).collect { result ->
-                when (result) {
-                    is Resource.Loading -> {
-                        _uiState.update { it.copy(isLoading = true) }
-                    }
-                    is Resource.Success -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            audit = result.data,
-                            errorMessage = null
-                        ) }
-                    }
-                    is Resource.Error -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            errorMessage = result.message ?: "No se pudo cargar la auditoría de la revisión."
-                        ) }
+    private fun loadAudit(adminId: String) {
+        if (peerReviewId.isNotBlank()) {
+            viewModelScope.launch {
+                peerReviewRepository.getAudit(adminId, peerReviewId).collect { result ->
+                    when (result) {
+                        is Resource.Loading<*> -> {
+                            _state.update { it.copy(isLoading = true) }
+                        }
+                        is Resource.Success -> {
+                            _state.update { it.copy(
+                                isLoading = false,
+                                audit = result.data,
+                                errorMessage = null
+                            ) }
+                        }
+                        is Resource.Error -> {
+                            _state.update { it.copy(
+                                isLoading = false,
+                                errorMessage = result.message ?: "No se pudo cargar la auditoría de la revisión."
+                            ) }
+                        }
                     }
                 }
             }
