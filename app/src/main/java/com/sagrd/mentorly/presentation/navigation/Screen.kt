@@ -117,6 +117,4 @@ sealed class Screen : NavKey {
     @Serializable
     data class AdminSubmissionAudit(val submissionId: String) : Screen()
 
-    @Serializable
-    data object AdminAnalytics : Screen()
 }
