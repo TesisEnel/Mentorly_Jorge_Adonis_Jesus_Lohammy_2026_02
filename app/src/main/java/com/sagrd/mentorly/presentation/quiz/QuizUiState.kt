@@ -7,6 +7,7 @@ data class QuizUiState(
     val isLoading: Boolean = true,
     val questions: List<QuizQuestion> = emptyList(),
     val answers: Map<String, String> = emptyMap(),
+    val currentQuestionIndex: Int = 0,
     val isSubmitting: Boolean = false,
     val result: QuizAttempt? = null,
     val errorMessage: String? = null,
