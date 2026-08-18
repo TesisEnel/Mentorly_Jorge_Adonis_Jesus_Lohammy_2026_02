@@ -20,6 +20,7 @@ import com.sagrd.mentorly.presentation.admin.content.unit.UnitFormScreen
 import com.sagrd.mentorly.presentation.admin.dashboard.AdminDashboardScreen
 import com.sagrd.mentorly.presentation.admin.peerreview.audit.PeerReviewAuditScreen
 import com.sagrd.mentorly.presentation.admin.peerreview.list.AdminPeerReviewListScreen
+import com.sagrd.mentorly.presentation.admin.peerreview.rubric.AdminPeerReviewRubricScreen
 import com.sagrd.mentorly.presentation.admin.quiz.AdminQuizQuestionScreen
 import com.sagrd.mentorly.presentation.admin.student.detail.AdminStudentDetailScreen
 import com.sagrd.mentorly.presentation.admin.student.list.AdminStudentListScreen
@@ -528,6 +529,9 @@ private fun NavigationContent(
                     onManageQuizQuestionsClick = { activityId ->
                         backStack.add(Screen.AdminQuizQuestion(activityId))
                     },
+                    onManageRubricClick = { activityId ->
+                        backStack.add(Screen.AdminPeerReviewRubric(activityId))
+                    },
                 )
             }
 
@@ -577,6 +581,18 @@ private fun NavigationContent(
                         popBackStackSafely(backStack)
                     },
                     onQuestionCreated = {
+
+                    },
+                )
+            }
+
+            entry<Screen.AdminPeerReviewRubric> { destination ->
+                AdminPeerReviewRubricScreen(
+                    activityId = destination.activityId,
+                    onBackClick = {
+                        popBackStackSafely(backStack)
+                    },
+                    onCriterionCreated = {
 
                     },
                 )
