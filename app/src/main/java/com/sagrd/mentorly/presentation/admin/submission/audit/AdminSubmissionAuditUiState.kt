@@ -7,8 +7,9 @@ data class AdminSubmissionAuditUiState(
     val isDeciding: Boolean = false,
     val audit: AdminSubmissionAudit? = null,
     val pendingDecision: Boolean? = null,
+    val decisionComment: String = "",
     val successMessage: String? = null,
     val errorMessage: String? = null,
     val hasSession: Boolean = true,
-    val hasAdminAccess: Boolean = true,
+    val hasAdminAccess: Boolean = true
 )
