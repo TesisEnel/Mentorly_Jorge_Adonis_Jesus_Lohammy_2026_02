@@ -376,9 +376,18 @@ private fun ProgressScrollableList(
 
         itemsIndexed(progress.units, key = { _, unit -> unit.unitId }) { index, unit ->
             val isExpanded = unit.unitId in expandedUnitIds
-            val isCompleted = unit.completedThemes == unit.totalThemes && unit.totalThemes > 0
-            val isInProgress = !isCompleted && unit.completedThemes > 0 || (index == 0 && unit.completedThemes == 0)
-            val isLocked = !isCompleted && !isInProgress
+            val isCompleted = unit.totalThemes > 0 &&
+                unit.completedThemes == unit.totalThemes &&
+                (unit.totalMandatoryActivities == 0 || unit.approvedMandatoryActivities >= unit.totalMandatoryActivities)
+
+            val isUnlocked = index == 0 || progress.units.take(index).all { prev ->
+                prev.totalThemes > 0 &&
+                    prev.completedThemes == prev.totalThemes &&
+                    (prev.totalMandatoryActivities == 0 || prev.approvedMandatoryActivities >= prev.totalMandatoryActivities)
+            }
+
+            val isLocked = !isUnlocked
+            val isInProgress = isUnlocked && !isCompleted
 
             UnitCurriculumCard(
                 unitIndex = index + 1,
