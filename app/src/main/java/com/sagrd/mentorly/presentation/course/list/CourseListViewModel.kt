@@ -126,14 +126,12 @@ class CourseListViewModel @Inject constructor(
                     when (resource) {
                         is Resource.Loading -> Unit
                         is Resource.Success -> {
-                            val publishedList = resource.data.orEmpty().filter { course ->
-                                course.isPublished
-                            }
+                            val publishedCourses = resource.data.orEmpty().filter { it.isPublished }
                             val query = _state.value.searchQuery
                             _state.update {
                                 it.copy(
-                                    courses = publishedList,
-                                    filteredCourses = filterCourses(query, publishedList)
+                                    courses = publishedCourses,
+                                    filteredCourses = filterCourses(query, publishedCourses)
                                 )
                             }
                         }
