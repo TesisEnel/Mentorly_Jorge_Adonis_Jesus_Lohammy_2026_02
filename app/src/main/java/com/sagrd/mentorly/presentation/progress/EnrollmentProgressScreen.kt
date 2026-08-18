@@ -817,7 +817,29 @@ private fun ActivityItemRow(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            if (activity.isApproved) {
+            if (activity.isApproved && isQuiz) {
+                Button(
+                    onClick = onQuizClick,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Completado",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else if (activity.isApproved) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = CompletedGreenBg
