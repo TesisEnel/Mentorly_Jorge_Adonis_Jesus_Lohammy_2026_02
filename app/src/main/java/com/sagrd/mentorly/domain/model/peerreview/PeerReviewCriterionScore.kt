@@ -2,5 +2,8 @@ package com.sagrd.mentorly.domain.model.peerreview
 
 data class PeerReviewCriterionScore(
     val rubricCriterionId: String,
-    val score: Int
+    val title: String,
+    val description: String,
+    val score: Int,
+    val maxScore: Int
 )
