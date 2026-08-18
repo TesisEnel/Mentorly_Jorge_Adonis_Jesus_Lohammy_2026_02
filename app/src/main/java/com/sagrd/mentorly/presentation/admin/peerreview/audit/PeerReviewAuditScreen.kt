@@ -41,7 +41,7 @@ fun PeerReviewAuditScreen(
     onBackClick: () -> Unit,
     viewModel: PeerReviewAuditViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(peerReviewId) {
         viewModel.setPeerReviewId(peerReviewId)
@@ -147,18 +147,18 @@ private fun AuditDetailsList(audit: PeerReviewAudit) {
             }
         }
 
-        // Course and Activity
-        AuditSection(title = "Curso y actividad", icon = Icons.Default.School) {
-            AuditField(label = "CURSO", value = audit.courseTitle, isBold = true)
-            AuditField(label = "ACTIVIDAD", value = audit.activityTitle, isBold = true)
+        // Context
+        AuditSection(title = "Información de auditoría", icon = Icons.Default.Info) {
+            AuditField(label = "ID DE REVISIÓN", value = audit.peerReviewId)
+            AuditField(label = "ID DE ENTREGA", value = audit.submissionId)
             AuditField(label = "FECHA DE REVISIÓN", value = DateFormatter.format(audit.createdAt))
         }
 
         // Participants
         AuditSection(title = "Participantes (Confidencial)", icon = Icons.Default.Group) {
-            ParticipantInfo(label = "AUTOR DE LA ENTREGA", name = audit.authorDisplayName, email = audit.authorEmail)
-            Spacer(modifier = Modifier.height(12.dp))
-            ParticipantInfo(label = "REVISOR", name = audit.reviewerDisplayName, email = audit.reviewerEmail)
+            AuditField(label = "ID AUTOR DE LA ENTREGA", value = audit.authorStudentId)
+            Spacer(modifier = Modifier.height(8.dp))
+            AuditField(label = "ID REVISOR", value = audit.reviewerStudentId)
         }
 
         // Decision
@@ -203,7 +203,7 @@ private fun AuditDetailsList(audit: PeerReviewAudit) {
             val isUrl = audit.evidenceType == EvidenceType.URL
 
             Column {
-                Text(text = "ENLACE DE ENTREGA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "CONTENIDO DE ENTREGA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
@@ -217,7 +217,7 @@ private fun AuditDetailsList(audit: PeerReviewAudit) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Link,
+                            imageVector = if (isUrl) Icons.Default.Link else Icons.AutoMirrored.Filled.ShortText,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -269,15 +269,6 @@ private fun AuditDetailsList(audit: PeerReviewAudit) {
 }
 
 @Composable
-private fun ParticipantInfo(label: String, name: String, email: String) {
-    Column {
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-        Text(text = email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-    }
-}
-
-@Composable
 private fun CriterionScoreItem(score: PeerReviewCriterionScore) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
@@ -285,21 +276,14 @@ private fun CriterionScoreItem(score: PeerReviewCriterionScore) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = score.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Text(text = "Criterio ID: ${score.rubricCriterionId.take(8)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
             Text(
-                text = "${score.score} / ${score.maxScore}",
+                text = "Puntaje: ${score.score}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = score.description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 18.sp
-        )
     }
 }
 
@@ -394,29 +378,23 @@ private fun ErrorView(
 
 @Preview(showBackground = true)
 @Composable
-private fun PeerReviewAuditScreenPreview() {
+fun PeerReviewAuditScreenPreview() {
     MentorlyTheme {
         AuditDetailsList(
             audit = PeerReviewAudit(
                 peerReviewId = "rev-123",
                 submissionId = "sub-456",
                 authorStudentId = "s1",
-                authorDisplayName = "Alejandro Garcia",
-                authorEmail = "alejandro.garcia@email.com",
                 reviewerStudentId = "s2",
-                reviewerDisplayName = "Dra. Elena Martinez",
-                reviewerEmail = "elena.martinez@mentorly.edu",
-                courseTitle = "Desarrollo Web Fullstack",
-                activityTitle = "Proyecto Final: API REST con Node.js",
                 isApproved = true,
-                feedbackComment = "El análisis de los algoritmos es sólido y cubre todos los casos de borde requeridos en el enunciado. La estructura del código es limpia, aunque se sugiere modularizar un poco más la función principal para futuras iteraciones.",
+                feedbackComment = "El análisis de los algoritmos es sólido y cubre todos los casos de borde requeridos en el enunciado.",
                 createdAt = "2023-10-24T14:32:00Z",
                 evidenceType = EvidenceType.URL,
                 evidenceContent = "github.com/mentorly/ent-4091-cs/pull/12",
                 criterionScores = listOf(
-                    PeerReviewCriterionScore("c1", "Claridad del código", "Evalúa la legibilidad y el uso de estándares de nomenclatura.", 4, 5),
-                    PeerReviewCriterionScore("c2", "Eficiencia algorítmica", "Optimización del tiempo de ejecución y uso de memoria.", 5, 5),
-                    PeerReviewCriterionScore("c3", "Documentación técnica", "Presencia de comentarios y README detallado.", 3, 5)
+                    PeerReviewCriterionScore("c1", 4),
+                    PeerReviewCriterionScore("c2", 5),
+                    PeerReviewCriterionScore("c3", 3)
                 )
             )
         )
