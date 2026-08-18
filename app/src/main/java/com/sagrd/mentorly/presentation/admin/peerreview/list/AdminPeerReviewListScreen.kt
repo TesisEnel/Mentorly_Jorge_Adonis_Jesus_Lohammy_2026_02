@@ -37,7 +37,7 @@ fun AdminPeerReviewListScreen(
     onPeerReviewClick: (String) -> Unit,
     viewModel: AdminPeerReviewListViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val filteredPeerReviews by viewModel.filteredPeerReviews.collectAsStateWithLifecycle()
 
     AdminPeerReviewListContent(
@@ -94,7 +94,7 @@ private fun AdminPeerReviewListContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                placeholder = { Text("Buscar por comentario o código...") },
+                placeholder = { Text("Buscar por comentario...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 shape = RoundedCornerShape(24.dp),
                 singleLine = true,
@@ -175,7 +175,7 @@ private fun AdminPeerReviewItem(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
