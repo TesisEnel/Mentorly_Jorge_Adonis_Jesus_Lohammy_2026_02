@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.ChevronRight
@@ -56,7 +55,6 @@ fun AdminDashboardScreen(
     onStudentsClick: () -> Unit,
     onPeerReviewsClick: () -> Unit,
     onEscalatedSubmissionsClick: () -> Unit,
-    onAnalyticsClick: () -> Unit,
     onSignOutCompleted: () -> Unit,
     viewModel: AdminDashboardViewModel = hiltViewModel()
 ) {
@@ -77,7 +75,6 @@ fun AdminDashboardScreen(
         onStudentsClick = onStudentsClick,
         onPeerReviewsClick = onPeerReviewsClick,
         onEscalatedSubmissionsClick = onEscalatedSubmissionsClick,
-        onAnalyticsClick = onAnalyticsClick,
         onShowSignOutDialog = {
             viewModel.onEvent(AdminDashboardUiEvent.ShowSignOutDialog)
         },
@@ -100,7 +97,6 @@ private fun AdminDashboardContent(
     onStudentsClick: () -> Unit,
     onPeerReviewsClick: () -> Unit,
     onEscalatedSubmissionsClick: () -> Unit,
-    onAnalyticsClick: () -> Unit,
     onShowSignOutDialog: () -> Unit,
     onDismissSignOutDialog: () -> Unit,
     onConfirmSignOut: () -> Unit,
@@ -166,7 +162,6 @@ private fun AdminDashboardContent(
                 onStudentsClick = onStudentsClick,
                 onPeerReviewsClick = onPeerReviewsClick,
                 onEscalatedSubmissionsClick = onEscalatedSubmissionsClick,
-                onAnalyticsClick = onAnalyticsClick,
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
         }
@@ -203,7 +198,6 @@ private fun DashboardContent(
     onStudentsClick: () -> Unit,
     onPeerReviewsClick: () -> Unit,
     onEscalatedSubmissionsClick: () -> Unit,
-    onAnalyticsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val metrics = listOf(
@@ -218,7 +212,6 @@ private fun DashboardContent(
         DashboardAction("Estudiantes", "Consultar progreso y gestionar roles", Icons.Default.Groups, onStudentsClick),
         DashboardAction("Revisiones por pares", "Auditar revisiones y resolver casos", Icons.Default.Assignment, onPeerReviewsClick),
         DashboardAction("Entregas escaladas", "Revisar solicitudes pendientes de decisión", Icons.Default.Assignment, onEscalatedSubmissionsClick),
-        DashboardAction("Analíticas", "Consultar abandono, tiempos y cuellos de botella", Icons.Default.Analytics, onAnalyticsClick),
     )
 
     LazyColumn(
@@ -461,7 +454,6 @@ private fun AdminDashboardPreview() {
             onStudentsClick = {},
             onPeerReviewsClick = {},
             onEscalatedSubmissionsClick = {},
-            onAnalyticsClick = {},
         )
     }
 }

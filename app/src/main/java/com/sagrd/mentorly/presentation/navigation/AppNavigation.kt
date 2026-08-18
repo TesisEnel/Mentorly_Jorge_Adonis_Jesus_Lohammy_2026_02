@@ -11,7 +11,6 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.sagrd.mentorly.presentation.admin.analytics.AnalyticsScreen
 import com.sagrd.mentorly.presentation.admin.course.form.CourseFormScreen
 import com.sagrd.mentorly.presentation.admin.course.list.AdminCourseListScreen
 import com.sagrd.mentorly.presentation.admin.content.ContentManagementScreen
@@ -402,9 +401,6 @@ private fun NavigationContent(
                     onEscalatedSubmissionsClick = {
                         backStack.add(Screen.AdminSubmissionList)
                     },
-                    onAnalyticsClick = {
-                        backStack.add(Screen.AdminAnalytics)
-                    },
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
                     },
@@ -418,14 +414,6 @@ private fun NavigationContent(
                     },
                     onPeerReviewClick = { peerReviewId ->
                         backStack.add(Screen.PeerReviewAudit(peerReviewId))
-                    }
-                )
-            }
-
-            entry<Screen.AdminAnalytics> {
-                AnalyticsScreen(
-                    onBackClick = {
-                        popBackStackSafely(backStack)
                     }
                 )
             }
@@ -448,7 +436,6 @@ private fun NavigationContent(
                         popBackStackSafely(backStack)
                     },
                     onDecisionCompleted = {
-                        // Volver a la lista sin duplicarla
                         popBackStackSafely(backStack)
                     }
                 )
@@ -577,7 +564,7 @@ private fun NavigationContent(
                         popBackStackSafely(backStack)
                     },
                     onQuestionCreated = {
-                        // La pantalla conserva el formulario para crear otra pregunta.
+
                     },
                 )
             }
