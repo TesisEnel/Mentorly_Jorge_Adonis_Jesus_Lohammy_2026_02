@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.sagrd.mentorly.domain.model.course.Course
@@ -67,6 +68,11 @@ fun AdminCourseListScreen(
     viewModel: AdminCourseListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(AdminCourseListUiEvent.Refresh)
+        onPauseOrDispose { }
+    }
 
     AdminCourseListContent(
         state = state,
