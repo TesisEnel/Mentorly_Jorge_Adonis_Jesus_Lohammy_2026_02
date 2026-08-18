@@ -6,9 +6,11 @@ import com.sagrd.mentorly.domain.model.student.Student
 
 data class AdminStudentDetailUiState(
     val isLoading: Boolean = false,
+    val isLoadingEnrollments: Boolean = false,
     val student: Student? = null,
     val enrollments: List<Enrollment> = emptyList(),
     val enrollmentProgress: Map<String, EnrollmentProgress> = emptyMap(),
+    val enrollmentErrors: Map<String, String> = emptyMap(),
     val expandedEnrollmentIds: Set<String> = emptySet(),
     val errorMessage: String? = null,
     val hasSession: Boolean = true,

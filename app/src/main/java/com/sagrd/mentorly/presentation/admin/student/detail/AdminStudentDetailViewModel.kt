@@ -21,8 +21,8 @@ class AdminStudentDetailViewModel @Inject constructor(
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AdminStudentDetailUiState())
-    val uiState: StateFlow<AdminStudentDetailUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(AdminStudentDetailUiState())
+    val state: StateFlow<AdminStudentDetailUiState> = _state.asStateFlow()
 
     private var studentId: String = ""
 
@@ -38,21 +38,32 @@ class AdminStudentDetailViewModel @Inject constructor(
             AdminStudentDetailUiEvent.Load -> checkSessionAndLoad()
             AdminStudentDetailUiEvent.Refresh -> checkSessionAndLoad()
             is AdminStudentDetailUiEvent.ToggleEnrollmentExpansion -> toggleExpansion(event.enrollmentId)
-            AdminStudentDetailUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            AdminStudentDetailUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun checkSessionAndLoad() {
         viewModelScope.launch {
-            sessionRepository.session.firstOrNull()?.let { session ->
+            val session = sessionRepository.session.firstOrNull()
+            if (session != null) {
                 if (session.role == StudentRole.ADMIN) {
-                    _uiState.update { it.copy(hasSession = true, hasAdminAccess = true) }
+                    _state.update { it.copy(hasSession = true, hasAdminAccess = true) }
                     loadData(session.studentId)
                 } else {
-                    _uiState.update { it.copy(hasAdminAccess = false, errorMessage = "No tienes permisos para ver el detalle.") }
+                    _state.update {
+                        it.copy(
+                            hasAdminAccess = false,
+                            errorMessage = "No tienes permisos para ver el detalle."
+                        )
+                    }
                 }
-            } ?: run {
-                _uiState.update { it.copy(hasSession = false, errorMessage = "No se encontró una sesión activa.") }
+            } else {
+                _state.update {
+                    it.copy(
+                        hasSession = false,
+                        errorMessage = "No se encontró una sesión activa."
+                    )
+                }
             }
         }
     }
@@ -60,15 +71,15 @@ class AdminStudentDetailViewModel @Inject constructor(
     private fun loadData(adminId: String) {
         if (studentId.isBlank()) return
 
-        _uiState.update { it.copy(isLoading = true) }
+        _state.update { it.copy(isLoading = true, isLoadingEnrollments = true) }
 
         viewModelScope.launch {
             // Load Student Profile
             launch {
                 studentRepository.getStudentById(studentId).collect { result ->
                     when (result) {
-                        is Resource.Success -> _uiState.update { it.copy(student = result.data) }
-                        is Resource.Error -> _uiState.update { it.copy(errorMessage = result.message) }
+                        is Resource.Success -> _state.update { it.copy(student = result.data, isLoading = false) }
+                        is Resource.Error -> _state.update { it.copy(errorMessage = result.message, isLoading = false) }
                         else -> {}
                     }
                 }
@@ -79,16 +90,20 @@ class AdminStudentDetailViewModel @Inject constructor(
                 enrollmentRepository.getAdminStudentEnrollments(adminId, studentId).collect { result ->
                     when (result) {
                         is Resource.Success -> {
-                            _uiState.update { it.copy(
-                                enrollments = result.data ?: emptyList(),
-                                isLoading = false
-                            ) }
+                            _state.update {
+                                it.copy(
+                                    enrollments = result.data ?: emptyList(),
+                                    isLoadingEnrollments = false
+                                )
+                            }
                         }
                         is Resource.Error -> {
-                            _uiState.update { it.copy(
-                                errorMessage = result.message,
-                                isLoading = false
-                            ) }
+                            _state.update {
+                                it.copy(
+                                    errorMessage = result.message,
+                                    isLoadingEnrollments = false
+                                )
+                            }
                         }
                         else -> {}
                     }
@@ -98,28 +113,41 @@ class AdminStudentDetailViewModel @Inject constructor(
     }
 
     private fun toggleExpansion(enrollmentId: String) {
-        val currentExpanded = _uiState.value.expandedEnrollmentIds
+        val currentExpanded = _state.value.expandedEnrollmentIds
         if (currentExpanded.contains(enrollmentId)) {
-            _uiState.update { it.copy(expandedEnrollmentIds = currentExpanded - enrollmentId) }
+            _state.update { it.copy(expandedEnrollmentIds = currentExpanded - enrollmentId) }
         } else {
-            _uiState.update { it.copy(expandedEnrollmentIds = currentExpanded + enrollmentId) }
-            loadProgressIfNeeded(enrollmentId)
+            _state.update { it.copy(expandedEnrollmentIds = currentExpanded + enrollmentId) }
+            loadProgress(enrollmentId)
         }
     }
 
-    private fun loadProgressIfNeeded(enrollmentId: String) {
-        if (_uiState.value.enrollmentProgress.containsKey(enrollmentId)) return
-
+    private fun loadProgress(enrollmentId: String) {
         viewModelScope.launch {
             val session = sessionRepository.session.firstOrNull()
-            val adminId = session?.studentId ?: return@launch
-
-            progressRepository.getAdminEnrollmentProgress(adminId, enrollmentId).collect { result ->
-                if (result is Resource.Success && result.data != null) {
-                    _uiState.update { state ->
-                        state.copy(
-                            enrollmentProgress = state.enrollmentProgress + (enrollmentId to result.data!!)
-                        )
+            if (session != null) {
+                val adminId = session.studentId
+                progressRepository.getAdminEnrollmentProgress(adminId, enrollmentId).collect { result ->
+                    when (result) {
+                        is Resource.Success -> {
+                            if (result.data != null) {
+                                _state.update { state ->
+                                    state.copy(
+                                        enrollmentProgress = state.enrollmentProgress + (enrollmentId to result.data!!),
+                                        enrollmentErrors = state.enrollmentErrors - enrollmentId
+                                    )
+                                }
+                            }
+                        }
+                        is Resource.Error -> {
+                            _state.update { state ->
+                                state.copy(
+                                    enrollmentErrors = state.enrollmentErrors + (enrollmentId to (result.message ?: "Error al cargar")),
+                                    enrollmentProgress = state.enrollmentProgress - enrollmentId
+                                )
+                            }
+                        }
+                        else -> {}
                     }
                 }
             }

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.sagrd.mentorly.domain.model.content.ActivityType
 import com.sagrd.mentorly.domain.model.enrollment.Enrollment
 import com.sagrd.mentorly.domain.model.enrollment.EnrollmentStatus
@@ -44,6 +41,7 @@ import com.sagrd.mentorly.domain.model.progress.EnrollmentUnitProgress
 import com.sagrd.mentorly.domain.model.student.Student
 import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 
 @Composable
 fun AdminStudentDetailScreen(
@@ -51,14 +49,14 @@ fun AdminStudentDetailScreen(
     onBackClick: () -> Unit,
     viewModel: AdminStudentDetailViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(studentId) {
         viewModel.setStudentId(studentId)
     }
 
     AdminStudentDetailContent(
-        uiState = uiState,
+        state = state,
         onBackClick = onBackClick,
         onEvent = viewModel::onEvent
     )
@@ -67,7 +65,7 @@ fun AdminStudentDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AdminStudentDetailContent(
-    uiState: AdminStudentDetailUiState,
+    state: AdminStudentDetailUiState,
     onBackClick: () -> Unit,
     onEvent: (AdminStudentDetailUiEvent) -> Unit
 ) {
@@ -83,13 +81,13 @@ private fun AdminStudentDetailContent(
             )
         }
     ) { padding ->
-        if (uiState.isLoading && uiState.student == null) {
+        if (state.isLoading && state.student == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-        } else if (uiState.errorMessage != null && uiState.student == null) {
-            ErrorView(message = uiState.errorMessage, onRetry = { onEvent(AdminStudentDetailUiEvent.Load) })
-        } else if (uiState.student != null) {
+        } else if (state.errorMessage != null && state.student == null) {
+            ErrorView(message = state.errorMessage, onRetry = { onEvent(AdminStudentDetailUiEvent.Load) })
+        } else if (state.student != null) {
             LazyColumn(
                 modifier = Modifier
                     .padding(padding)
@@ -100,7 +98,7 @@ private fun AdminStudentDetailContent(
             ) {
                 // Profile Header
                 item {
-                    StudentProfileHeader(student = uiState.student)
+                    StudentProfileHeader(student = state.student)
                 }
 
                 // Enrollments Section
@@ -111,17 +109,20 @@ private fun AdminStudentDetailContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Inscripciones (${uiState.enrollments.size})",
+                            text = "Inscripciones (${state.enrollments.size})",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        TextButton(onClick = { /* Ver todas if implemented */ }) {
-                            Text("Ver todas")
-                        }
                     }
                 }
 
-                if (uiState.enrollments.isEmpty()) {
+                if (state.isLoadingEnrollments && state.enrollments.isEmpty()) {
+                    item {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                } else if (state.enrollments.isEmpty()) {
                     item {
                         Box(
                             Modifier
@@ -132,19 +133,21 @@ private fun AdminStudentDetailContent(
                         }
                     }
                 } else {
-                    items(uiState.enrollments, key = { it.id }) { enrollment ->
-                        val progress = uiState.enrollmentProgress[enrollment.id]
-                        val isExpanded = uiState.expandedEnrollmentIds.contains(enrollment.id)
+                    items(state.enrollments, key = { it.id }) { enrollment ->
+                        val progress = state.enrollmentProgress[enrollment.id]
+                        val error = state.enrollmentErrors[enrollment.id]
+                        val isExpanded = state.expandedEnrollmentIds.contains(enrollment.id)
 
                         EnrollmentCard(
                             enrollment = enrollment,
                             progress = progress,
+                            error = error,
                             isExpanded = isExpanded,
                             onToggleExpansion = { onEvent(AdminStudentDetailUiEvent.ToggleEnrollmentExpansion(enrollment.id)) }
                         )
                     }
                 }
-                
+
                 item { Spacer(modifier = Modifier.height(32.dp)) }
             }
         }
@@ -175,7 +178,7 @@ private fun StudentProfileHeader(student: Student) {
                     val initials = student.displayName.split(" ").filter { it.isNotEmpty() }.take(2).map { it[0] }.joinToString("").uppercase()
                     Text(text = initials, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
-                
+
                 // Star badge
                 Surface(
                     modifier = Modifier.size(32.dp).border(2.dp, Color.White, CircleShape),
@@ -254,10 +257,11 @@ private fun BadgeChip(
 private fun EnrollmentCard(
     enrollment: Enrollment,
     progress: EnrollmentProgress?,
+    error: String?,
     isExpanded: Boolean,
     onToggleExpansion: () -> Unit
 ) {
-    val rotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f)
+    val rotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "rotation")
 
     Card(
         modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), RoundedCornerShape(16.dp)),
@@ -273,7 +277,7 @@ private fun EnrollmentCard(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                
+
                 StatusBadge(status = enrollment.status)
             }
 
@@ -288,8 +292,7 @@ private fun EnrollmentCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.width(4.dp))
-                    // Simple date display
-                    val dateRange = "${enrollment.startedAt.take(10)} - ${enrollment.completedAt?.take(10) ?: "Presente"}"
+                    val dateRange = "${DateFormatter.format(enrollment.startedAt)} - ${enrollment.completedAt?.let { DateFormatter.format(it) } ?: "Presente"}"
                     Text(dateRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -311,7 +314,17 @@ private fun EnrollmentCard(
 
             AnimatedVisibility(visible = isExpanded) {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
-                    if (progress == null) {
+                    if (error != null) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                            TextButton(onClick = onToggleExpansion) {
+                                Text("Reintentar")
+                            }
+                        }
+                    } else if (progress == null) {
                         Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         }
@@ -357,7 +370,7 @@ private fun ProgressContent(progress: EnrollmentProgress) {
             Text("Progreso General", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("${progress.percentage}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
-        
+
         LinearProgressIndicator(
             progress = progress.percentage.toFloat() / 100f,
             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
@@ -392,12 +405,12 @@ private fun UnitProgressItem(unit: EnrollmentUnitProgress) {
             Box(modifier = Modifier.width(4.dp).height(40.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(text = "Unidad ${unit.unitId}: ${unit.title}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(text = unit.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 val unitPercentage = if (unit.totalThemes > 0) (unit.completedThemes * 100) / unit.totalThemes else 0
                 Text(text = "Progreso $unitPercentage%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
 
         // Nested themes
@@ -428,7 +441,7 @@ private fun ThemeProgressItem(theme: EnrollmentThemeProgress) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = theme.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
             }
-            
+
             if (theme.contentText.isNotBlank()) {
                 Text(
                     text = theme.contentText,
@@ -515,7 +528,7 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
 fun AdminStudentDetailScreenPreview() {
     MentorlyTheme {
         AdminStudentDetailContent(
-            uiState = AdminStudentDetailUiState(
+            state = AdminStudentDetailUiState(
                 student = Student("1", "elena.rodriguez@university.edu", "Elena Rodríguez", StudentRole.STUDENT, true, 1250),
                 enrollments = listOf(
                     Enrollment("e1", "1", "c1", "Introducción al Diseño UX/UI", 1, "2026-10-12", "2027-01-12", null, EnrollmentStatus.ACTIVE),

@@ -89,12 +89,12 @@ private fun AdminStudentListContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        "Administrar estudiantes", 
+                        "Administrar estudiantes",
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -164,7 +164,7 @@ private fun AdminStudentListContent(
                             onDetailClick = { onStudentClick(student.id) }
                         )
                     }
-                    
+
                     if (state.isLoading) {
                         item {
                             LoadingItem()
@@ -234,8 +234,8 @@ fun StudentItem(
 
                 // Role Badge
                 Surface(
-                    color = if (student.role == StudentRole.ADMIN) 
-                        MaterialTheme.colorScheme.secondaryContainer 
+                    color = if (student.role == StudentRole.ADMIN)
+                        MaterialTheme.colorScheme.secondaryContainer
                     else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(8.dp)
                 ) {
