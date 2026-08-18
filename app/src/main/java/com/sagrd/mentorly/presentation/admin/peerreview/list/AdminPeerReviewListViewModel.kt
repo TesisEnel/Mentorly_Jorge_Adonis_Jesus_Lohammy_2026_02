@@ -17,8 +17,8 @@ class AdminPeerReviewListViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AdminPeerReviewListUiState())
-    val uiState: StateFlow<AdminPeerReviewListUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(AdminPeerReviewListUiState())
+    val state: StateFlow<AdminPeerReviewListUiState> = _state.asStateFlow()
 
     init {
         checkSessionAndLoad()
@@ -26,21 +26,22 @@ class AdminPeerReviewListViewModel @Inject constructor(
 
     private fun checkSessionAndLoad() {
         viewModelScope.launch {
-            sessionRepository.session.firstOrNull()?.let { session ->
+            val session = sessionRepository.session.firstOrNull()
+            if (session != null) {
                 if (session.role == StudentRole.ADMIN) {
-                    _uiState.update { it.copy(
+                    _state.update { it.copy(
                         hasSession = true,
                         hasAdminAccess = true
                     ) }
                     loadPeerReviews()
                 } else {
-                    _uiState.update { it.copy(
+                    _state.update { it.copy(
                         hasAdminAccess = false,
                         errorMessage = "No tienes permisos para consultar revisiones administrativas."
                     ) }
                 }
-            } ?: run {
-                _uiState.update { it.copy(
+            } else {
+                _state.update { it.copy(
                     hasSession = false,
                     errorMessage = "No se encontró una sesión activa."
                 ) }
@@ -53,13 +54,13 @@ class AdminPeerReviewListViewModel @Inject constructor(
             AdminPeerReviewListUiEvent.Load -> loadPeerReviews()
             AdminPeerReviewListUiEvent.Refresh -> loadPeerReviews(isRefreshing = true)
             is AdminPeerReviewListUiEvent.SearchChanged -> {
-                _uiState.update { it.copy(searchQuery = event.value) }
+                _state.update { it.copy(searchQuery = event.value) }
             }
             is AdminPeerReviewListUiEvent.FilterChanged -> {
-                _uiState.update { it.copy(selectedFilter = event.filter) }
+                _state.update { it.copy(selectedFilter = event.filter) }
             }
             AdminPeerReviewListUiEvent.ClearError -> {
-                _uiState.update { it.copy(errorMessage = null) }
+                _state.update { it.copy(errorMessage = null) }
             }
         }
     }
@@ -67,48 +68,48 @@ class AdminPeerReviewListViewModel @Inject constructor(
     private fun loadPeerReviews(isRefreshing: Boolean = false) {
         viewModelScope.launch {
             val session = sessionRepository.session.firstOrNull()
-            val adminId = session?.studentId ?: return@launch
+            if (session != null) {
+                val adminId = session.studentId
 
-            peerReviewRepository.getAllPeerReviews(adminId).collect { result ->
-                when (result) {
-                    is Resource.Loading -> {
-                        _uiState.update { 
-                            if (isRefreshing) it.copy(isRefreshing = true)
-                            else it.copy(isLoading = true)
+                peerReviewRepository.getAllPeerReviews(adminId).collect { result ->
+                    when (result) {
+                        is Resource.Loading<*> -> {
+                            if (isRefreshing) _state.update { it.copy(isRefreshing = true) }
+                            else _state.update { it.copy(isLoading = true) }
                         }
-                    }
-                    is Resource.Success -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            peerReviews = result.data ?: emptyList(),
-                            errorMessage = null
-                        ) }
-                    }
-                    is Resource.Error -> {
-                        _uiState.update { it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            errorMessage = result.message ?: "No se pudieron cargar las revisiones."
-                        ) }
+                        is Resource.Success -> {
+                            _state.update { it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                peerReviews = result.data ?: emptyList(),
+                                errorMessage = null
+                            ) }
+                        }
+                        is Resource.Error -> {
+                            _state.update { it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                errorMessage = result.message ?: "No se pudieron cargar las revisiones."
+                            ) }
+                        }
                     }
                 }
             }
         }
     }
 
-    val filteredPeerReviews = combine(_uiState, _uiState.map { it.peerReviews }) { state, reviews ->
+    val filteredPeerReviews = combine(_state, _state.map { it.peerReviews }) { state, reviews ->
         reviews.filter { review ->
-            val matchesSearch = state.searchQuery.isBlank() || 
+            val matchesSearch = state.searchQuery.isBlank() ||
                 review.feedbackComment.contains(state.searchQuery, ignoreCase = true) ||
                 review.id.contains(state.searchQuery, ignoreCase = true)
-            
+
             val matchesFilter = when (state.selectedFilter) {
                 PeerReviewFilter.All -> true
                 PeerReviewFilter.Approved -> review.isApproved
                 PeerReviewFilter.Rejected -> !review.isApproved
             }
-            
+
             matchesSearch && matchesFilter
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
