@@ -3,6 +3,7 @@ package com.sagrd.mentorly.presentation.submission.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
+import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
@@ -21,7 +22,8 @@ import kotlinx.coroutines.launch
 class SubmissionListViewModel @Inject constructor(
     private val submissionRepository: SubmissionRepository,
     private val sessionRepository: SessionRepository,
-    private val enrollmentRepository: EnrollmentRepository
+    private val enrollmentRepository: EnrollmentRepository,
+    private val courseRepository: CourseRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SubmissionListUiState())
@@ -80,7 +82,10 @@ class SubmissionListViewModel @Inject constructor(
                         is Resource.Loading -> _uiState.update { it.copy(isLoading = true) }
                         is Resource.Success -> {
                             val rawSubmissions = resource.data ?: emptyList()
-                            val initialItems = rawSubmissions.map { SubmissionItemUiState(submission = it) }
+                            val initialItems = rawSubmissions.map { raw ->
+                                val existing = _uiState.value.submissions.find { it.submission.id == raw.id }
+                                existing?.copy(submission = raw) ?: SubmissionItemUiState(submission = raw)
+                            }
                             _uiState.update { state ->
                                 state.copy(
                                     isLoading = false,
@@ -122,6 +127,42 @@ class SubmissionListViewModel @Inject constructor(
                     )
                 }
 
+                val courseIds = enrollmentMap.values.map { it.courseId }.distinct()
+                courseIds.forEach { courseId ->
+                    launch {
+                        courseRepository.getCourseContent(courseId).collect { courseRes ->
+                            if (courseRes is Resource.Success && courseRes.data != null) {
+                                val course = courseRes.data
+                                val activityMap = course.units
+                                    .flatMap { it.themes }
+                                    .flatMap { it.activities }
+                                    .associateBy { it.id }
+
+                                _uiState.update { state ->
+                                    val updated = state.submissions.map { item ->
+                                        val enrollment = enrollmentMap[item.submission.enrollmentId]
+                                        if (enrollment?.courseId == courseId) {
+                                            val activity = activityMap[item.submission.activityId]
+                                            val strategy = activity?.approvalStrategy ?: ApprovalStrategy.AUTO
+                                            val required = if (strategy == ApprovalStrategy.PEER_REVIEW) course.requiredPeerReviews else 0
+                                            item.copy(
+                                                approvalStrategy = strategy,
+                                                requiredReviewsCount = required
+                                            )
+                                        } else {
+                                            item
+                                        }
+                                    }
+                                    state.copy(
+                                        submissions = updated,
+                                        filteredSubmissions = filterSubmissions(updated, state.searchQuery)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 submissions.forEach { submission ->
                     launch {
                         submissionRepository.getSubmissionReviews(studentId, submission.id).collect { reviewsRes ->
@@ -134,8 +175,7 @@ class SubmissionListViewModel @Inject constructor(
                                         if (item.submission.id == submission.id) {
                                             item.copy(
                                                 positiveReviewsCount = positiveCount,
-                                                requiredReviewsCount = 3,
-                                                hasReviewsInfo = reviews.isNotEmpty() || item.submission.status.name == "PENDING" || item.submission.status.name == "APPROVED"
+                                                hasReviewsInfo = reviews.isNotEmpty()
                                             )
                                         } else {
                                             item
