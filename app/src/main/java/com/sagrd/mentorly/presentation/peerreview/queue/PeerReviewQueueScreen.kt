@@ -47,7 +47,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.IconButton
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.peerreview.ReviewQueueItem
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
@@ -66,6 +69,11 @@ fun PeerReviewQueueScreen(
     viewModel: PeerReviewQueueViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(PeerReviewQueueUiEvent.Refresh)
+        onPauseOrDispose { }
+    }
 
     PeerReviewQueueContent(
         uiState = uiState,
@@ -95,6 +103,13 @@ private fun PeerReviewQueueContent(
                     )
                 },
                 actions = {
+                    IconButton(onClick = onRetry) {
+                        Icon(
+                            imageVector = Icons.Outlined.Refresh,
+                            contentDescription = "Actualizar",
+                            tint = PrimaryBlue
+                        )
+                    }
                     TextButton(onClick = onHistoryClick) {
                         Text(
                             text = "Historial",
