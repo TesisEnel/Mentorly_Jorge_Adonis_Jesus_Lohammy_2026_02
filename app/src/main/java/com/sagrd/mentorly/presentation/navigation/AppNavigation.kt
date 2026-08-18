@@ -401,8 +401,6 @@ private fun NavigationContent(
                     onEscalatedSubmissionsClick = {
                         backStack.add(Screen.AdminSubmissionList)
                     },
-                    onAnalyticsClick = {
-                    },
                     onSignOutCompleted = {
                         replaceRoot(backStack, Screen.Login)
                     },
