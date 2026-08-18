@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.outlined.Code
@@ -70,6 +71,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
@@ -82,8 +84,8 @@ import com.sagrd.mentorly.util.DateFormatter
 private val PrimaryBlue = Color(0xFF1565C0)
 private val CompletedGreen = Color(0xFF2E7D32)
 private val CompletedGreenBg = Color(0xFFE8F5E9)
-private val PendingBadgeBg = Color(0xFFFFEBEE)
-private val PendingBadgeText = Color(0xFFC62828)
+private val PendingBadgeBg = Color(0xFFFEF3C7)
+private val PendingBadgeText = Color(0xFFB45309)
 private val RejectedBadgeBg = Color(0xFFFFEBEE)
 private val RejectedBadgeText = Color(0xFFC62828)
 private val EscalatedBadgeBg = Color(0xFFF3E8FF)
@@ -100,6 +102,11 @@ fun SubmissionDetailScreen(
 
     LaunchedEffect(submissionId) {
         viewModel.onEvent(SubmissionDetailUiEvent.Load(submissionId))
+    }
+
+    LifecycleResumeEffect(submissionId) {
+        viewModel.onEvent(SubmissionDetailUiEvent.Refresh)
+        onPauseOrDispose { }
     }
 
     SubmissionDetailBody(
@@ -143,6 +150,15 @@ fun SubmissionDetailBody(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver atrás"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onRetry) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Actualizar",
+                            tint = PrimaryBlue
                         )
                     }
                 },
