@@ -109,14 +109,8 @@ class PeerReviewDetailViewModel @Inject constructor(
     ) {
         peerReviewRepository.getRubric(activityId).collect { rubricResource ->
             val criteria = when (rubricResource) {
-                is Resource.Success -> {
-                    if (rubricResource.data.isNullOrEmpty()) {
-                        getDefaultCriteria(activityId)
-                    } else {
-                        rubricResource.data
-                    }
-                }
-                else -> getDefaultCriteria(activityId)
+                is Resource.Success -> rubricResource.data.orEmpty()
+                else -> emptyList()
             }
 
             _uiState.update {
@@ -129,25 +123,6 @@ class PeerReviewDetailViewModel @Inject constructor(
             }
         }
     }
-
-    private fun getDefaultCriteria(activityId: String): List<PeerReviewRubricCriterion> = listOf(
-        PeerReviewRubricCriterion(
-            id = "crit-1",
-            activityId = activityId,
-            title = "Complejidad Técnica",
-            description = "Evalúa la eficiencia y el uso de estructuras de datos adecuadas.",
-            maxScore = 5,
-            orderIndex = 1
-        ),
-        PeerReviewRubricCriterion(
-            id = "crit-2",
-            activityId = activityId,
-            title = "Calidad del Código",
-            description = "Evalúa la legibilidad, modularidad y seguimiento de convenciones.",
-            maxScore = 5,
-            orderIndex = 2
-        )
-    )
 
     private fun submitReview() {
         val id = submissionId ?: return
@@ -176,11 +151,15 @@ class PeerReviewDetailViewModel @Inject constructor(
         }
 
         val selectedDecision = approved ?: return
-        val scoresList = state.criterionScores.map { (criterionId, score) ->
-            PeerReviewCriterionScoreDto(
-                rubricCriterionId = criterionId,
-                score = score
-            )
+        val scoresList = if (state.criteria.isEmpty()) {
+            emptyList()
+        } else {
+            state.criterionScores.map { (criterionId, score) ->
+                PeerReviewCriterionScoreDto(
+                    rubricCriterionId = criterionId,
+                    score = score
+                )
+            }
         }
 
         viewModelScope.launch {

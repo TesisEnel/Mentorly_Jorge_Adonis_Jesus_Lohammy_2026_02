@@ -49,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.peerreview.PeerReview
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
@@ -66,6 +67,11 @@ fun PeerReviewHistoryScreen(
     viewModel: PeerReviewHistoryViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(PeerReviewHistoryUiEvent.Refresh)
+        onPauseOrDispose { }
+    }
 
     PeerReviewHistoryBody(
         state = state,
