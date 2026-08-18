@@ -3,6 +3,7 @@ package com.sagrd.mentorly.data.repository.analytics
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.analytics.AnalyticsOverviewDto
+import com.sagrd.mentorly.data.remote.dto.analytics.CompletionTimeReportDto
 import com.sagrd.mentorly.data.remote.remotedatasource.AnalyticsRemoteDataSource
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -82,6 +83,26 @@ class AnalyticsRepositoryImplTest {
         // Then
         assertTrue(result[1] is Resource.Success)
         coVerify { remoteDataSource.getDropOff(adminId, courseId) }
+    }
+
+    @Test
+    fun `getCompletionTimeReport retorna reporte correctamente`() = runTest {
+        // Given
+        val adminId = "admin-1"
+        val courseId = "course-1"
+        val reportDto = CompletionTimeReportDto(
+            courseAverageDays = 15.5,
+            units = emptyList(),
+        )
+        coEvery { remoteDataSource.getCompletionTimeReport(adminId, courseId) } returns Result.success(reportDto)
+
+        // When
+        val result = repository.getCompletionTimeReport(adminId, courseId).toList()
+
+        // Then
+        assertTrue(result[1] is Resource.Success)
+        assertEquals(15.5, result[1].data?.courseAverageDays)
+        coVerify { remoteDataSource.getCompletionTimeReport(adminId, courseId) }
     }
 
     @Test
