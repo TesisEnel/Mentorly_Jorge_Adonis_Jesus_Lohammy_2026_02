@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -83,14 +84,14 @@ fun QuizScreen(
     onQuizSubmitted: () -> Unit,
     viewModel: QuizViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(enrollmentId, activityId) {
         viewModel.initialize(enrollmentId, activityId)
     }
 
     QuizContent(
-        uiState = uiState,
+        state = state,
         onBackClick = onBackClick,
         onQuizSubmitted = onQuizSubmitted,
         onEvent = viewModel::onEvent
@@ -100,7 +101,7 @@ fun QuizScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QuizContent(
-    uiState: QuizUiState,
+    state: QuizUiState,
     onBackClick: () -> Unit,
     onQuizSubmitted: () -> Unit,
     onEvent: (QuizUiEvent) -> Unit
@@ -119,7 +120,7 @@ private fun QuizContent(
                     },
                     navigationIcon = {
                         IconButton(onClick = {
-                            if (uiState.result != null) onQuizSubmitted() else onBackClick()
+                            if (state.result != null) onQuizSubmitted() else onBackClick()
                         }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -136,9 +137,9 @@ private fun QuizContent(
             }
         },
         bottomBar = {
-            if (uiState.questions.isNotEmpty() && !uiState.isLoading && uiState.result == null) {
-                val allAnswered = uiState.questions.all {
-                    !uiState.answers[it.id].isNullOrBlank()
+            if (state.questions.isNotEmpty() && !state.isLoading && state.result == null) {
+                val allAnswered = state.questions.all {
+                    !state.answers[it.id].isNullOrBlank()
                 }
 
                 Surface(
@@ -152,7 +153,7 @@ private fun QuizContent(
                     ) {
                         Button(
                             onClick = { onEvent(QuizUiEvent.SubmitQuiz) },
-                            enabled = !uiState.isSubmitting,
+                            enabled = !state.isSubmitting,
                             shape = RoundedCornerShape(24.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (allAnswered) PrimaryBlue else Color(0xFFF1F5F9),
@@ -164,7 +165,7 @@ private fun QuizContent(
                                 .fillMaxWidth()
                                 .height(48.dp)
                         ) {
-                            if (uiState.isSubmitting) {
+                            if (state.isSubmitting) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(20.dp),
                                     color = Color.White,
@@ -195,24 +196,24 @@ private fun QuizContent(
         }
     ) { innerPadding ->
         when {
-            uiState.isLoading && uiState.questions.isEmpty() -> LoadingContent(
+            state.isLoading && state.questions.isEmpty() -> LoadingContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             )
 
-            uiState.errorMessage != null && uiState.questions.isEmpty() -> ErrorContent(
-                message = uiState.errorMessage,
+            state.errorMessage != null && state.questions.isEmpty() -> ErrorContent(
+                message = state.errorMessage,
                 onRetry = { onEvent(QuizUiEvent.Retry) },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             )
 
-            uiState.result != null -> {
-                if (uiState.result.passed) {
+            state.result != null -> {
+                if (state.result.passed) {
                     QuizApprovedResultContent(
-                        result = uiState.result,
+                        result = state.result,
                         onBackToCourse = onQuizSubmitted,
                         modifier = Modifier
                             .fillMaxSize()
@@ -220,7 +221,8 @@ private fun QuizContent(
                     )
                 } else {
                     QuizNotApprovedResultContent(
-                        result = uiState.result,
+                        result = state.result,
+                        onReattempt = { onEvent(QuizUiEvent.ReattemptQuiz) },
                         onBackToCourse = onQuizSubmitted,
                         modifier = Modifier
                             .fillMaxSize()
@@ -229,14 +231,14 @@ private fun QuizContent(
                 }
             }
 
-            uiState.questions.isEmpty() -> EmptyContent(
+            state.questions.isEmpty() -> EmptyContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
             )
 
             else -> QuizSolvingContent(
-                uiState = uiState,
+                state = state,
                 onEvent = onEvent,
                 modifier = Modifier
                     .fillMaxSize()
@@ -248,14 +250,14 @@ private fun QuizContent(
 
 @Composable
 private fun QuizSolvingContent(
-    uiState: QuizUiState,
+    state: QuizUiState,
     onEvent: (QuizUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val total = uiState.questions.size
-    val currentIndex = uiState.currentQuestionIndex.coerceIn(0, total - 1)
-    val currentQuestion = uiState.questions[currentIndex]
-    val currentAnswer = uiState.answers[currentQuestion.id].orEmpty()
+    val total = state.questions.size
+    val currentIndex = state.currentQuestionIndex.coerceIn(0, total - 1)
+    val currentQuestion = state.questions[currentIndex]
+    val currentAnswer = state.answers[currentQuestion.id].orEmpty()
     val progressPercent = if (total > 0) ((currentIndex + 1) * 100) / total else 0
 
     LazyColumn(
@@ -303,8 +305,8 @@ private fun QuizSolvingContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     for (i in 0 until total) {
-                        val question = uiState.questions[i]
-                        val isAnswered = !uiState.answers[question.id].isNullOrBlank()
+                        val question = state.questions[i]
+                        val isAnswered = !state.answers[question.id].isNullOrBlank()
                         val isCurrent = i == currentIndex
 
                         if (i > 0) {
@@ -362,7 +364,7 @@ private fun QuizSolvingContent(
             }
         }
 
-        if (uiState.errorMessage != null) {
+        if (state.errorMessage != null) {
             item {
                 Row(
                     modifier = Modifier
@@ -379,7 +381,7 @@ private fun QuizSolvingContent(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = uiState.errorMessage,
+                        text = state.errorMessage,
                         color = ErrorRed,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium
@@ -467,7 +469,7 @@ private fun QuizSolvingContent(
                             .fillMaxWidth()
                             .heightIn(min = 160.dp),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = !uiState.isSubmitting && !uiState.isSubmitted
+                        enabled = !state.isSubmitting && !state.isSubmitted
                     )
                 }
             }
@@ -681,6 +683,7 @@ private fun QuizApprovedResultContent(
 @Composable
 private fun QuizNotApprovedResultContent(
     result: QuizAttempt,
+    onReattempt: () -> Unit,
     onBackToCourse: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -744,7 +747,7 @@ private fun QuizNotApprovedResultContent(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "La puntuación mínima para aprobar es 70%. Puedes volver al curso y continuar tu aprendizaje.",
+                    text = "La puntuación mínima para aprobar es 70%. Puedes volver a intentarlo para mejorar tu calificación y continuar tu progreso.",
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF334155),
@@ -763,7 +766,7 @@ private fun QuizNotApprovedResultContent(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = onBackToCourse,
+                    onClick = onReattempt,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                     modifier = Modifier
@@ -775,17 +778,47 @@ private fun QuizNotApprovedResultContent(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.Filled.Refresh,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Volver al curso",
+                            text = "Reintentar cuestionario",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onBackToCourse,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Volver al curso",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -845,7 +878,7 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
 private fun QuizSolvingPreview() {
     MentorlyTheme {
         QuizContent(
-            uiState = QuizUiState(
+            state = QuizUiState(
                 isLoading = false,
                 currentQuestionIndex = 1,
                 questions = listOf(
@@ -891,7 +924,7 @@ private fun QuizSolvingPreview() {
 private fun QuizApprovedPreview() {
     MentorlyTheme {
         QuizContent(
-            uiState = QuizUiState(
+            state = QuizUiState(
                 isLoading = false,
                 result = QuizAttempt(
                     id = "attempt-1",
@@ -912,7 +945,7 @@ private fun QuizApprovedPreview() {
 private fun QuizNotApprovedPreview() {
     MentorlyTheme {
         QuizContent(
-            uiState = QuizUiState(
+            state = QuizUiState(
                 isLoading = false,
                 result = QuizAttempt(
                     id = "attempt-2",
