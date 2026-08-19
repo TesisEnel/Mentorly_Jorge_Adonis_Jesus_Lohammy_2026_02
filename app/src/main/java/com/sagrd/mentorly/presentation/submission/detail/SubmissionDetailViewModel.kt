@@ -33,8 +33,8 @@ class SubmissionDetailViewModel @Inject constructor(
     private val courseRepository: CourseRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SubmissionDetailUiState())
-    val uiState: StateFlow<SubmissionDetailUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(SubmissionDetailUiState())
+    val state: StateFlow<SubmissionDetailUiState> = _state.asStateFlow()
 
     private var currentSubmissionId: String? = null
 
@@ -48,26 +48,26 @@ class SubmissionDetailViewModel @Inject constructor(
                 currentSubmissionId?.let { load(it) }
             }
             is SubmissionDetailUiEvent.Escalate -> escalate()
-            is SubmissionDetailUiEvent.DismissError -> _uiState.update { it.copy(errorMessage = null) }
+            is SubmissionDetailUiEvent.DismissError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun load(submissionId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val session = sessionRepository.session.first()
             val studentId = session?.studentId
 
             if (studentId == null) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Sesión no encontrada") }
+                _state.update { it.copy(isLoading = false, errorMessage = "Sesión no encontrada") }
             } else {
                 submissionRepository.getSubmissionById(submissionId).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update { it.copy(isLoading = true) }
+                        is Resource.Loading -> _state.update { it.copy(isLoading = true) }
                         is Resource.Success -> {
                             val submission = resource.data
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isLoading = false,
                                     submission = submission,
@@ -79,7 +79,7 @@ class SubmissionDetailViewModel @Inject constructor(
                                 loadReviews(studentId, submissionId)
                             }
                         }
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(isLoading = false, errorMessage = resource.message)
                         }
                     }
@@ -107,7 +107,7 @@ class SubmissionDetailViewModel @Inject constructor(
                                 null -> "Cargando información..."
                             }
 
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     requiredReviewsCount = course.requiredPeerReviews,
                                     approvalStrategy = strategy,
@@ -126,7 +126,7 @@ class SubmissionDetailViewModel @Inject constructor(
         viewModelScope.launch {
             submissionRepository.getSubmissionReviews(studentId, submissionId).collect { resource ->
                 if (resource is Resource.Success) {
-                    _uiState.update { it.copy(reviews = resource.data ?: emptyList()) }
+                    _state.update { it.copy(reviews = resource.data ?: emptyList()) }
                 }
             }
         }
@@ -136,18 +136,18 @@ class SubmissionDetailViewModel @Inject constructor(
         val submissionId = currentSubmissionId ?: return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isEscalating = true, errorMessage = null) }
+            _state.update { it.copy(isEscalating = true, errorMessage = null) }
 
             val session = sessionRepository.session.first()
             val studentId = session?.studentId
 
             if (studentId == null) {
-                _uiState.update { it.copy(isEscalating = false, errorMessage = "Sesión no encontrada") }
+                _state.update { it.copy(isEscalating = false, errorMessage = "Sesión no encontrada") }
             } else {
                 submissionRepository.escalateSubmission(studentId, submissionId).collect { resource ->
                     when (resource) {
                         is Resource.Success -> {
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isEscalating = false,
                                     submission = it.submission?.copy(status = SubmissionStatus.ESCALATED),
@@ -155,7 +155,7 @@ class SubmissionDetailViewModel @Inject constructor(
                                 )
                             }
                         }
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(isEscalating = false, errorMessage = resource.message)
                         }
                         is Resource.Loading -> Unit
