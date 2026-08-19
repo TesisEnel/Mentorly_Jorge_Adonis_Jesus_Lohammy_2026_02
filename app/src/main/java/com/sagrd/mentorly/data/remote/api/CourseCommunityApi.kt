@@ -12,13 +12,13 @@ interface CourseCommunityApi {
     @GET("api/courses/{courseId}/members")
     suspend fun getCourseMembers(
         @Path("courseId") courseId: String,
-        @Query("viewerStudentId") viewerStudentId: String
+        @Query("viewerStudentId") viewerStudentId: String? = null
     ): Response<List<CourseMemberDto>>
 
     @GET("api/courses/{courseId}/leaderboard")
     suspend fun getLeaderboard(
         @Path("courseId") courseId: String,
-        @Query("viewerStudentId") viewerStudentId: String
+        @Query("viewerStudentId") viewerStudentId: String? = null
     ): Response<List<LeaderboardEntryDto>>
 
     @GET("api/courses/{courseId}/leaderboard/{studentId}")
