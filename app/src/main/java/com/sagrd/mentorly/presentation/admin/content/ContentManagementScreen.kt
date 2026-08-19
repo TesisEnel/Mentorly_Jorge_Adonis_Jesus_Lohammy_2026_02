@@ -388,7 +388,7 @@ private fun UnitCard(
                     color = MaterialTheme.colorScheme.primary,
                 ) {
                     Text(
-                        text = "U${unit.orderIndex + 1}",
+                        text = "U${unit.orderIndex}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -500,7 +500,7 @@ private fun ThemeContainer(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                 ) {
                     Text(
-                        text = "TEMA ${theme.orderIndex + 1}",
+                        text = "TEMA ${theme.orderIndex}",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
