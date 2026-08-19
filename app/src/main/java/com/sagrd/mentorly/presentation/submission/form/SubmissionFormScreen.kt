@@ -77,7 +77,7 @@ fun SubmissionFormScreen(
     onSaved: (String) -> Unit,
     viewModel: SubmissionFormViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(enrollmentId, activityId, submissionId) {
         viewModel.onEvent(SubmissionFormUiEvent.Load(enrollmentId, activityId, submissionId))

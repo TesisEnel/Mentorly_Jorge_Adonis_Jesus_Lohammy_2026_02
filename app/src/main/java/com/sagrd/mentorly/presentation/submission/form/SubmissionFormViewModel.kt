@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.submission.CreateSubmissionDto
 import com.sagrd.mentorly.data.remote.dto.submission.UpdateSubmissionDto
-import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
@@ -26,8 +25,8 @@ class SubmissionFormViewModel @Inject constructor(
     private val courseRepository: CourseRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SubmissionFormUiState())
-    val uiState: StateFlow<SubmissionFormUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(SubmissionFormUiState())
+    val state: StateFlow<SubmissionFormUiState> = _state.asStateFlow()
 
     private var enrollmentId: String = ""
     private var activityId: String = ""
@@ -36,17 +35,17 @@ class SubmissionFormViewModel @Inject constructor(
     fun onEvent(event: SubmissionFormUiEvent) {
         when (event) {
             is SubmissionFormUiEvent.Load -> load(event.enrollmentId, event.activityId, event.submissionId)
-            is SubmissionFormUiEvent.UrlContentChanged -> _uiState.update {
+            is SubmissionFormUiEvent.UrlContentChanged -> _state.update {
                 it.copy(urlContent = event.value, evidenceContentError = null)
             }
-            is SubmissionFormUiEvent.CommentsContentChanged -> _uiState.update {
+            is SubmissionFormUiEvent.CommentsContentChanged -> _state.update {
                 it.copy(commentsContent = event.value)
             }
-            is SubmissionFormUiEvent.TextContentChanged -> _uiState.update {
+            is SubmissionFormUiEvent.TextContentChanged -> _state.update {
                 it.copy(textContent = event.value, evidenceContentError = null)
             }
             is SubmissionFormUiEvent.Save -> save()
-            is SubmissionFormUiEvent.DismissError -> _uiState.update { it.copy(errorMessage = null) }
+            is SubmissionFormUiEvent.DismissError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
@@ -58,7 +57,7 @@ class SubmissionFormViewModel @Inject constructor(
         loadActivityMetadata(enrollmentId, activityId)
 
         if (submissionId == null) {
-            _uiState.update {
+            _state.update {
                 it.copy(
                     isEditing = false,
                     urlContent = "",
@@ -68,7 +67,7 @@ class SubmissionFormViewModel @Inject constructor(
                 )
             }
         } else {
-            _uiState.update {
+            _state.update {
                 it.copy(
                     isEditing = true,
                     isLoading = true,
@@ -79,11 +78,11 @@ class SubmissionFormViewModel @Inject constructor(
             viewModelScope.launch {
                 submissionRepository.getSubmissionById(submissionId).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update { it.copy(isLoading = true) }
+                        is Resource.Loading -> _state.update { it.copy(isLoading = true) }
                         is Resource.Success -> {
                             val submission = resource.data
                             val type = submission?.evidenceType ?: EvidenceType.URL
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isLoading = false,
                                     evidenceType = type,
@@ -92,7 +91,7 @@ class SubmissionFormViewModel @Inject constructor(
                                 )
                             }
                         }
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(isLoading = false, errorMessage = resource.message)
                         }
                     }
@@ -113,7 +112,7 @@ class SubmissionFormViewModel @Inject constructor(
                                 .firstOrNull { it.id == targetActivityId }
 
                             if (foundActivity != null) {
-                                _uiState.update {
+                                _state.update {
                                     it.copy(
                                         activityTitle = foundActivity.title,
                                         activityDescription = foundActivity.description,
@@ -131,11 +130,11 @@ class SubmissionFormViewModel @Inject constructor(
     }
 
     private fun save() {
-        val state = _uiState.value
+        val state = _state.value
         val validationError = validateEvidence(state)
 
         if (validationError != null) {
-            _uiState.update { it.copy(evidenceContentError = validationError) }
+            _state.update { it.copy(evidenceContentError = validationError) }
         } else {
             val contentPayload = when (state.evidenceType) {
                 EvidenceType.URL -> state.urlContent.trim()
@@ -143,7 +142,7 @@ class SubmissionFormViewModel @Inject constructor(
             }
 
             viewModelScope.launch {
-                _uiState.update {
+                _state.update {
                     it.copy(
                         isSaving = true,
                         errorMessage = null,
@@ -181,7 +180,7 @@ class SubmissionFormViewModel @Inject constructor(
         when (resource) {
             is Resource.Success -> {
                 val createdSubmissionId = resource.data?.id
-                _uiState.update {
+                _state.update {
                     if (createdSubmissionId == null) {
                         it.copy(
                             isSaving = false,
@@ -195,7 +194,7 @@ class SubmissionFormViewModel @Inject constructor(
                     }
                 }
             }
-            is Resource.Error -> _uiState.update { it.copy(isSaving = false, errorMessage = resource.message) }
+            is Resource.Error -> _state.update { it.copy(isSaving = false, errorMessage = resource.message) }
             is Resource.Loading -> Unit
         }
     }
@@ -205,13 +204,13 @@ class SubmissionFormViewModel @Inject constructor(
         updatedSubmissionId: String
     ) {
         when (resource) {
-            is Resource.Success -> _uiState.update {
+            is Resource.Success -> _state.update {
                 it.copy(
                     isSaving = false,
                     savedSubmissionId = updatedSubmissionId
                 )
             }
-            is Resource.Error -> _uiState.update { it.copy(isSaving = false, errorMessage = resource.message) }
+            is Resource.Error -> _state.update { it.copy(isSaving = false, errorMessage = resource.message) }
             is Resource.Loading -> Unit
         }
     }
