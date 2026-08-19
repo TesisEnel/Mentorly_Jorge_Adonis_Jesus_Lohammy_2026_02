@@ -155,51 +155,50 @@ class QuizViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(errorMessage = "No se encontró una sesión activa.")
                 }
-                return@launch
-            }
-
-            val attempt = SubmitQuizAttemptDto(
-                studentId = session.studentId,
-                answers = state.questions.map { question ->
-                    QuizAnswerDto(
-                        questionId = question.id,
-                        answer = state.answers.getValue(question.id).trim()
-                    )
-                }
-            )
-
-            quizRepository.submitQuizAttempt(
-                enrollmentId = currentEnrollmentId,
-                activityId = currentActivityId,
-                attempt = attempt
-            ).collect { resource ->
-                when (resource) {
-                    is Resource.Loading -> {
-                        _uiState.update {
-                            it.copy(
-                                isSubmitting = true,
-                                errorMessage = null
-                            )
-                        }
+            } else {
+                val attempt = SubmitQuizAttemptDto(
+                    studentId = session.studentId,
+                    answers = state.questions.map { question ->
+                        QuizAnswerDto(
+                            questionId = question.id,
+                            answer = state.answers.getValue(question.id).trim()
+                        )
                     }
+                )
 
-                    is Resource.Success -> {
-                        _uiState.update {
-                            it.copy(
-                                isSubmitting = false,
-                                result = resource.data,
-                                errorMessage = null,
-                                isSubmitted = true
-                            )
+                quizRepository.submitQuizAttempt(
+                    enrollmentId = currentEnrollmentId,
+                    activityId = currentActivityId,
+                    attempt = attempt
+                ).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> {
+                            _uiState.update {
+                                it.copy(
+                                    isSubmitting = true,
+                                    errorMessage = null
+                                )
+                            }
                         }
-                    }
 
-                    is Resource.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                isSubmitting = false,
-                                errorMessage = "No se pudo enviar el intento. Inténtalo nuevamente."
-                            )
+                        is Resource.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    isSubmitting = false,
+                                    result = resource.data,
+                                    errorMessage = null,
+                                    isSubmitted = true
+                                )
+                            }
+                        }
+
+                        is Resource.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isSubmitting = false,
+                                    errorMessage = "No se pudo enviar el intento. Inténtalo nuevamente."
+                                )
+                            }
                         }
                     }
                 }
