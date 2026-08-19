@@ -215,13 +215,17 @@ private fun NavigationContent(
                     onBackClick = {
                         popBackStackSafely(backStack)
                     },
-                    onActivityClick = { activityId ->
-                        backStack.add(
-                            Screen.SubmissionForm(
-                                enrollmentId = destination.enrollmentId,
-                                activityId = activityId
+                    onActivityClick = { activityId, submissionId ->
+                        if (submissionId != null) {
+                            backStack.add(Screen.SubmissionDetail(submissionId))
+                        } else {
+                            backStack.add(
+                                Screen.SubmissionForm(
+                                    enrollmentId = destination.enrollmentId,
+                                    activityId = activityId
+                                )
                             )
-                        )
+                        }
                     },
                     onQuizClick = { activityId ->
                         backStack.add(
