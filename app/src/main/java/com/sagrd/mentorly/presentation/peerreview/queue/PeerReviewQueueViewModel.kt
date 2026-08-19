@@ -48,36 +48,35 @@ class PeerReviewQueueViewModel @Inject constructor(
                         errorMessage = "No se encontró una sesión activa."
                     )
                 }
-                return@launch
-            }
+            } else {
+                peerReviewRepository.getQueue(session.studentId).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> _uiState.update {
+                            it.copy(
+                                isLoading = !isRefresh,
+                                isRefreshing = isRefresh,
+                                errorMessage = null,
+                                hasSession = true
+                            )
+                        }
 
-            peerReviewRepository.getQueue(session.studentId).collect { resource ->
-                when (resource) {
-                    is Resource.Loading -> _uiState.update {
-                        it.copy(
-                            isLoading = !isRefresh,
-                            isRefreshing = isRefresh,
-                            errorMessage = null,
-                            hasSession = true
-                        )
-                    }
+                        is Resource.Success -> _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                queueItems = resource.data.orEmpty(),
+                                errorMessage = null
+                            )
+                        }
 
-                    is Resource.Success -> _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            queueItems = resource.data.orEmpty(),
-                            errorMessage = null
-                        )
-                    }
-
-                    is Resource.Error -> _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isRefreshing = false,
-                            errorMessage = resource.message
-                                ?: "No se pudo cargar la cola de revisiones."
-                        )
+                        is Resource.Error -> _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                errorMessage = resource.message
+                                    ?: "No se pudo cargar la cola de revisiones."
+                            )
+                        }
                     }
                 }
             }
