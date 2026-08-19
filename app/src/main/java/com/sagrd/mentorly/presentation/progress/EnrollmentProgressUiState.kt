@@ -1,5 +1,6 @@
 package com.sagrd.mentorly.presentation.progress
 
+import com.sagrd.mentorly.domain.model.enrollment.Certificate
 import com.sagrd.mentorly.domain.model.enrollment.Enrollment
 import com.sagrd.mentorly.domain.model.progress.EnrollmentProgress
 import com.sagrd.mentorly.domain.model.submission.Submission
@@ -9,6 +10,9 @@ data class EnrollmentProgressUiState(
     val isRefreshing: Boolean = false,
     val progress: EnrollmentProgress? = null,
     val enrollment: Enrollment? = null,
+    val certificate: Certificate? = null,
+    val studentName: String = "",
+    val isCertificateDialogVisible: Boolean = false,
     val courseImageUrl: String? = null,
     val expandedUnitIds: Set<String> = emptySet(),
     val completingThemeIds: Set<String> = emptySet(),
