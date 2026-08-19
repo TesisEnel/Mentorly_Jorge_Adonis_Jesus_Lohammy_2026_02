@@ -20,8 +20,8 @@ class PeerReviewQueueViewModel @Inject constructor(
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PeerReviewQueueUiState())
-    val uiState: StateFlow<PeerReviewQueueUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(PeerReviewQueueUiState())
+    val state: StateFlow<PeerReviewQueueUiState> = _state.asStateFlow()
 
     init {
         loadQueue()
@@ -30,17 +30,17 @@ class PeerReviewQueueViewModel @Inject constructor(
     fun onEvent(event: PeerReviewQueueUiEvent) {
         when (event) {
             PeerReviewQueueUiEvent.Refresh -> loadQueue(isRefresh = true)
-            PeerReviewQueueUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            PeerReviewQueueUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun loadQueue(isRefresh: Boolean = false) {
-        if (_uiState.value.isLoading || _uiState.value.isRefreshing) return
+        if (_state.value.isLoading || _state.value.isRefreshing) return
 
         viewModelScope.launch {
             val session = sessionRepository.session.first()
             if (session == null) {
-                _uiState.update {
+                _state.update {
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
@@ -51,7 +51,7 @@ class PeerReviewQueueViewModel @Inject constructor(
             } else {
                 peerReviewRepository.getQueue(session.studentId).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update {
+                        is Resource.Loading -> _state.update {
                             it.copy(
                                 isLoading = !isRefresh,
                                 isRefreshing = isRefresh,
@@ -60,7 +60,7 @@ class PeerReviewQueueViewModel @Inject constructor(
                             )
                         }
 
-                        is Resource.Success -> _uiState.update {
+                        is Resource.Success -> _state.update {
                             it.copy(
                                 isLoading = false,
                                 isRefreshing = false,
@@ -69,7 +69,7 @@ class PeerReviewQueueViewModel @Inject constructor(
                             )
                         }
 
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(
                                 isLoading = false,
                                 isRefreshing = false,
