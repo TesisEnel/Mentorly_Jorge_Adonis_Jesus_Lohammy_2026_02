@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.admin.peerreview.list
+﻿package com.sagrd.mentorly.presentation.admin.peerreview.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,7 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.peerreview.PeerReview
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 @Composable
 fun AdminPeerReviewListScreen(
@@ -211,7 +211,7 @@ private fun AdminPeerReviewItem(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = DateFormatter.format(review.createdAt),
+                        text = formatDate(review.createdAt),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -296,3 +296,4 @@ fun AdminPeerReviewListScreenPreview() {
         )
     }
 }
+

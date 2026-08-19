@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.submission.list
+﻿package com.sagrd.mentorly.presentation.submission.list
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -71,7 +71,7 @@ import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 private val PrimaryBlue = Color(0xFF1565C0)
 private val CompletedGreen = Color(0xFF2E7D32)
@@ -488,7 +488,7 @@ private fun SubmissionItemCard(
             )
 
             Text(
-                text = "Enviada el ${DateFormatter.format(submission.submittedAt).substringBefore(",")}",
+                text = "Enviada el ${formatDate(submission.submittedAt).substringBefore(",")}",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF64748B)
             )
@@ -662,3 +662,4 @@ private fun SubmissionListEmptyPreview() {
         )
     }
 }
+

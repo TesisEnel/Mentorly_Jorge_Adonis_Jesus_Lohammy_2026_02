@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.peerreview.queue
+﻿package com.sagrd.mentorly.presentation.peerreview.queue
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -55,7 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.peerreview.ReviewQueueItem
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 private val PrimaryBlue = Color(0xFF0D62D9)
 private val AnonymousContainer = Color(0xFFEDE7F6)
@@ -239,7 +239,7 @@ private fun QueueItemCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = DateFormatter.format(item.submittedAtUtc),
+                    text = formatDate(item.submittedAtUtc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

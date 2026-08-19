@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.admin.submission.list
+﻿package com.sagrd.mentorly.presentation.admin.submission.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.submission.AdminEscalatedSubmission
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 @Composable
 fun AdminSubmissionListScreen(
@@ -285,8 +285,8 @@ private fun EscalatedSubmissionCard(
 
             // Dates
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                DateInfoRow(label = "Fecha de envío:", date = DateFormatter.format(submission.submittedAtUtc), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                DateInfoRow(label = "Fecha de escalamiento:", date = DateFormatter.format(submission.escalatedAtUtc), color = MaterialTheme.colorScheme.error)
+                DateInfoRow(label = "Fecha de envío:", date = formatDate(submission.submittedAtUtc), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                DateInfoRow(label = "Fecha de escalamiento:", date = formatDate(submission.escalatedAtUtc), color = MaterialTheme.colorScheme.error)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -397,3 +397,4 @@ fun AdminSubmissionListScreenPreview() {
         )
     }
 }
+
