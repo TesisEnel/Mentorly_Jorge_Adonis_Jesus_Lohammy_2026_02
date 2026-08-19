@@ -54,7 +54,7 @@ class UnitFormViewModel @Inject constructor(
                 updateMissingSession()
             } else if (session.role != StudentRole.ADMIN) {
                 updateMissingAdminAccess()
-            } else if (courseId != newCourseId || unitId != newUnitId) {
+            } else {
                 courseId = newCourseId
                 unitId = newUnitId
                 _state.update {
