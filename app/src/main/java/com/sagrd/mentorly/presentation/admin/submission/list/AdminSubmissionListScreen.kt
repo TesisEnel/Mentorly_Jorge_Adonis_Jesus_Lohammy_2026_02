@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.submission.AdminEscalatedSubmission
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
@@ -43,6 +44,11 @@ fun AdminSubmissionListScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val filteredSubmissions by viewModel.filteredSubmissions.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(AdminSubmissionListUiEvent.Refresh)
+        onPauseOrDispose { }
+    }
 
     AdminSubmissionListContent(
         state = state,
