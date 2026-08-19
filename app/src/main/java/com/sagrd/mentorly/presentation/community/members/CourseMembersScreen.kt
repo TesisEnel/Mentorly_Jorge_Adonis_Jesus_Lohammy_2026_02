@@ -220,14 +220,16 @@ fun MemberItem(member: CourseMember, onClick: () -> Unit) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.width(10.dp))
-            Row(
-                Modifier.background(PointsBackground, RoundedCornerShape(20.dp)).padding(horizontal = 11.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Outlined.StarOutline, null, Modifier.size(18.dp), tint = PrimaryBlue)
-                Spacer(Modifier.width(4.dp))
-                Text("${formatPoints(member.totalPoints)} pts", color = PrimaryBlue, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            if (member.totalPoints > 0) {
+                Spacer(Modifier.width(10.dp))
+                Row(
+                    Modifier.background(PointsBackground, RoundedCornerShape(20.dp)).padding(horizontal = 11.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Outlined.StarOutline, null, Modifier.size(18.dp), tint = PrimaryBlue)
+                    Spacer(Modifier.width(4.dp))
+                    Text("${formatPoints(member.totalPoints)} pts", color = PrimaryBlue, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                }
             }
         }
     }
@@ -274,9 +276,6 @@ fun ErrorView(message: String, onRetry: () -> Unit, modifier: Modifier = Modifie
 
 @Composable
 private fun LoadingView(modifier: Modifier) = Box(modifier, contentAlignment = Alignment.Center) { CircularProgressIndicator(color = PrimaryBlue) }
-
-@Composable
-fun EmptyView(message: String) = EmptyCard(message)
 
 private fun formatPoints(points: Int): String = NumberFormat.getIntegerInstance(Locale.US).format(points)
 
