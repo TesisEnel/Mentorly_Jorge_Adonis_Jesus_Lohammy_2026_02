@@ -25,7 +25,7 @@ class CourseCommunityRemoteDataSource @Inject constructor(
         } catch (exception: HttpException) {
             Result.failure(Exception("Error de servidor", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception(exception.message ?: "Error al obtener miembros del curso", exception))
         }
     }
 
@@ -37,14 +37,14 @@ class CourseCommunityRemoteDataSource @Inject constructor(
             val response = api.getLeaderboard(courseId, viewerStudentId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("Error de red ${response.code()}: ${response.message()}"))
             } else {
-                Result.success(response.body()!!)
+                Result.success(response.body() ?: emptyList())
             }
         } catch (exception: HttpException) {
             Result.failure(Exception("Error de servidor", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception(exception.message ?: "Error al obtener el ranking", exception))
         }
     }
 
@@ -63,7 +63,7 @@ class CourseCommunityRemoteDataSource @Inject constructor(
         } catch (exception: HttpException) {
             Result.failure(Exception("Error de servidor", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception(exception.message ?: "Error al obtener posición en ranking", exception))
         }
     }
 
@@ -82,7 +82,7 @@ class CourseCommunityRemoteDataSource @Inject constructor(
         } catch (exception: HttpException) {
             Result.failure(Exception("Error de servidor", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception(exception.message ?: "Error al obtener ranking administrativo", exception))
         }
     }
 }
