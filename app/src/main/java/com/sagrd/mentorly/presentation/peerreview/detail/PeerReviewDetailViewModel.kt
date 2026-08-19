@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.data.remote.dto.peerreview.CreatePeerReviewRequestDto
 import com.sagrd.mentorly.data.remote.dto.peerreview.PeerReviewCriterionScoreDto
-import com.sagrd.mentorly.domain.model.peerreview.PeerReviewRubricCriterion
 import com.sagrd.mentorly.domain.repository.peerreview.PeerReviewRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,47 +22,47 @@ class PeerReviewDetailViewModel @Inject constructor(
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PeerReviewDetailUiState())
-    val uiState: StateFlow<PeerReviewDetailUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(PeerReviewDetailUiState())
+    val state: StateFlow<PeerReviewDetailUiState> = _state.asStateFlow()
 
     private var submissionId: String? = null
 
     fun initialize(id: String) {
-        if (submissionId == id && (_uiState.value.submission != null || _uiState.value.isLoading)) return
+        if (submissionId == id && (_state.value.submission != null || _state.value.isLoading)) return
         submissionId = id
         loadSubmission()
     }
 
     fun onEvent(event: PeerReviewDetailUiEvent) {
         when (event) {
-            is PeerReviewDetailUiEvent.CriterionScoreChanged -> _uiState.update { state ->
+            is PeerReviewDetailUiEvent.CriterionScoreChanged -> _state.update { state ->
                 val newScores = state.criterionScores + (event.criterionId to event.score)
                 val newErrors = state.criterionErrors - event.criterionId
                 state.copy(criterionScores = newScores, criterionErrors = newErrors)
             }
 
-            is PeerReviewDetailUiEvent.DecisionChanged -> _uiState.update {
+            is PeerReviewDetailUiEvent.DecisionChanged -> _state.update {
                 it.copy(isApproved = event.isApproved, decisionError = null)
             }
 
-            is PeerReviewDetailUiEvent.FeedbackChanged -> _uiState.update {
+            is PeerReviewDetailUiEvent.FeedbackChanged -> _state.update {
                 it.copy(feedbackComment = event.value, feedbackError = null)
             }
 
             PeerReviewDetailUiEvent.Submit -> submitReview()
             PeerReviewDetailUiEvent.Retry -> loadSubmission()
-            PeerReviewDetailUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            PeerReviewDetailUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun loadSubmission() {
         val id = submissionId ?: return
-        if (_uiState.value.isLoading) return
+        if (_state.value.isLoading) return
 
         viewModelScope.launch {
             val session = sessionRepository.session.first()
             if (session == null) {
-                _uiState.update {
+                _state.update {
                     it.copy(
                         hasSession = false,
                         errorMessage = "No se encontró una sesión activa."
@@ -72,7 +71,7 @@ class PeerReviewDetailViewModel @Inject constructor(
             } else {
                 peerReviewRepository.getAnonymousSubmission(session.studentId, id).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update {
+                        is Resource.Loading -> _state.update {
                             it.copy(isLoading = true, errorMessage = null, hasSession = true)
                         }
 
@@ -81,7 +80,7 @@ class PeerReviewDetailViewModel @Inject constructor(
                             if (submission != null) {
                                 loadRubricAndSetState(submission.activityId, submission)
                             } else {
-                                _uiState.update {
+                                _state.update {
                                     it.copy(
                                         isLoading = false,
                                         errorMessage = "No se encontraron datos de la entrega."
@@ -90,7 +89,7 @@ class PeerReviewDetailViewModel @Inject constructor(
                             }
                         }
 
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(
                                 isLoading = false,
                                 errorMessage = resource.message ?: "No se pudo cargar la entrega anónima."
@@ -112,7 +111,7 @@ class PeerReviewDetailViewModel @Inject constructor(
                 else -> emptyList()
             }
 
-            _uiState.update {
+            _state.update {
                 it.copy(
                     isLoading = false,
                     submission = submission,
@@ -125,7 +124,7 @@ class PeerReviewDetailViewModel @Inject constructor(
 
     private fun submitReview() {
         val id = submissionId ?: return
-        val state = _uiState.value
+        val state = _state.value
         if (state.isSubmitting || state.result != null) return
 
         val missingCriterionIds = state.criteria
@@ -139,7 +138,7 @@ class PeerReviewDetailViewModel @Inject constructor(
         val feedbackError = if (feedback.isBlank()) "Este campo es obligatorio para enviar la revisión." else null
 
         if (missingCriterionIds.isNotEmpty() || decisionError != null || feedbackError != null) {
-            _uiState.update {
+            _state.update {
                 it.copy(
                     criterionErrors = missingCriterionIds,
                     decisionError = decisionError,
@@ -164,7 +163,7 @@ class PeerReviewDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val session = sessionRepository.session.first()
             if (session == null) {
-                _uiState.update { it.copy(errorMessage = "No se encontró una sesión activa.") }
+                _state.update { it.copy(errorMessage = "No se encontró una sesión activa.") }
             } else {
                 peerReviewRepository.submitReview(
                     studentId = session.studentId,
@@ -176,11 +175,11 @@ class PeerReviewDetailViewModel @Inject constructor(
                     )
                 ).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update {
+                        is Resource.Loading -> _state.update {
                             it.copy(isSubmitting = true, errorMessage = null)
                         }
 
-                        is Resource.Success -> _uiState.update {
+                        is Resource.Success -> _state.update {
                             it.copy(
                                 isSubmitting = false,
                                 result = resource.data,
@@ -188,7 +187,7 @@ class PeerReviewDetailViewModel @Inject constructor(
                             )
                         }
 
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(
                                 isSubmitting = false,
                                 errorMessage = resource.message ?: "No se pudo enviar la revisión."

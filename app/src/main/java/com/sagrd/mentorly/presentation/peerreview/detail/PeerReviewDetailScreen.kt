@@ -89,7 +89,7 @@ fun PeerReviewDetailScreen(
     onReviewCompleted: () -> Unit,
     viewModel: PeerReviewDetailViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(submissionId) { viewModel.initialize(submissionId) }
 
