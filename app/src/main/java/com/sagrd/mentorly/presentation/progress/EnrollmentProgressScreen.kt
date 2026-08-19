@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Quiz
@@ -83,6 +84,7 @@ import com.sagrd.mentorly.domain.model.progress.EnrollmentThemeProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentUnitProgress
 import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
+import com.sagrd.mentorly.presentation.certificate.CertificateDialog
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
 private val PrimaryBlue = Color(0xFF1565C0)
@@ -111,12 +113,29 @@ fun EnrollmentProgressScreen(
         onPauseOrDispose { }
     }
 
+    if (uiState.isCertificateDialogVisible) {
+        val courseTitle = uiState.enrollment?.courseTitle ?: "Curso Mentorly"
+        CertificateDialog(
+            studentName = uiState.studentName,
+            courseTitle = courseTitle,
+            enrollmentId = uiState.enrollment?.id ?: enrollmentId,
+            issuedDate = uiState.certificate?.issuedAt ?: uiState.enrollment?.completedAt,
+            certificateUrl = uiState.certificate?.certificateUrl,
+            onDismiss = {
+                viewModel.onEvent(EnrollmentProgressUiEvent.DismissCertificateDialog)
+            }
+        )
+    }
+
     EnrollmentProgressContent(
         uiState = uiState,
         onBackClick = onBackClick,
         onActivityClick = onActivityClick,
         onQuizClick = onQuizClick,
         onThemeClick = onThemeClick,
+        onOpenCertificate = {
+            viewModel.onEvent(EnrollmentProgressUiEvent.ShowCertificateDialog)
+        },
         onToggleUnitExpansion = { unitId ->
             viewModel.onEvent(EnrollmentProgressUiEvent.ToggleUnitExpansion(unitId))
         },
@@ -135,6 +154,7 @@ private fun EnrollmentProgressContent(
     onActivityClick: (activityId: String, submissionId: String?) -> Unit,
     onQuizClick: (String) -> Unit,
     onThemeClick: (String) -> Unit,
+    onOpenCertificate: () -> Unit,
     onToggleUnitExpansion: (String) -> Unit,
     onCompleteTheme: (String) -> Unit,
     onRetry: () -> Unit
@@ -215,6 +235,7 @@ private fun EnrollmentProgressContent(
                     completingThemeIds = uiState.completingThemeIds,
                     submissionsByActivityId = uiState.submissionsByActivityId,
                     errorMessage = uiState.errorMessage,
+                    onOpenCertificate = onOpenCertificate,
                     onToggleUnitExpansion = onToggleUnitExpansion,
                     onThemeClick = onThemeClick,
                     onActivityClick = onActivityClick,
@@ -239,6 +260,7 @@ private fun ProgressScrollableList(
     completingThemeIds: Set<String>,
     submissionsByActivityId: Map<String, Submission>,
     errorMessage: String?,
+    onOpenCertificate: () -> Unit,
     onToggleUnitExpansion: (String) -> Unit,
     onThemeClick: (String) -> Unit,
     onActivityClick: (activityId: String, submissionId: String?) -> Unit,
@@ -283,11 +305,13 @@ private fun ProgressScrollableList(
                         Icon(
                             imageVector = Icons.Outlined.Info,
                             contentDescription = null,
-                            tint = Color(0xFFD97706)
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(20.dp)
                         )
                         Text(
                             text = reason,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
                             color = Color(0xFF92400E)
                         )
                     }
@@ -303,38 +327,67 @@ private fun ProgressScrollableList(
                     colors = CardDefaults.cardColors(containerColor = CompletedGreenBg),
                     border = BorderStroke(1.dp, CompletedGreen.copy(alpha = 0.3f))
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            .padding(16.dp)
                     ) {
-                        Box(
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(CompletedGreen),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.WorkspacePremium,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "¡Curso Completado!",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = CompletedGreen
+                                )
+                                Text(
+                                    text = "Has alcanzado el 100% de los requisitos y actividades.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = onOpenCertificate,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CompletedGreen),
                             modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(CompletedGreen),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .height(42.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.WorkspacePremium,
+                                imageVector = Icons.Filled.WorkspacePremium,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(18.dp)
                             )
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "¡Curso Completado!",
-                                style = MaterialTheme.typography.titleMedium,
+                                text = "Ver Certificado Digital",
+                                style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = CompletedGreen
-                            )
-                            Text(
-                                text = "Has alcanzado el 100% de los requisitos y actividades.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White
                             )
                         }
                     }
@@ -1085,6 +1138,7 @@ private fun EnrollmentProgressPreview() {
             onActivityClick = { _, _ -> },
             onQuizClick = {},
             onThemeClick = {},
+            onOpenCertificate = {},
             onToggleUnitExpansion = {},
             onCompleteTheme = {},
             onRetry = {}
