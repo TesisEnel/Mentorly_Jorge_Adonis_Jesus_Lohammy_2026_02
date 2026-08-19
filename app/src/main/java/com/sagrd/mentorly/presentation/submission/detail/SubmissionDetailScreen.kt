@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.submission.detail
+﻿package com.sagrd.mentorly.presentation.submission.detail
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -79,7 +79,7 @@ import com.sagrd.mentorly.domain.model.submission.Submission
 import com.sagrd.mentorly.domain.model.submission.SubmissionReview
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 private val PrimaryBlue = Color(0xFF1565C0)
 private val CompletedGreen = Color(0xFF2E7D32)
@@ -404,7 +404,7 @@ private fun SubmissionHeaderCard(
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "Entregada: ${DateFormatter.format(submission.submittedAt)}",
+                    text = "Entregada: ${formatDate(submission.submittedAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -576,7 +576,7 @@ private fun SubmissionTimelineStepperCard(
                     }
                 },
                 title = "Entrega enviada",
-                subtitle = DateFormatter.format(submission.submittedAt).take(12),
+                subtitle = formatDate(submission.submittedAt).take(12),
                 showLine = true
             )
 
@@ -971,7 +971,7 @@ private fun PeerReviewItemCard(review: SubmissionReview) {
                     }
 
                     Text(
-                        text = DateFormatter.format(review.reviewedAt).take(12),
+                        text = formatDate(review.reviewedAt).take(12),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1324,3 +1324,4 @@ private fun SubmissionDetailAutoPreview() {
         )
     }
 }
+

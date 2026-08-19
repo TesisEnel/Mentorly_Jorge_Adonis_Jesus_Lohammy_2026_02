@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.admin.peerreview.audit
+﻿package com.sagrd.mentorly.presentation.admin.peerreview.audit
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -33,7 +33,7 @@ import com.sagrd.mentorly.domain.model.peerreview.PeerReviewAudit
 import com.sagrd.mentorly.domain.model.peerreview.PeerReviewCriterionScore
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 @Composable
 fun PeerReviewAuditScreen(
@@ -151,7 +151,7 @@ private fun AuditDetailsList(audit: PeerReviewAudit) {
         AuditSection(title = "Información de auditoría", icon = Icons.Default.Info) {
             AuditField(label = "ID DE REVISIÓN", value = audit.peerReviewId)
             AuditField(label = "ID DE ENTREGA", value = audit.submissionId)
-            AuditField(label = "FECHA DE REVISIÓN", value = DateFormatter.format(audit.createdAt))
+            AuditField(label = "FECHA DE REVISIÓN", value = formatDate(audit.createdAt))
         }
 
         // Participants
@@ -187,7 +187,7 @@ private fun AuditDetailsList(audit: PeerReviewAudit) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Registrado: ${DateFormatter.format(audit.createdAt)}",
+                        text = "Registrado: ${formatDate(audit.createdAt)}",
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
                         style = MaterialTheme.typography.labelSmall,
@@ -400,3 +400,4 @@ fun PeerReviewAuditScreenPreview() {
         )
     }
 }
+

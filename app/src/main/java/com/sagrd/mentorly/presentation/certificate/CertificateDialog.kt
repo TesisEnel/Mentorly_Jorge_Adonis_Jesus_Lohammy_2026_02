@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.certificate
+﻿package com.sagrd.mentorly.presentation.certificate
 
 import android.content.Intent
 import android.net.Uri
@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.sagrd.mentorly.util.CertificatePdfGenerator
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 private val PrimaryBlue = Color(0xFF1565C0)
 private val GoldColor = Color(0xFFD97706)
@@ -64,7 +64,7 @@ fun CertificateDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val formattedDate = issuedDate?.let { DateFormatter.format(it) } ?: "Completado"
+    val formattedDate = issuedDate?.let { formatDate(it) } ?: "Completado"
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -306,3 +306,4 @@ fun CertificateDialog(
         }
     }
 }
+

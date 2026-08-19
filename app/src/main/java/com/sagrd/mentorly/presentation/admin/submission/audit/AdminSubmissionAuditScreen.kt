@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.admin.submission.audit
+﻿package com.sagrd.mentorly.presentation.admin.submission.audit
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -36,7 +36,7 @@ import com.sagrd.mentorly.domain.model.submission.AdminSubmissionAudit
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 @Composable
 fun AdminSubmissionAuditScreen(
@@ -217,13 +217,13 @@ private fun AuditDetails(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 AuditField(
                     label = "Fecha de envío", 
-                    value = DateFormatter.format(audit.submittedAtUtc), 
+                    value = formatDate(audit.submittedAtUtc), 
                     modifier = Modifier.weight(1f)
                 )
                 audit.reviewedAtUtc?.let {
                     AuditField(
                         label = "Fecha de revisión", 
-                        value = DateFormatter.format(it), 
+                        value = formatDate(it), 
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -473,7 +473,7 @@ private fun ReviewAuditCard(review: AdminPeerReviewAuditItem) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = DateFormatter.format(review.createdAtUtc),
+                text = formatDate(review.createdAtUtc),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.labelSmall,
@@ -583,3 +583,4 @@ private fun AdminSubmissionAuditScreenPreview() {
         )
     }
 }
+

@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.profile
+﻿package com.sagrd.mentorly.presentation.profile
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -75,7 +75,7 @@ import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.domain.model.student.StudentStatistics
 import com.sagrd.mentorly.presentation.certificate.CertificateDialog
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -784,7 +784,7 @@ private fun CertificatesListDialog(
                                         )
                                         enrollment.completedAt?.let { date ->
                                             Text(
-                                                text = "Completado el ${DateFormatter.format(date)}",
+                                                text = "Completado el ${formatDate(date)}",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -857,3 +857,4 @@ private fun ProfileScreenPreview() {
         )
     }
 }
+

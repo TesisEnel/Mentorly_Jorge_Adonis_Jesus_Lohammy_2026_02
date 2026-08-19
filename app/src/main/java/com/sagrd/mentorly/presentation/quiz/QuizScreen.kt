@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.quiz
+﻿package com.sagrd.mentorly.presentation.quiz
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -66,7 +66,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.quiz.QuizAttempt
 import com.sagrd.mentorly.domain.model.quiz.QuizQuestion
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 private val PrimaryBlue = Color(0xFF0D62D9)
 private val CompletedGreen = Color(0xFF2E7D32)
@@ -627,7 +627,7 @@ private fun QuizApprovedResultContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Enviado el ${DateFormatter.format(result.submittedAtUtc)}",
+            text = "Enviado el ${formatDate(result.submittedAtUtc)}",
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFF475569)
         )
@@ -758,7 +758,7 @@ private fun QuizNotApprovedResultContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Enviado el ${DateFormatter.format(result.submittedAtUtc)}",
+                    text = "Enviado el ${formatDate(result.submittedAtUtc)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF64748B)
                 )
@@ -960,3 +960,4 @@ private fun QuizNotApprovedPreview() {
         )
     }
 }
+

@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.peerreview.detail
+﻿package com.sagrd.mentorly.presentation.peerreview.detail
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -70,7 +70,7 @@ import com.sagrd.mentorly.domain.model.submission.AnonymousSubmission
 import com.sagrd.mentorly.domain.model.submission.EvidenceType
 import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 private val PrimaryBlue = Color(0xFF0D62D9)
 private val AnonymousContainer = Color(0xFFEDE7F6)
@@ -407,7 +407,7 @@ private fun SubmissionInfoCard(submission: AnonymousSubmission) {
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = DateFormatter.format(submission.submittedAtUtc),
+                    text = formatDate(submission.submittedAtUtc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -935,3 +935,4 @@ private fun PeerReviewDetailPreview() {
         )
     }
 }
+

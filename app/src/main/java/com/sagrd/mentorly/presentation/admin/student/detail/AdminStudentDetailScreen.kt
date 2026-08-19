@@ -41,7 +41,7 @@ import com.sagrd.mentorly.domain.model.progress.EnrollmentUnitProgress
 import com.sagrd.mentorly.domain.model.student.Student
 import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 @Composable
 fun AdminStudentDetailScreen(
@@ -294,7 +294,7 @@ private fun EnrollmentCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.width(4.dp))
-                    val dateRange = "${DateFormatter.format(enrollment.startedAt)} - ${enrollment.completedAt?.let { DateFormatter.format(it) } ?: "Presente"}"
+                    val dateRange = "${formatDate(enrollment.startedAt)} - ${enrollment.completedAt?.let { formatDate(it) } ?: "Presente"}"
                     Text(dateRange, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -397,7 +397,7 @@ private fun ProgressContent(progress: EnrollmentProgress) {
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(text = "No puede avanzar:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                    Text(text = progress.blockedReason!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    Text(text = progress.blockedReason, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -596,3 +596,4 @@ fun AdminStudentDetailScreenPreview() {
         )
     }
 }
+

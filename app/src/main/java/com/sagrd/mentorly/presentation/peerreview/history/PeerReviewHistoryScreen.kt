@@ -1,4 +1,4 @@
-package com.sagrd.mentorly.presentation.peerreview.history
+﻿package com.sagrd.mentorly.presentation.peerreview.history
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -53,7 +53,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.peerreview.PeerReview
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
-import com.sagrd.mentorly.util.DateFormatter
+import com.sagrd.mentorly.util.formatDate
 
 private val PrimaryBlue = Color(0xFF1565C0)
 private val ApprovedGreen = Color(0xFF2E7D32)
@@ -202,7 +202,7 @@ private fun ReviewHistoryCard(review: PeerReview) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.CalendarToday, null, Modifier.size(19.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.width(7.dp))
-                Text(DateFormatter.format(review.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(formatDate(review.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.width(12.dp))
                 Text("•", color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(Modifier.width(12.dp))
@@ -295,3 +295,4 @@ private fun PeerReviewHistoryPreview() {
         )
     }
 }
+
