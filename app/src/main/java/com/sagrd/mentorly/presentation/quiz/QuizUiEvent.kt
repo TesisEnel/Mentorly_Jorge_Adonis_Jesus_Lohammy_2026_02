@@ -10,4 +10,5 @@ sealed interface QuizUiEvent {
     data object SubmitQuiz : QuizUiEvent
     data object Retry : QuizUiEvent
     data object ClearError : QuizUiEvent
+    data object ReattemptQuiz : QuizUiEvent
 }
