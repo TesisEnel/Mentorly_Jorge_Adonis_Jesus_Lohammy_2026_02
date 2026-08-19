@@ -10,10 +10,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +27,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,6 +44,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -57,13 +64,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.sagrd.mentorly.domain.model.enrollment.Enrollment
 import com.sagrd.mentorly.domain.model.student.Student
 import com.sagrd.mentorly.domain.model.student.StudentRole
 import com.sagrd.mentorly.domain.model.student.StudentStatistics
+import com.sagrd.mentorly.presentation.certificate.CertificateDialog
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
+import com.sagrd.mentorly.util.DateFormatter
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -82,6 +94,11 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(ProfileUiEvent.Load)
+        onPauseOrDispose { }
+    }
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) {
@@ -188,6 +205,25 @@ fun ProfileBody(
                 )
             }
         }
+    }
+
+    if (uiState.isCertificatesListDialogVisible) {
+        CertificatesListDialog(
+            completedEnrollments = uiState.completedEnrollments,
+            onSelectEnrollment = { onEvent(ProfileUiEvent.SelectCertificateEnrollment(it)) },
+            onDismiss = { onEvent(ProfileUiEvent.DismissCertificatesListDialog) }
+        )
+    }
+
+    uiState.selectedCertificateEnrollment?.let { enrollment ->
+        CertificateDialog(
+            studentName = uiState.student?.displayName ?: "",
+            courseTitle = enrollment.courseTitle,
+            enrollmentId = enrollment.id,
+            issuedDate = uiState.selectedCertificate?.issuedAt ?: enrollment.completedAt,
+            certificateUrl = uiState.selectedCertificate?.certificateUrl,
+            onDismiss = { onEvent(ProfileUiEvent.DismissCertificateDialog) }
+        )
     }
 
     if (uiState.isEditDialogVisible) {
@@ -403,7 +439,11 @@ private fun ProfileContent(
                 )
 
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { onEvent(ProfileUiEvent.ShowCertificatesListDialog) }
+                        .padding(vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -413,11 +453,16 @@ private fun ProfileContent(
                         color = PrimaryBlue
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Certificados",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Certificados",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -651,6 +696,133 @@ private fun EditProfileDialog(
             }
         }
     )
+}
+
+@Composable
+private fun CertificatesListDialog(
+    completedEnrollments: List<Enrollment>,
+    onSelectEnrollment: (Enrollment) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.WorkspacePremium,
+                            contentDescription = null,
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Mis Certificados",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Cerrar",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (completedEnrollments.isEmpty()) {
+                    Text(
+                        text = "Aún no tienes certificados emitidos. Completa el 100% de las actividades de un curso para obtener tu certificado oficial.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 360.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(completedEnrollments) { enrollment ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = enrollment.courseTitle,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        enrollment.completedAt?.let { date ->
+                                            Text(
+                                                text = "Completado el ${DateFormatter.format(date)}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Button(
+                                        onClick = {
+                                            onDismiss()
+                                            onSelectEnrollment(enrollment)
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = "Ver",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Cerrar")
+                }
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
