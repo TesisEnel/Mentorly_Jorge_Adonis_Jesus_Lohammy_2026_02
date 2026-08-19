@@ -161,6 +161,21 @@ private fun ActivityForm(
             singleLine = true,
         )
 
+        OutlinedTextField(
+            value = state.description,
+            onValueChange = { onEvent(ActivityFormUiEvent.DescriptionChanged(it)) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Descripción de la actividad") },
+            placeholder = { Text("Instrucciones, objetivos y detalles de entrega...") },
+            isError = state.fieldErrors.containsKey("description"),
+            supportingText = {
+                state.fieldErrors["description"]?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            },
+            enabled = inputsEnabled,
+            minLines = 3,
+            maxLines = 6,
+        )
+
         Text("Tipo de actividad", style = MaterialTheme.typography.titleSmall)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ActivityTypeOption(
