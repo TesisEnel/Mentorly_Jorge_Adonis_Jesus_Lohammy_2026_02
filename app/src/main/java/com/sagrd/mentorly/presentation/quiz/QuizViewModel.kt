@@ -22,8 +22,8 @@ class QuizViewModel @Inject constructor(
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(QuizUiState())
-    val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(QuizUiState())
+    val state: StateFlow<QuizUiState> = _state.asStateFlow()
 
     private var enrollmentId: String? = null
     private var activityId: String? = null
@@ -32,7 +32,7 @@ class QuizViewModel @Inject constructor(
         if (
             this.enrollmentId == enrollmentId &&
             this.activityId == activityId &&
-            (_uiState.value.questions.isNotEmpty() || _uiState.value.isLoading)
+            (_state.value.questions.isNotEmpty() || _state.value.isLoading)
         ) {
             return
         }
@@ -48,20 +48,20 @@ class QuizViewModel @Inject constructor(
             QuizUiEvent.Retry -> loadQuiz()
 
             is QuizUiEvent.QuestionIndexChanged -> {
-                val maxIndex = (_uiState.value.questions.size - 1).coerceAtLeast(0)
+                val maxIndex = (_state.value.questions.size - 1).coerceAtLeast(0)
                 val validIndex = event.index.coerceIn(0, maxIndex)
-                _uiState.update { it.copy(currentQuestionIndex = validIndex) }
+                _state.update { it.copy(currentQuestionIndex = validIndex) }
             }
 
             is QuizUiEvent.AnswerChanged -> updateAnswer(event.questionId, event.answer)
             QuizUiEvent.SubmitQuiz -> submitQuiz()
-            QuizUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            QuizUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
             QuizUiEvent.ReattemptQuiz -> reattemptQuiz()
         }
     }
 
     private fun reattemptQuiz() {
-        _uiState.update {
+        _state.update {
             it.copy(
                 isSubmitted = false,
                 isSubmitting = false,
@@ -71,15 +71,15 @@ class QuizViewModel @Inject constructor(
                 errorMessage = null
             )
         }
-        if (_uiState.value.questions.isEmpty()) {
+        if (_state.value.questions.isEmpty()) {
             loadQuiz()
         }
     }
 
     private fun updateAnswer(questionId: String, answer: String) {
-        if (_uiState.value.isSubmitted) return
+        if (_state.value.isSubmitted) return
 
-        _uiState.update { state ->
+        _state.update { state ->
             state.copy(
                 answers = state.answers + (questionId to answer),
                 errorMessage = null
@@ -89,13 +89,13 @@ class QuizViewModel @Inject constructor(
 
     private fun loadQuiz() {
         val currentActivityId = activityId ?: return
-        if (_uiState.value.isLoading && _uiState.value.questions.isNotEmpty()) return
+        if (_state.value.isLoading && _state.value.questions.isNotEmpty()) return
 
         viewModelScope.launch {
             quizRepository.getQuizQuestions(currentActivityId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isLoading = true,
                                 errorMessage = null
@@ -104,7 +104,7 @@ class QuizViewModel @Inject constructor(
                     }
 
                     is Resource.Success -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isLoading = false,
                                 questions = resource.data.orEmpty().sortedBy { question ->
@@ -117,7 +117,7 @@ class QuizViewModel @Inject constructor(
                     }
 
                     is Resource.Error -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isLoading = false,
                                 errorMessage = "No se pudo cargar el cuestionario."
@@ -130,7 +130,7 @@ class QuizViewModel @Inject constructor(
     }
 
     private fun submitQuiz() {
-        val state = _uiState.value
+        val state = _state.value
         val currentEnrollmentId = enrollmentId ?: return
         val currentActivityId = activityId ?: return
 
@@ -140,7 +140,7 @@ class QuizViewModel @Inject constructor(
             state.answers[it.id].isNullOrBlank()
         }
         if (firstUnansweredIndex != -1) {
-            _uiState.update {
+            _state.update {
                 it.copy(
                     currentQuestionIndex = firstUnansweredIndex,
                     errorMessage = "Debes responder todas las preguntas antes de enviar."
@@ -152,7 +152,7 @@ class QuizViewModel @Inject constructor(
         viewModelScope.launch {
             val session = sessionRepository.session.first()
             if (session == null) {
-                _uiState.update {
+                _state.update {
                     it.copy(errorMessage = "No se encontró una sesión activa.")
                 }
             } else {
@@ -173,7 +173,7 @@ class QuizViewModel @Inject constructor(
                 ).collect { resource ->
                     when (resource) {
                         is Resource.Loading -> {
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isSubmitting = true,
                                     errorMessage = null
@@ -182,7 +182,7 @@ class QuizViewModel @Inject constructor(
                         }
 
                         is Resource.Success -> {
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isSubmitting = false,
                                     result = resource.data,
@@ -193,7 +193,7 @@ class QuizViewModel @Inject constructor(
                         }
 
                         is Resource.Error -> {
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isSubmitting = false,
                                     errorMessage = "No se pudo enviar el intento. Inténtalo nuevamente."
