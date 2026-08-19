@@ -6,14 +6,21 @@ import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.domain.repository.community.CourseCommunityRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class LeaderboardViewModel @Inject constructor(
     private val communityRepository: CourseCommunityRepository,
-    private val sessionRepository: SessionRepository,
+    private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LeaderboardUiState())
@@ -45,7 +52,7 @@ class LeaderboardViewModel @Inject constructor(
         if (courseId.isBlank()) return
 
         viewModelScope.launch {
-            val session = sessionRepository.session.firstOrNull()
+            val session = sessionRepository.session.first()
             if (session == null) {
                 _state.update {
                     it.copy(
@@ -53,26 +60,24 @@ class LeaderboardViewModel @Inject constructor(
                         errorMessage = "No se encontró una sesión activa."
                     )
                 }
-                return@launch
-            }
+            } else {
+                val viewerId = session.studentId
 
-            val viewerId = session.studentId
-
-            // Leaderboard
-            launch {
                 communityRepository.getLeaderboard(courseId, viewerId).collect { result ->
                     when (result) {
-                        is Resource.Loading<*> -> {
+                        is Resource.Loading -> {
                             if (isRefreshing) _state.update { it.copy(isRefreshing = true) }
                             else _state.update { it.copy(isLoading = true) }
                         }
 
                         is Resource.Success -> {
-                            _state.update {
-                                it.copy(
+                            val entries = result.data ?: emptyList()
+                            _state.update { current ->
+                                current.copy(
                                     isLoading = false,
                                     isRefreshing = false,
-                                    entries = result.data ?: emptyList(),
+                                    entries = entries,
+                                    ownPosition = current.ownPosition ?: entries.find { it.studentId == viewerId },
                                     errorMessage = null
                                 )
                             }
@@ -91,11 +96,13 @@ class LeaderboardViewModel @Inject constructor(
                     }
                 }
             }
+        }
 
-            // Own Position
-            launch {
-                communityRepository.getLeaderboardEntry(courseId, viewerId).collect { result ->
-                    if (result is Resource.Success) {
+        viewModelScope.launch {
+            val session = sessionRepository.session.first()
+            if (session != null) {
+                communityRepository.getLeaderboardEntry(courseId, session.studentId).collect { result ->
+                    if (result is Resource.Success && result.data != null) {
                         _state.update { it.copy(ownPosition = result.data) }
                     }
                 }
