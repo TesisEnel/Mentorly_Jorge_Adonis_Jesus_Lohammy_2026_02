@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import coil.compose.AsyncImage
 import com.sagrd.mentorly.domain.model.content.ActivityType
 import com.sagrd.mentorly.domain.model.enrollment.Enrollment
@@ -80,13 +81,13 @@ import com.sagrd.mentorly.domain.model.progress.EnrollmentActivityProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentThemeProgress
 import com.sagrd.mentorly.domain.model.progress.EnrollmentUnitProgress
+import com.sagrd.mentorly.domain.model.submission.Submission
+import com.sagrd.mentorly.domain.model.submission.SubmissionStatus
 import com.sagrd.mentorly.ui.theme.MentorlyTheme
 
 private val PrimaryBlue = Color(0xFF1565C0)
 private val CompletedGreen = Color(0xFF2E7D32)
 private val CompletedGreenBg = Color(0xFFE8F5E9)
-private val TimeRemainingBg = Color(0xFFFFEBEE)
-private val TimeRemainingText = Color(0xFFC62828)
 private val LockedBg = Color(0xFFF1F5F9)
 private val ActiveBlueBg = Color(0xFFEFF6FF)
 
@@ -94,7 +95,7 @@ private val ActiveBlueBg = Color(0xFFEFF6FF)
 fun EnrollmentProgressScreen(
     enrollmentId: String,
     onBackClick: () -> Unit,
-    onActivityClick: (String) -> Unit,
+    onActivityClick: (activityId: String, submissionId: String?) -> Unit,
     onQuizClick: (String) -> Unit = {},
     onThemeClick: (String) -> Unit = {},
     viewModel: EnrollmentProgressViewModel = hiltViewModel()
@@ -103,6 +104,11 @@ fun EnrollmentProgressScreen(
 
     LaunchedEffect(enrollmentId) {
         viewModel.initialize(enrollmentId)
+    }
+
+    LifecycleResumeEffect(enrollmentId) {
+        viewModel.onEvent(EnrollmentProgressUiEvent.Refresh)
+        onPauseOrDispose { }
     }
 
     EnrollmentProgressContent(
@@ -126,7 +132,7 @@ fun EnrollmentProgressScreen(
 private fun EnrollmentProgressContent(
     uiState: EnrollmentProgressUiState,
     onBackClick: () -> Unit,
-    onActivityClick: (String) -> Unit,
+    onActivityClick: (activityId: String, submissionId: String?) -> Unit,
     onQuizClick: (String) -> Unit,
     onThemeClick: (String) -> Unit,
     onToggleUnitExpansion: (String) -> Unit,
@@ -205,9 +211,9 @@ private fun EnrollmentProgressContent(
                     progress = uiState.progress,
                     courseImageUrl = uiState.courseImageUrl,
                     courseTitle = courseTitle,
-                    daysRemaining = uiState.daysRemaining,
                     expandedUnitIds = uiState.expandedUnitIds,
                     completingThemeIds = uiState.completingThemeIds,
+                    submissionsByActivityId = uiState.submissionsByActivityId,
                     errorMessage = uiState.errorMessage,
                     onToggleUnitExpansion = onToggleUnitExpansion,
                     onThemeClick = onThemeClick,
@@ -229,13 +235,13 @@ private fun ProgressScrollableList(
     progress: EnrollmentProgress,
     courseImageUrl: String?,
     courseTitle: String,
-    daysRemaining: Long?,
     expandedUnitIds: Set<String>,
     completingThemeIds: Set<String>,
+    submissionsByActivityId: Map<String, Submission>,
     errorMessage: String?,
     onToggleUnitExpansion: (String) -> Unit,
     onThemeClick: (String) -> Unit,
-    onActivityClick: (String) -> Unit,
+    onActivityClick: (activityId: String, submissionId: String?) -> Unit,
     onQuizClick: (String) -> Unit,
     onCompleteTheme: (String) -> Unit,
     onRetry: () -> Unit,
@@ -255,8 +261,7 @@ private fun ProgressScrollableList(
 
         item {
             OverallProgressCard(
-                progress = progress,
-                daysRemaining = daysRemaining
+                progress = progress
             )
         }
 
@@ -397,6 +402,7 @@ private fun ProgressScrollableList(
                 isLocked = isLocked,
                 isExpanded = isExpanded,
                 completingThemeIds = completingThemeIds,
+                submissionsByActivityId = submissionsByActivityId,
                 onToggleExpand = { onToggleUnitExpansion(unit.unitId) },
                 onThemeClick = onThemeClick,
                 onActivityClick = onActivityClick,
@@ -409,8 +415,7 @@ private fun ProgressScrollableList(
 
 @Composable
 private fun OverallProgressCard(
-    progress: EnrollmentProgress,
-    daysRemaining: Long?
+    progress: EnrollmentProgress
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -450,37 +455,6 @@ private fun OverallProgressCard(
                         fontWeight = FontWeight.Bold,
                         color = PrimaryBlue
                     )
-                }
-
-                if (daysRemaining != null) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = TimeRemainingBg
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Schedule,
-                                contentDescription = null,
-                                tint = TimeRemainingText,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = when {
-                                    daysRemaining > 1 -> "Tiempo restante: $daysRemaining días"
-                                    daysRemaining == 1L -> "Tiempo restante: 1 día"
-                                    daysRemaining == 0L -> "Vence hoy"
-                                    else -> "Plazo vencido"
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = TimeRemainingText
-                            )
-                        }
-                    }
                 }
             }
 
@@ -525,9 +499,10 @@ private fun UnitCurriculumCard(
     isLocked: Boolean,
     isExpanded: Boolean,
     completingThemeIds: Set<String>,
+    submissionsByActivityId: Map<String, Submission>,
     onToggleExpand: () -> Unit,
     onThemeClick: (String) -> Unit,
-    onActivityClick: (String) -> Unit,
+    onActivityClick: (activityId: String, submissionId: String?) -> Unit,
     onQuizClick: (String) -> Unit,
     onCompleteTheme: (String) -> Unit
 ) {
@@ -646,9 +621,13 @@ private fun UnitCurriculumCard(
                         )
 
                         theme.activities.forEach { activity ->
+                            val submission = submissionsByActivityId[activity.activityId]
                             ActivityItemRow(
                                 activity = activity,
-                                onActivityClick = { onActivityClick(activity.activityId) },
+                                submission = submission,
+                                onActivityClick = {
+                                    onActivityClick(activity.activityId, submission?.id)
+                                },
                                 onQuizClick = { onQuizClick(activity.activityId) }
                             )
                         }
@@ -668,8 +647,11 @@ private fun ThemeItemRow(
 ) {
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+        color = if (theme.isCompleted) CompletedGreenBg.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            1.dp,
+            if (theme.isCompleted) CompletedGreen.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onThemeClick)
@@ -684,13 +666,15 @@ private fun ThemeItemRow(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(PrimaryBlue.copy(alpha = 0.1f)),
+                    .background(
+                        if (theme.isCompleted) CompletedGreen.copy(alpha = 0.15f) else PrimaryBlue.copy(alpha = 0.1f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.Article,
                     contentDescription = null,
-                    tint = PrimaryBlue,
+                    tint = if (theme.isCompleted) CompletedGreen else PrimaryBlue,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -701,63 +685,62 @@ private fun ThemeItemRow(
                 Text(
                     text = "TEMA ${theme.orderIndex}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = PrimaryBlue,
+                    color = if (theme.isCompleted) CompletedGreen else PrimaryBlue,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = theme.title,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Medium
                 )
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            when {
-                theme.isCompleted -> {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = CompletedGreenBg
+            if (theme.isCompleted) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = CompletedGreenBg
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = CompletedGreen,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = "Visto",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = CompletedGreen
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            tint = CompletedGreen,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Completado",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = CompletedGreen
+                        )
                     }
                 }
-
-                isCompleting -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = PrimaryBlue
-                    )
-                }
-
-                else -> {
-                    OutlinedButton(
-                        onClick = onCompleteTheme,
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
+            } else {
+                OutlinedButton(
+                    onClick = onCompleteTheme,
+                    enabled = !isCompleting,
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, PrimaryBlue),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    if (isCompleting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            strokeWidth = 2.dp,
+                            color = PrimaryBlue
+                        )
+                    } else {
                         Text(
                             text = "Completar",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryBlue
                         )
                     }
                 }
@@ -769,6 +752,7 @@ private fun ThemeItemRow(
 @Composable
 private fun ActivityItemRow(
     activity: EnrollmentActivityProgress,
+    submission: Submission?,
     onActivityClick: () -> Unit,
     onQuizClick: () -> Unit
 ) {
@@ -826,64 +810,144 @@ private fun ActivityItemRow(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            if (activity.isApproved && isQuiz) {
-                Button(
-                    onClick = onQuizClick,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Completado",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            } else if (activity.isApproved) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = CompletedGreenBg
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+            if (isQuiz) {
+                if (activity.isApproved) {
+                    Button(
+                        onClick = onQuizClick,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.CheckCircle,
                             contentDescription = null,
-                            tint = CompletedGreen,
                             modifier = Modifier.size(14.dp)
                         )
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Aprobada",
+                            text = "Completado",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = CompletedGreen
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else {
+                    Button(
+                        onClick = onQuizClick,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "Iniciar Quiz",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             } else {
-                Button(
-                    onClick = if (isQuiz) onQuizClick else onActivityClick,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = if (isQuiz) "Iniciar Quiz" else "Entregar",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold
-                    )
+                val isApproved = activity.isApproved || submission?.status == SubmissionStatus.APPROVED
+                val isRejected = submission?.status == SubmissionStatus.REJECTED
+                val isPending = submission != null && !isApproved && !isRejected
+
+                when {
+                    isApproved -> {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = CompletedGreenBg,
+                            modifier = Modifier.clickable(onClick = onActivityClick)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.CheckCircle,
+                                    contentDescription = null,
+                                    tint = CompletedGreen,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "Aprobada",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = CompletedGreen
+                                )
+                            }
+                        }
+                    }
+
+                    isRejected -> {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFFEF3C7),
+                            modifier = Modifier.clickable(onClick = onActivityClick)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Info,
+                                    contentDescription = null,
+                                    tint = Color(0xFFB45309),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "Requiere cambios",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB45309)
+                                )
+                            }
+                        }
+                    }
+
+                    isPending -> {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = ActiveBlueBg,
+                            modifier = Modifier.clickable(onClick = onActivityClick)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Schedule,
+                                    contentDescription = null,
+                                    tint = PrimaryBlue,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "Entregada",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryBlue
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {
+                        Button(
+                            onClick = onActivityClick,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Entregar",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -931,7 +995,6 @@ private fun EnrollmentProgressPreview() {
         EnrollmentProgressContent(
             uiState = EnrollmentProgressUiState(
                 isLoading = false,
-                daysRemaining = 14,
                 courseImageUrl = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80",
                 enrollment = Enrollment(
                     id = "enrollment-1",
@@ -1019,7 +1082,7 @@ private fun EnrollmentProgressPreview() {
                 )
             ),
             onBackClick = {},
-            onActivityClick = {},
+            onActivityClick = { _, _ -> },
             onQuizClick = {},
             onThemeClick = {},
             onToggleUnitExpansion = {},
