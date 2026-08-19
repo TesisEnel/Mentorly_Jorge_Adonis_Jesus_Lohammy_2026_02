@@ -6,14 +6,14 @@ import com.sagrd.mentorly.data.remote.Resource
 import com.sagrd.mentorly.domain.repository.course.CourseRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
 import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
+import com.sagrd.mentorly.domain.repository.session.SessionRepository
+import com.sagrd.mentorly.domain.repository.submission.SubmissionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -21,7 +21,9 @@ import kotlinx.coroutines.launch
 class EnrollmentProgressViewModel @Inject constructor(
     private val enrollmentProgressRepository: EnrollmentProgressRepository,
     private val enrollmentRepository: EnrollmentRepository,
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
+    private val submissionRepository: SubmissionRepository,
+    private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EnrollmentProgressUiState())
@@ -30,11 +32,18 @@ class EnrollmentProgressViewModel @Inject constructor(
     private var enrollmentId: String? = null
 
     fun initialize(id: String) {
-        if (enrollmentId == id && (_uiState.value.progress != null || _uiState.value.isLoading)) return
-
-        enrollmentId = id
-        loadProgress()
+        if (enrollmentId != id) {
+            enrollmentId = id
+            _uiState.update {
+                EnrollmentProgressUiState(
+                    isLoading = true,
+                    expandedUnitIds = it.expandedUnitIds
+                )
+            }
+        }
+        loadProgress(isRefresh = false)
         loadEnrollmentDetails(id)
+        loadSubmissions(id)
     }
 
     fun onEvent(event: EnrollmentProgressUiEvent) {
@@ -44,6 +53,7 @@ class EnrollmentProgressViewModel @Inject constructor(
                 if (id != null) {
                     loadProgress(isRefresh = true)
                     loadEnrollmentDetails(id)
+                    loadSubmissions(id)
                 }
             }
 
@@ -78,12 +88,15 @@ class EnrollmentProgressViewModel @Inject constructor(
                         )
                     }
 
-                    is Resource.Success -> _uiState.update {
-                        it.copy(
-                            progress = resource.data,
-                            completingThemeIds = it.completingThemeIds - themeId,
-                            errorMessage = null
-                        )
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                progress = resource.data,
+                                completingThemeIds = it.completingThemeIds - themeId,
+                                errorMessage = null
+                            )
+                        }
+                        loadSubmissions(id)
                     }
 
                     is Resource.Error -> _uiState.update {
@@ -99,14 +112,13 @@ class EnrollmentProgressViewModel @Inject constructor(
 
     private fun loadProgress(isRefresh: Boolean = false) {
         val id = enrollmentId ?: return
-        if (_uiState.value.isLoading || _uiState.value.isRefreshing) return
 
         viewModelScope.launch {
             enrollmentProgressRepository.getEnrollmentProgress(id).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _uiState.update {
                         it.copy(
-                            isLoading = !isRefresh,
+                            isLoading = !isRefresh && it.progress == null,
                             isRefreshing = isRefresh,
                             errorMessage = null
                         )
@@ -150,17 +162,30 @@ class EnrollmentProgressViewModel @Inject constructor(
         }
     }
 
+    private fun loadSubmissions(enrollmentId: String) {
+        viewModelScope.launch {
+            val session = sessionRepository.session.firstOrNull()
+            val studentId = session?.studentId ?: return@launch
+
+            submissionRepository.getSubmissionsByStudentId(studentId).collect { resource ->
+                if (resource is Resource.Success && resource.data != null) {
+                    val map = resource.data
+                        .filter { it.enrollmentId == enrollmentId }
+                        .associateBy { it.activityId }
+
+                    _uiState.update { it.copy(submissionsByActivityId = map) }
+                }
+            }
+        }
+    }
+
     private fun loadEnrollmentDetails(id: String) {
         viewModelScope.launch {
             enrollmentRepository.getEnrollmentById(id).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
                     val enrollment = resource.data
-                    val days = calculateDaysRemaining(enrollment.expiresAt)
                     _uiState.update {
-                        it.copy(
-                            enrollment = enrollment,
-                            daysRemaining = days
-                        )
+                        it.copy(enrollment = enrollment)
                     }
                     loadCourseImage(enrollment.courseId)
                 }
@@ -177,21 +202,6 @@ class EnrollmentProgressViewModel @Inject constructor(
                     }
                 }
             }
-        }
-    }
-
-    private fun calculateDaysRemaining(expiresAt: String?): Long? {
-        if (expiresAt.isNullOrBlank()) return null
-        val parsedDate = if ('T' in expiresAt) {
-            runCatching { OffsetDateTime.parse(expiresAt).toLocalDate() }.getOrNull()
-        } else {
-            runCatching { LocalDate.parse(expiresAt) }.getOrNull()
-        }
-        val today = LocalDate.now()
-        return if (parsedDate != null) {
-            ChronoUnit.DAYS.between(today, parsedDate)
-        } else {
-            null
         }
     }
 }
