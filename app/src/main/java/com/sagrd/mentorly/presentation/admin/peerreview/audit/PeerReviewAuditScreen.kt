@@ -1,4 +1,4 @@
-﻿package com.sagrd.mentorly.presentation.admin.peerreview.audit
+package com.sagrd.mentorly.presentation.admin.peerreview.audit
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -148,17 +148,27 @@ private fun AuditDetailsList(audit: PeerReviewAudit) {
         }
 
         // Context
-        AuditSection(title = "Información de auditoría", icon = Icons.Default.Info) {
-            AuditField(label = "ID DE REVISIÓN", value = audit.peerReviewId)
-            AuditField(label = "ID DE ENTREGA", value = audit.submissionId)
+        AuditSection(title = "Información de la actividad", icon = Icons.Default.Info) {
+            AuditField(label = "ACTIVIDAD", value = audit.activityTitle.ifBlank { "Actividad" }, isBold = true)
+            AuditField(label = "CURSO", value = audit.courseTitle.ifBlank { "Curso" })
             AuditField(label = "FECHA DE REVISIÓN", value = formatDate(audit.createdAt))
         }
 
         // Participants
         AuditSection(title = "Participantes (Confidencial)", icon = Icons.Default.Group) {
-            AuditField(label = "ID AUTOR DE LA ENTREGA", value = audit.authorStudentId)
+            val authorText = if (audit.authorDisplayName.isNotBlank()) {
+                if (audit.authorEmail.isNotBlank()) "${audit.authorDisplayName} (${audit.authorEmail})" else audit.authorDisplayName
+            } else {
+                audit.authorStudentId
+            }
+            val reviewerText = if (audit.reviewerDisplayName.isNotBlank()) {
+                if (audit.reviewerEmail.isNotBlank()) "${audit.reviewerDisplayName} (${audit.reviewerEmail})" else audit.reviewerDisplayName
+            } else {
+                audit.reviewerStudentId
+            }
+            AuditField(label = "AUTOR DE LA ENTREGA", value = authorText, isBold = true)
             Spacer(modifier = Modifier.height(8.dp))
-            AuditField(label = "ID REVISOR", value = audit.reviewerStudentId)
+            AuditField(label = "REVISOR", value = reviewerText, isBold = true)
         }
 
         // Decision
@@ -276,10 +286,25 @@ private fun CriterionScoreItem(score: PeerReviewCriterionScore) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Criterio ID: ${score.rubricCriterionId.take(8)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = score.criterionTitle.ifBlank { "Criterio de evaluación" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (!score.criterionDescription.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = score.criterionDescription,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Puntaje: ${score.score}",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "${score.score} / ${score.maxScore}",
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -385,16 +410,24 @@ fun PeerReviewAuditScreenPreview() {
                 peerReviewId = "rev-123",
                 submissionId = "sub-456",
                 authorStudentId = "s1",
+                authorDisplayName = "Adonis Mercado",
+                authorEmail = "adonis@example.com",
                 reviewerStudentId = "s2",
+                reviewerDisplayName = "Juan Pérez",
+                reviewerEmail = "juan@example.com",
+                activityId = "act-789",
+                activityTitle = "Proyecto Final - Jetpack Compose",
+                courseId = "c-101",
+                courseTitle = "Android con Jetpack Compose",
                 isApproved = true,
                 feedbackComment = "El análisis de los algoritmos es sólido y cubre todos los casos de borde requeridos en el enunciado.",
                 createdAt = "2023-10-24T14:32:00Z",
                 evidenceType = EvidenceType.URL,
                 evidenceContent = "github.com/mentorly/ent-4091-cs/pull/12",
                 criterionScores = listOf(
-                    PeerReviewCriterionScore("c1", 4),
-                    PeerReviewCriterionScore("c2", 5),
-                    PeerReviewCriterionScore("c3", 3)
+                    PeerReviewCriterionScore("c1", 4, "Calidad del código", "Estructura limpia y buenas prácticas", 5),
+                    PeerReviewCriterionScore("c2", 5, "Cumplimiento de requisitos", "Todos los requerimientos implementados", 5),
+                    PeerReviewCriterionScore("c3", 3, "Diseño y UI", "Interfaz adecuada con Compose", 5)
                 )
             )
         )
