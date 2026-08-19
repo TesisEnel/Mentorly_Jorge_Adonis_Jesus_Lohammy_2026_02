@@ -20,8 +20,8 @@ class PeerReviewHistoryViewModel @Inject constructor(
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PeerReviewHistoryUiState())
-    val uiState: StateFlow<PeerReviewHistoryUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(PeerReviewHistoryUiState())
+    val state: StateFlow<PeerReviewHistoryUiState> = _state.asStateFlow()
 
     init {
         loadHistory()
@@ -30,17 +30,17 @@ class PeerReviewHistoryViewModel @Inject constructor(
     fun onEvent(event: PeerReviewHistoryUiEvent) {
         when (event) {
             PeerReviewHistoryUiEvent.Refresh -> loadHistory(isRefresh = true)
-            PeerReviewHistoryUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            PeerReviewHistoryUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun loadHistory(isRefresh: Boolean = false) {
-        if (_uiState.value.isLoading || _uiState.value.isRefreshing) return
+        if (_state.value.isLoading || _state.value.isRefreshing) return
 
         viewModelScope.launch {
             val session = sessionRepository.session.first()
             if (session == null) {
-                _uiState.update {
+                _state.update {
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
@@ -51,7 +51,7 @@ class PeerReviewHistoryViewModel @Inject constructor(
             } else {
                 peerReviewRepository.getMyReviews(session.studentId).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update {
+                        is Resource.Loading -> _state.update {
                             it.copy(
                                 isLoading = !isRefresh,
                                 isRefreshing = isRefresh,
@@ -60,7 +60,7 @@ class PeerReviewHistoryViewModel @Inject constructor(
                             )
                         }
 
-                        is Resource.Success -> _uiState.update {
+                        is Resource.Success -> _state.update {
                             it.copy(
                                 isLoading = false,
                                 isRefreshing = false,
@@ -69,7 +69,7 @@ class PeerReviewHistoryViewModel @Inject constructor(
                             )
                         }
 
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(
                                 isLoading = false,
                                 isRefreshing = false,

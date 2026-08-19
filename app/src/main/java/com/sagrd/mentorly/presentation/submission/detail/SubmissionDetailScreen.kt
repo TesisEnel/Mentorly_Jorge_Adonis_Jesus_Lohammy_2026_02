@@ -98,7 +98,7 @@ fun SubmissionDetailScreen(
     onEditClick: (submissionId: String, enrollmentId: String, activityId: String) -> Unit,
     viewModel: SubmissionDetailViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(submissionId) {
         viewModel.onEvent(SubmissionDetailUiEvent.Load(submissionId))

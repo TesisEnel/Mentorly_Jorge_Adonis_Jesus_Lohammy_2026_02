@@ -66,7 +66,7 @@ fun PeerReviewHistoryScreen(
     onBackClick: () -> Unit,
     viewModel: PeerReviewHistoryViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LifecycleResumeEffect(Unit) {
         viewModel.onEvent(PeerReviewHistoryUiEvent.Refresh)

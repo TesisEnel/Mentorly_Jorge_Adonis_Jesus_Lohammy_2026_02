@@ -84,7 +84,7 @@ fun QuizScreen(
     onQuizSubmitted: () -> Unit,
     viewModel: QuizViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(enrollmentId, activityId) {
         viewModel.initialize(enrollmentId, activityId)

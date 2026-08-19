@@ -93,7 +93,7 @@ fun ProfileScreen(
     onBackClick: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     LifecycleResumeEffect(Unit) {
         viewModel.onEvent(ProfileUiEvent.Load)

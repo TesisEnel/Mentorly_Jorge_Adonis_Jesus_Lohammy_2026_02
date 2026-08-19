@@ -26,8 +26,8 @@ class SubmissionListViewModel @Inject constructor(
     private val courseRepository: CourseRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SubmissionListUiState())
-    val uiState: StateFlow<SubmissionListUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(SubmissionListUiState())
+    val state: StateFlow<SubmissionListUiState> = _state.asStateFlow()
 
     init {
         onEvent(SubmissionListUiEvent.Load)
@@ -39,12 +39,12 @@ class SubmissionListViewModel @Inject constructor(
             is SubmissionListUiEvent.Refresh -> load()
             is SubmissionListUiEvent.OnSearchQueryChanged -> updateSearchQuery(event.query)
             is SubmissionListUiEvent.ClearSearch -> updateSearchQuery("")
-            is SubmissionListUiEvent.DismissError -> _uiState.update { it.copy(errorMessage = null) }
+            is SubmissionListUiEvent.DismissError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun updateSearchQuery(query: String) {
-        _uiState.update { state ->
+        _state.update { state ->
             state.copy(
                 searchQuery = query,
                 filteredSubmissions = filterSubmissions(state.submissions, query)
@@ -69,24 +69,24 @@ class SubmissionListViewModel @Inject constructor(
 
     private fun load() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val session = sessionRepository.session.first()
             val studentId = session?.studentId
 
             if (studentId == null) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Sesión no encontrada") }
+                _state.update { it.copy(isLoading = false, errorMessage = "Sesión no encontrada") }
             } else {
                 submissionRepository.getSubmissionsByStudentId(studentId).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update { it.copy(isLoading = true) }
+                        is Resource.Loading -> _state.update { it.copy(isLoading = true) }
                         is Resource.Success -> {
                             val rawSubmissions = resource.data ?: emptyList()
                             val initialItems = rawSubmissions.map { raw ->
-                                val existing = _uiState.value.submissions.find { it.submission.id == raw.id }
+                                val existing = _state.value.submissions.find { it.submission.id == raw.id }
                                 existing?.copy(submission = raw) ?: SubmissionItemUiState(submission = raw)
                             }
-                            _uiState.update { state ->
+                            _state.update { state ->
                                 state.copy(
                                     isLoading = false,
                                     submissions = initialItems,
@@ -97,7 +97,7 @@ class SubmissionListViewModel @Inject constructor(
                                 loadMetadata(studentId, rawSubmissions)
                             }
                         }
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(isLoading = false, errorMessage = resource.message)
                         }
                     }
@@ -115,7 +115,7 @@ class SubmissionListViewModel @Inject constructor(
                     emptyMap()
                 }
 
-                _uiState.update { state ->
+                _state.update { state ->
                     val updated = state.submissions.map { item ->
                         val enrollment = enrollmentMap[item.submission.enrollmentId]
                         val courseTitle = enrollment?.courseTitle ?: ""
@@ -138,7 +138,7 @@ class SubmissionListViewModel @Inject constructor(
                                     .flatMap { it.activities }
                                     .associateBy { it.id }
 
-                                _uiState.update { state ->
+                                _state.update { state ->
                                     val updated = state.submissions.map { item ->
                                         val enrollment = enrollmentMap[item.submission.enrollmentId]
                                         if (enrollment?.courseId == courseId) {
@@ -170,7 +170,7 @@ class SubmissionListViewModel @Inject constructor(
                                 val reviews = reviewsRes.data
                                 val positiveCount = reviews.count { it.isApproved }
 
-                                _uiState.update { state ->
+                                _state.update { state ->
                                     val updated = state.submissions.map { item ->
                                         if (item.submission.id == submission.id) {
                                             item.copy(

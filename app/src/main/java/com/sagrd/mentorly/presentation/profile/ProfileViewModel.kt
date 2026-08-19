@@ -31,8 +31,8 @@ class ProfileViewModel @Inject constructor(
     private val enrollmentProgressRepository: EnrollmentProgressRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProfileUiState())
-    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(ProfileUiState())
+    val state: StateFlow<ProfileUiState> = _state.asStateFlow()
 
     init {
         onEvent(ProfileUiEvent.Load)
@@ -42,36 +42,36 @@ class ProfileViewModel @Inject constructor(
         when (event) {
             ProfileUiEvent.Load -> load()
             ProfileUiEvent.ShowEditDialog -> showEditDialog()
-            ProfileUiEvent.DismissEditDialog -> _uiState.update { it.copy(isEditDialogVisible = false) }
-            is ProfileUiEvent.DisplayNameChanged -> _uiState.update { it.copy(editedDisplayName = event.value) }
-            is ProfileUiEvent.EmailChanged -> _uiState.update { it.copy(editedEmail = event.value) }
+            ProfileUiEvent.DismissEditDialog -> _state.update { it.copy(isEditDialogVisible = false) }
+            is ProfileUiEvent.DisplayNameChanged -> _state.update { it.copy(editedDisplayName = event.value) }
+            is ProfileUiEvent.EmailChanged -> _state.update { it.copy(editedEmail = event.value) }
             ProfileUiEvent.SaveProfile -> saveProfile()
             is ProfileUiEvent.PrivacyChanged -> changePrivacy(event.isPublic)
-            ProfileUiEvent.ShowCertificatesListDialog -> _uiState.update {
+            ProfileUiEvent.ShowCertificatesListDialog -> _state.update {
                 it.copy(isCertificatesListDialogVisible = true)
             }
-            ProfileUiEvent.DismissCertificatesListDialog -> _uiState.update {
+            ProfileUiEvent.DismissCertificatesListDialog -> _state.update {
                 it.copy(isCertificatesListDialogVisible = false)
             }
             is ProfileUiEvent.SelectCertificateEnrollment -> selectCertificateEnrollment(event.enrollment)
-            ProfileUiEvent.DismissCertificateDialog -> _uiState.update {
+            ProfileUiEvent.DismissCertificateDialog -> _state.update {
                 it.copy(selectedCertificateEnrollment = null, selectedCertificate = null)
             }
-            ProfileUiEvent.ShowSignOutDialog -> _uiState.update { it.copy(isSignOutDialogVisible = true) }
-            ProfileUiEvent.DismissSignOutDialog -> _uiState.update { it.copy(isSignOutDialogVisible = false) }
+            ProfileUiEvent.ShowSignOutDialog -> _state.update { it.copy(isSignOutDialogVisible = true) }
+            ProfileUiEvent.DismissSignOutDialog -> _state.update { it.copy(isSignOutDialogVisible = false) }
             ProfileUiEvent.ConfirmSignOut -> signOut()
-            ProfileUiEvent.SignOutHandled -> _uiState.update { it.copy(isSignedOut = false) }
-            ProfileUiEvent.DismissError -> _uiState.update { it.copy(errorMessage = null) }
+            ProfileUiEvent.SignOutHandled -> _state.update { it.copy(isSignedOut = false) }
+            ProfileUiEvent.DismissError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun load() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val session = sessionRepository.session.first()
             if (session == null) {
-                _uiState.update {
+                _state.update {
                     it.copy(
                         isLoading = false,
                         errorMessage = "No se encontró una sesión activa."
@@ -81,16 +81,16 @@ class ProfileViewModel @Inject constructor(
                 val studentId = session.studentId
                 val authUser = authRepository.getCurrentUser()
 
-                _uiState.update {
+                _state.update {
                     it.copy(userPhotoUrl = authUser?.photoUrl)
                 }
 
                 studentRepository.getStudentById(studentId).collect { resource ->
                     when (resource) {
-                        is Resource.Loading -> _uiState.update { it.copy(isLoading = true) }
+                        is Resource.Loading -> _state.update { it.copy(isLoading = true) }
                         is Resource.Success -> {
                             val student = resource.data
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isLoading = false,
                                     student = student,
@@ -102,7 +102,7 @@ class ProfileViewModel @Inject constructor(
                             loadPeerReviewsCount(studentId)
                             loadCertificatesCount(studentId)
                         }
-                        is Resource.Error -> _uiState.update {
+                        is Resource.Error -> _state.update {
                             it.copy(isLoading = false, errorMessage = resource.message)
                         }
                     }
@@ -115,7 +115,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             studentRepository.getStudentStatistics(studentId).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
-                    _uiState.update { it.copy(statistics = resource.data) }
+                    _state.update { it.copy(statistics = resource.data) }
                 }
             }
         }
@@ -125,7 +125,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             peerReviewRepository.getMyReviews(studentId).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
-                    _uiState.update { it.copy(peerReviewsCount = resource.data.size) }
+                    _state.update { it.copy(peerReviewsCount = resource.data.size) }
                 }
             }
         }
@@ -139,7 +139,7 @@ class ProfileViewModel @Inject constructor(
                     val explicitlyCompleted = enrollments.filter {
                         it.status == EnrollmentStatus.COMPLETED || it.completedAt != null
                     }
-                    _uiState.update {
+                    _state.update {
                         it.copy(
                             certificatesCount = explicitlyCompleted.size,
                             completedEnrollments = explicitlyCompleted
@@ -155,7 +155,7 @@ class ProfileViewModel @Inject constructor(
                         launch {
                             enrollmentProgressRepository.getEnrollmentProgress(enrollment.id).collect { progressResource ->
                                 if (progressResource is Resource.Success && progressResource.data?.percentage == 100) {
-                                    _uiState.update { current ->
+                                    _state.update { current ->
                                         if (current.completedEnrollments.none { it.id == enrollment.id }) {
                                             val updated = current.completedEnrollments + enrollment
                                             current.copy(
@@ -176,7 +176,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun selectCertificateEnrollment(enrollment: com.sagrd.mentorly.domain.model.enrollment.Enrollment) {
-        _uiState.update {
+        _state.update {
             it.copy(
                 selectedCertificateEnrollment = enrollment,
                 selectedCertificate = null
@@ -185,15 +185,15 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             enrollmentRepository.getCertificate(enrollment.id).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
-                    _uiState.update { it.copy(selectedCertificate = resource.data) }
+                    _state.update { it.copy(selectedCertificate = resource.data) }
                 }
             }
         }
     }
 
     private fun showEditDialog() {
-        val student = _uiState.value.student
-        _uiState.update {
+        val student = _state.value.student
+        _state.update {
             it.copy(
                 isEditDialogVisible = true,
                 editedDisplayName = student?.displayName ?: "",
@@ -203,12 +203,12 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun saveProfile() {
-        val state = _uiState.value
+        val state = _state.value
         val student = state.student
         if (student == null) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true) }
+            _state.update { it.copy(isSaving = true) }
 
             val dto = UpdateStudentDto(
                 displayName = state.editedDisplayName,
@@ -218,7 +218,7 @@ class ProfileViewModel @Inject constructor(
             studentRepository.updateStudent(student.id, dto).collect { resource ->
                 when (resource) {
                     is Resource.Success -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isSaving = false,
                                 isEditDialogVisible = false,
@@ -230,7 +230,7 @@ class ProfileViewModel @Inject constructor(
                         }
                         updateSessionCache()
                     }
-                    is Resource.Error -> _uiState.update {
+                    is Resource.Error -> _state.update {
                         it.copy(isSaving = false, errorMessage = resource.message)
                     }
                     is Resource.Loading -> Unit
@@ -240,7 +240,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun changePrivacy(isPublic: Boolean) {
-        val student = _uiState.value.student
+        val student = _state.value.student
         if (student == null) return
 
         viewModelScope.launch {
@@ -249,12 +249,12 @@ class ProfileViewModel @Inject constructor(
             studentRepository.updateLeaderboardPrivacy(student.id, dto).collect { resource ->
                 when (resource) {
                     is Resource.Success -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(student = it.student?.copy(isLeaderboardPublic = isPublic))
                         }
                         updateSessionCache()
                     }
-                    is Resource.Error -> _uiState.update { it.copy(errorMessage = resource.message) }
+                    is Resource.Error -> _state.update { it.copy(errorMessage = resource.message) }
                     is Resource.Loading -> Unit
                 }
             }
@@ -262,7 +262,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     private suspend fun updateSessionCache() {
-        val student = _uiState.value.student
+        val student = _state.value.student
         if (student != null) {
             val currentSession = sessionRepository.session.first()
             if (currentSession != null) {
@@ -281,7 +281,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.signOut()
             sessionRepository.clearSession()
-            _uiState.update { it.copy(isSignOutDialogVisible = false, isSignedOut = true) }
+            _state.update { it.copy(isSignOutDialogVisible = false, isSignedOut = true) }
         }
     }
 }
