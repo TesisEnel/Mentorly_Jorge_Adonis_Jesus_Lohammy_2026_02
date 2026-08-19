@@ -17,8 +17,8 @@ class ThemeDetailViewModel @Inject constructor(
     private val enrollmentProgressRepository: EnrollmentProgressRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ThemeDetailUiState())
-    val uiState: StateFlow<ThemeDetailUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(ThemeDetailUiState())
+    val state: StateFlow<ThemeDetailUiState> = _state.asStateFlow()
 
     private var enrollmentId: String? = null
     private var themeId: String? = null
@@ -32,7 +32,7 @@ class ThemeDetailViewModel @Inject constructor(
             }
 
             ThemeDetailUiEvent.CompleteTheme -> completeCurrentTheme()
-            ThemeDetailUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            ThemeDetailUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 
@@ -41,7 +41,7 @@ class ThemeDetailViewModel @Inject constructor(
             enrollmentProgressRepository.getEnrollmentProgress(enrollmentId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isLoading = it.theme == null,
                                 errorMessage = null
@@ -65,7 +65,7 @@ class ThemeDetailViewModel @Inject constructor(
                         }
 
                         if (foundTheme != null) {
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isLoading = false,
                                     unitTitle = foundUnitTitle,
@@ -76,7 +76,7 @@ class ThemeDetailViewModel @Inject constructor(
                                 )
                             }
                         } else {
-                            _uiState.update {
+                            _state.update {
                                 it.copy(
                                     isLoading = false,
                                     errorMessage = "No se encontró el tema solicitado."
@@ -86,7 +86,7 @@ class ThemeDetailViewModel @Inject constructor(
                     }
 
                     is Resource.Error -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isLoading = false,
                                 errorMessage = resource.message ?: "No se pudo cargar el tema."
@@ -101,13 +101,13 @@ class ThemeDetailViewModel @Inject constructor(
     private fun completeCurrentTheme() {
         val currentEnrollmentId = enrollmentId ?: return
         val currentThemeId = themeId ?: return
-        if (_uiState.value.isCompleting || _uiState.value.isCompleted) return
+        if (_state.value.isCompleting || _state.value.isCompleted) return
 
         viewModelScope.launch {
             enrollmentProgressRepository.completeTheme(currentEnrollmentId, currentThemeId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isCompleting = true,
                                 errorMessage = null
@@ -118,7 +118,7 @@ class ThemeDetailViewModel @Inject constructor(
                     is Resource.Success -> {
                         val progress = resource.data
                         val updatedTheme = progress?.units?.flatMap { it.themes }?.firstOrNull { it.themeId == currentThemeId }
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isCompleting = false,
                                 isCompleted = true,
@@ -129,7 +129,7 @@ class ThemeDetailViewModel @Inject constructor(
                     }
 
                     is Resource.Error -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 isCompleting = false,
                                 errorMessage = resource.message ?: "No se pudo marcar el tema como completado."
