@@ -26,15 +26,15 @@ class EnrollmentProgressViewModel @Inject constructor(
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(EnrollmentProgressUiState())
-    val uiState: StateFlow<EnrollmentProgressUiState> = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(EnrollmentProgressUiState())
+    val state: StateFlow<EnrollmentProgressUiState> = _state.asStateFlow()
 
     private var enrollmentId: String? = null
 
     fun initialize(id: String) {
         if (enrollmentId != id) {
             enrollmentId = id
-            _uiState.update {
+            _state.update {
                 EnrollmentProgressUiState(
                     isLoading = true,
                     expandedUnitIds = it.expandedUnitIds
@@ -50,7 +50,7 @@ class EnrollmentProgressViewModel @Inject constructor(
     private fun loadSession() {
         viewModelScope.launch {
             sessionRepository.session.firstOrNull()?.let { session ->
-                _uiState.update { it.copy(studentName = session.displayName) }
+                _state.update { it.copy(studentName = session.displayName) }
             }
         }
     }
@@ -69,7 +69,7 @@ class EnrollmentProgressViewModel @Inject constructor(
 
             is EnrollmentProgressUiEvent.CompleteTheme -> completeTheme(event.themeId)
             is EnrollmentProgressUiEvent.ToggleUnitExpansion -> {
-                _uiState.update { current ->
+                _state.update { current ->
                     val expanded = current.expandedUnitIds
                     val updated = if (event.unitId in expanded) {
                         expanded - event.unitId
@@ -80,16 +80,16 @@ class EnrollmentProgressViewModel @Inject constructor(
                 }
             }
 
-            EnrollmentProgressUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            EnrollmentProgressUiEvent.ClearError -> _state.update { it.copy(errorMessage = null) }
             EnrollmentProgressUiEvent.ShowCertificateDialog -> {
                 val id = enrollmentId
-                _uiState.update { it.copy(isCertificateDialogVisible = true) }
-                if (id != null && _uiState.value.certificate == null) {
+                _state.update { it.copy(isCertificateDialogVisible = true) }
+                if (id != null && _state.value.certificate == null) {
                     loadCertificate(id)
                 }
             }
             EnrollmentProgressUiEvent.DismissCertificateDialog -> {
-                _uiState.update { it.copy(isCertificateDialogVisible = false) }
+                _state.update { it.copy(isCertificateDialogVisible = false) }
             }
         }
     }
@@ -98,7 +98,7 @@ class EnrollmentProgressViewModel @Inject constructor(
         viewModelScope.launch {
             enrollmentRepository.getCertificate(enrollmentId).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
-                    _uiState.update { it.copy(certificate = resource.data) }
+                    _state.update { it.copy(certificate = resource.data) }
                 }
             }
         }
@@ -106,12 +106,12 @@ class EnrollmentProgressViewModel @Inject constructor(
 
     private fun completeTheme(themeId: String) {
         val id = enrollmentId ?: return
-        if (themeId in _uiState.value.completingThemeIds) return
+        if (themeId in _state.value.completingThemeIds) return
 
         viewModelScope.launch {
             enrollmentProgressRepository.completeTheme(id, themeId).collect { resource ->
                 when (resource) {
-                    is Resource.Loading -> _uiState.update {
+                    is Resource.Loading -> _state.update {
                         it.copy(
                             completingThemeIds = it.completingThemeIds + themeId,
                             errorMessage = null
@@ -119,7 +119,7 @@ class EnrollmentProgressViewModel @Inject constructor(
                     }
 
                     is Resource.Success -> {
-                        _uiState.update {
+                        _state.update {
                             it.copy(
                                 progress = resource.data,
                                 completingThemeIds = it.completingThemeIds - themeId,
@@ -129,7 +129,7 @@ class EnrollmentProgressViewModel @Inject constructor(
                         loadSubmissions(id)
                     }
 
-                    is Resource.Error -> _uiState.update {
+                    is Resource.Error -> _state.update {
                         it.copy(
                             completingThemeIds = it.completingThemeIds - themeId,
                             errorMessage = resource.message ?: "No se pudo completar el tema."
@@ -146,7 +146,7 @@ class EnrollmentProgressViewModel @Inject constructor(
         viewModelScope.launch {
             enrollmentProgressRepository.getEnrollmentProgress(id).collect { resource ->
                 when (resource) {
-                    is Resource.Loading -> _uiState.update {
+                    is Resource.Loading -> _state.update {
                         it.copy(
                             isLoading = !isRefresh && it.progress == null,
                             isRefreshing = isRefresh,
@@ -156,7 +156,7 @@ class EnrollmentProgressViewModel @Inject constructor(
 
                     is Resource.Success -> {
                         val progressData = resource.data
-                        _uiState.update { current ->
+                        _state.update { current ->
                             val defaultExpanded = if (current.expandedUnitIds.isEmpty() && progressData != null) {
                                 val activeUnit = progressData.units.firstOrNull { unit ->
                                     val isUnitCompleted = unit.totalThemes > 0 &&
@@ -180,7 +180,7 @@ class EnrollmentProgressViewModel @Inject constructor(
                         }
                     }
 
-                    is Resource.Error -> _uiState.update {
+                    is Resource.Error -> _state.update {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
@@ -203,7 +203,7 @@ class EnrollmentProgressViewModel @Inject constructor(
                             .filter { it.enrollmentId == enrollmentId }
                             .associateBy { it.activityId }
 
-                        _uiState.update { it.copy(submissionsByActivityId = map) }
+                        _state.update { it.copy(submissionsByActivityId = map) }
                     }
                 }
             }
@@ -215,7 +215,7 @@ class EnrollmentProgressViewModel @Inject constructor(
             enrollmentRepository.getEnrollmentById(id).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
                     val enrollment = resource.data
-                    _uiState.update {
+                    _state.update {
                         it.copy(enrollment = enrollment)
                     }
                     loadCourseImage(enrollment.courseId)
@@ -228,7 +228,7 @@ class EnrollmentProgressViewModel @Inject constructor(
         viewModelScope.launch {
             courseRepository.getCourseById(courseId).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
-                    _uiState.update {
+                    _state.update {
                         it.copy(courseImageUrl = resource.data.imageUrl)
                     }
                 }

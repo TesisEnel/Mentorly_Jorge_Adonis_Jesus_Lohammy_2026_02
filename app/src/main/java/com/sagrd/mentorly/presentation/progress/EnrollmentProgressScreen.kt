@@ -102,7 +102,7 @@ fun EnrollmentProgressScreen(
     onThemeClick: (String) -> Unit = {},
     viewModel: EnrollmentProgressViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(enrollmentId) {
         viewModel.initialize(enrollmentId)
