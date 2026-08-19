@@ -86,266 +86,194 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCourseApi(retrofit: Retrofit): CourseApi {
-        return retrofit.create(CourseApi::class.java)
+    fun provideCourseApi(moshi: Moshi): CourseApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(CourseApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideCourseCommunityApi(retrofit: Retrofit): CourseCommunityApi {
-        return retrofit.create(CourseCommunityApi::class.java)
+    fun provideCourseCommunityApi(moshi: Moshi): CourseCommunityApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(CourseCommunityApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideActivityApi(retrofit: Retrofit): ActivityApi {
-        return retrofit.create(ActivityApi::class.java)
+    fun provideActivityApi(moshi: Moshi): ActivityApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(ActivityApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideAnalyticsApi(retrofit: Retrofit): AnalyticsApi {
-        return retrofit.create(AnalyticsApi::class.java)
+    fun provideAnalyticsApi(moshi: Moshi): AnalyticsApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(AnalyticsApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideStudentApi(retrofit: Retrofit): StudentApi {
-        return retrofit.create(StudentApi::class.java)
+    fun provideStudentApi(moshi: Moshi): StudentApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(StudentApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideEnrollmentApi(retrofit: Retrofit): EnrollmentApi {
-        return retrofit.create(EnrollmentApi::class.java)
+    fun provideEnrollmentApi(moshi: Moshi): EnrollmentApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(EnrollmentApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideEnrollmentProgressApi(retrofit: Retrofit): EnrollmentProgressApi {
-        return retrofit.create(EnrollmentProgressApi::class.java)
+    fun provideEnrollmentProgressApi(moshi: Moshi): EnrollmentProgressApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(EnrollmentProgressApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun providePeerReviewApi(retrofit: Retrofit): PeerReviewApi {
-        return retrofit.create(PeerReviewApi::class.java)
+    fun providePeerReviewApi(moshi: Moshi): PeerReviewApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(PeerReviewApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideQuizApi(retrofit: Retrofit): QuizApi {
-        return retrofit.create(QuizApi::class.java)
+    fun provideQuizApi(moshi: Moshi): QuizApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(QuizApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideSubmissionApi(retrofit: Retrofit): SubmissionApi {
-        return retrofit.create(SubmissionApi::class.java)
+    fun provideSubmissionApi(moshi: Moshi): SubmissionApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(SubmissionApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideThemeApi(retrofit: Retrofit): ThemeApi {
-        return retrofit.create(ThemeApi::class.java)
+    fun provideThemeApi(moshi: Moshi): ThemeApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(ThemeApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideUnitApi(retrofit: Retrofit): UnitApi {
-        return retrofit.create(UnitApi::class.java)
+    fun provideUnitApi(moshi: Moshi): UnitApi {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(UnitApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideCourseRemoteDataSource(
-        courseApi: CourseApi
-    ): CourseRemoteDataSource {
-        return CourseRemoteDataSource(courseApi)
+    fun provideCourseRepository(api: CourseApi): CourseRepository {
+        return CourseRepositoryImpl(CourseRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideCourseCommunityRemoteDataSource(
-        courseCommunityApi: CourseCommunityApi
-    ): CourseCommunityRemoteDataSource {
-        return CourseCommunityRemoteDataSource(courseCommunityApi)
+    fun provideCourseCommunityRepository(api: CourseCommunityApi): CourseCommunityRepository {
+        return CourseCommunityRepositoryImpl(CourseCommunityRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideActivityRemoteDataSource(
-        activityApi: ActivityApi
-    ): ActivityRemoteDataSource {
-        return ActivityRemoteDataSource(activityApi)
+    fun provideActivityRepository(api: ActivityApi): ActivityRepository {
+        return ActivityRepositoryImpl(ActivityRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideAnalyticsRemoteDataSource(
-        analyticsApi: AnalyticsApi
-    ): AnalyticsRemoteDataSource {
-        return AnalyticsRemoteDataSource(analyticsApi)
+    fun provideAnalyticsRepository(api: AnalyticsApi): AnalyticsRepository {
+        return AnalyticsRepositoryImpl(AnalyticsRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideStudentRemoteDataSource(
-        studentApi: StudentApi
-    ): StudentRemoteDataSource {
-        return StudentRemoteDataSource(studentApi)
+    fun provideStudentRepository(api: StudentApi): StudentRepository {
+        return StudentRepositoryImpl(StudentRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideEnrollmentRemoteDataSource(
-        enrollmentApi: EnrollmentApi
-    ): EnrollmentRemoteDataSource {
-        return EnrollmentRemoteDataSource(enrollmentApi)
+    fun provideEnrollmentRepository(api: EnrollmentApi): EnrollmentRepository {
+        return EnrollmentRepositoryImpl(EnrollmentRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideEnrollmentProgressRemoteDataSource(
-        enrollmentProgressApi: EnrollmentProgressApi
-    ): EnrollmentProgressRemoteDataSource {
-        return EnrollmentProgressRemoteDataSource(enrollmentProgressApi)
+    fun provideEnrollmentProgressRepository(api: EnrollmentProgressApi): EnrollmentProgressRepository {
+        return EnrollmentProgressRepositoryImpl(EnrollmentProgressRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun providePeerReviewRemoteDataSource(
-        peerReviewApi: PeerReviewApi
-    ): PeerReviewRemoteDataSource {
-        return PeerReviewRemoteDataSource(peerReviewApi)
+    fun providePeerReviewRepository(api: PeerReviewApi): PeerReviewRepository {
+        return PeerReviewRepositoryImpl(PeerReviewRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideQuizRemoteDataSource(
-        quizApi: QuizApi
-    ): QuizRemoteDataSource {
-        return QuizRemoteDataSource(quizApi)
+    fun provideQuizRepository(api: QuizApi): QuizRepository {
+        return QuizRepositoryImpl(QuizRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideSubmissionRemoteDataSource(
-        submissionApi: SubmissionApi
-    ): SubmissionRemoteDataSource {
-        return SubmissionRemoteDataSource(submissionApi)
+    fun provideSubmissionRepository(api: SubmissionApi): SubmissionRepository {
+        return SubmissionRepositoryImpl(SubmissionRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideThemeRemoteDataSource(
-        themeApi: ThemeApi
-    ): ThemeRemoteDataSource {
-        return ThemeRemoteDataSource(themeApi)
+    fun provideThemeRepository(api: ThemeApi): ThemeRepository {
+        return ThemeRepositoryImpl(ThemeRemoteDataSource(api))
     }
 
     @Provides
     @Singleton
-    fun provideUnitRemoteDataSource(
-        unitApi: UnitApi
-    ): UnitRemoteDataSource {
-        return UnitRemoteDataSource(unitApi)
-    }
-
-    @Provides
-    @Singleton
-    fun provideCourseRepository(
-        remoteDataSource: CourseRemoteDataSource
-    ): CourseRepository {
-        return CourseRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideCourseCommunityRepository(
-        remoteDataSource: CourseCommunityRemoteDataSource
-    ): CourseCommunityRepository {
-        return CourseCommunityRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideActivityRepository(
-        remoteDataSource: ActivityRemoteDataSource
-    ): ActivityRepository {
-        return ActivityRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnalyticsRepository(
-        remoteDataSource: AnalyticsRemoteDataSource
-    ): AnalyticsRepository {
-        return AnalyticsRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideStudentRepository(
-        remoteDataSource: StudentRemoteDataSource
-    ): StudentRepository {
-        return StudentRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideEnrollmentRepository(
-        remoteDataSource: EnrollmentRemoteDataSource
-    ): EnrollmentRepository {
-        return EnrollmentRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideEnrollmentProgressRepository(
-        remoteDataSource: EnrollmentProgressRemoteDataSource
-    ): EnrollmentProgressRepository {
-        return EnrollmentProgressRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun providePeerReviewRepository(
-        remoteDataSource: PeerReviewRemoteDataSource
-    ): PeerReviewRepository {
-        return PeerReviewRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideQuizRepository(
-        remoteDataSource: QuizRemoteDataSource
-    ): QuizRepository {
-        return QuizRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideSubmissionRepository(
-        remoteDataSource: SubmissionRemoteDataSource
-    ): SubmissionRepository {
-        return SubmissionRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideThemeRepository(
-        remoteDataSource: ThemeRemoteDataSource
-    ): ThemeRepository {
-        return ThemeRepositoryImpl(remoteDataSource)
-    }
-
-    @Provides
-    @Singleton
-    fun provideUnitRepository(
-        remoteDataSource: UnitRemoteDataSource
-    ): UnitRepository {
-        return UnitRepositoryImpl(remoteDataSource)
+    fun provideUnitRepository(api: UnitApi): UnitRepository {
+        return UnitRepositoryImpl(UnitRemoteDataSource(api))
     }
 
     @Provides
