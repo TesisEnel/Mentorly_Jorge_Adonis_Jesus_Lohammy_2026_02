@@ -6,6 +6,7 @@ import com.sagrd.mentorly.domain.model.progress.EnrollmentActivityProgress
 data class EnrollmentActivityProgressDto(
     val activityId: String,
     val title: String,
+    val description: String = "",
     val type: Int,
     val isMandatory: Boolean,
     val isApproved: Boolean
@@ -13,6 +14,7 @@ data class EnrollmentActivityProgressDto(
     fun toDomain() = EnrollmentActivityProgress(
         activityId = activityId,
         title = title,
+        description = description,
         type = ActivityType.fromApi(type),
         isMandatory = isMandatory,
         isApproved = isApproved
