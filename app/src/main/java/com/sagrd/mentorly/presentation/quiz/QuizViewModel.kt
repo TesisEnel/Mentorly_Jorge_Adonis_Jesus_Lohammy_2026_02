@@ -56,6 +56,23 @@ class QuizViewModel @Inject constructor(
             is QuizUiEvent.AnswerChanged -> updateAnswer(event.questionId, event.answer)
             QuizUiEvent.SubmitQuiz -> submitQuiz()
             QuizUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            QuizUiEvent.ReattemptQuiz -> reattemptQuiz()
+        }
+    }
+
+    private fun reattemptQuiz() {
+        _uiState.update {
+            it.copy(
+                isSubmitted = false,
+                isSubmitting = false,
+                result = null,
+                answers = emptyMap(),
+                currentQuestionIndex = 0,
+                errorMessage = null
+            )
+        }
+        if (_uiState.value.questions.isEmpty()) {
+            loadQuiz()
         }
     }
 
