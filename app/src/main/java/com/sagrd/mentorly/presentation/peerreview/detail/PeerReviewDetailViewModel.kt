@@ -69,34 +69,33 @@ class PeerReviewDetailViewModel @Inject constructor(
                         errorMessage = "No se encontró una sesión activa."
                     )
                 }
-                return@launch
-            }
+            } else {
+                peerReviewRepository.getAnonymousSubmission(session.studentId, id).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> _uiState.update {
+                            it.copy(isLoading = true, errorMessage = null, hasSession = true)
+                        }
 
-            peerReviewRepository.getAnonymousSubmission(session.studentId, id).collect { resource ->
-                when (resource) {
-                    is Resource.Loading -> _uiState.update {
-                        it.copy(isLoading = true, errorMessage = null, hasSession = true)
-                    }
-
-                    is Resource.Success -> {
-                        val submission = resource.data
-                        if (submission != null) {
-                            loadRubricAndSetState(submission.activityId, submission)
-                        } else {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    errorMessage = "No se encontraron datos de la entrega."
-                                )
+                        is Resource.Success -> {
+                            val submission = resource.data
+                            if (submission != null) {
+                                loadRubricAndSetState(submission.activityId, submission)
+                            } else {
+                                _uiState.update {
+                                    it.copy(
+                                        isLoading = false,
+                                        errorMessage = "No se encontraron datos de la entrega."
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    is Resource.Error -> _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = resource.message ?: "No se pudo cargar la entrega anónima."
-                        )
+                        is Resource.Error -> _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "No se pudo cargar la entrega anónima."
+                            )
+                        }
                     }
                 }
             }
@@ -166,36 +165,35 @@ class PeerReviewDetailViewModel @Inject constructor(
             val session = sessionRepository.session.first()
             if (session == null) {
                 _uiState.update { it.copy(errorMessage = "No se encontró una sesión activa.") }
-                return@launch
-            }
+            } else {
+                peerReviewRepository.submitReview(
+                    studentId = session.studentId,
+                    dto = CreatePeerReviewRequestDto(
+                        submissionId = id,
+                        isApproved = selectedDecision,
+                        feedbackComment = feedback,
+                        criterionScores = scoresList
+                    )
+                ).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> _uiState.update {
+                            it.copy(isSubmitting = true, errorMessage = null)
+                        }
 
-            peerReviewRepository.submitReview(
-                studentId = session.studentId,
-                dto = CreatePeerReviewRequestDto(
-                    submissionId = id,
-                    isApproved = selectedDecision,
-                    feedbackComment = feedback,
-                    criterionScores = scoresList
-                )
-            ).collect { resource ->
-                when (resource) {
-                    is Resource.Loading -> _uiState.update {
-                        it.copy(isSubmitting = true, errorMessage = null)
-                    }
+                        is Resource.Success -> _uiState.update {
+                            it.copy(
+                                isSubmitting = false,
+                                result = resource.data,
+                                errorMessage = null
+                            )
+                        }
 
-                    is Resource.Success -> _uiState.update {
-                        it.copy(
-                            isSubmitting = false,
-                            result = resource.data,
-                            errorMessage = null
-                        )
-                    }
-
-                    is Resource.Error -> _uiState.update {
-                        it.copy(
-                            isSubmitting = false,
-                            errorMessage = resource.message ?: "No se pudo enviar la revisión."
-                        )
+                        is Resource.Error -> _uiState.update {
+                            it.copy(
+                                isSubmitting = false,
+                                errorMessage = resource.message ?: "No se pudo enviar la revisión."
+                            )
+                        }
                     }
                 }
             }

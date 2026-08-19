@@ -195,15 +195,16 @@ class EnrollmentProgressViewModel @Inject constructor(
     private fun loadSubmissions(enrollmentId: String) {
         viewModelScope.launch {
             val session = sessionRepository.session.firstOrNull()
-            val studentId = session?.studentId ?: return@launch
+            val studentId = session?.studentId
+            if (studentId != null) {
+                submissionRepository.getSubmissionsByStudentId(studentId).collect { resource ->
+                    if (resource is Resource.Success && resource.data != null) {
+                        val map = resource.data
+                            .filter { it.enrollmentId == enrollmentId }
+                            .associateBy { it.activityId }
 
-            submissionRepository.getSubmissionsByStudentId(studentId).collect { resource ->
-                if (resource is Resource.Success && resource.data != null) {
-                    val map = resource.data
-                        .filter { it.enrollmentId == enrollmentId }
-                        .associateBy { it.activityId }
-
-                    _uiState.update { it.copy(submissionsByActivityId = map) }
+                        _uiState.update { it.copy(submissionsByActivityId = map) }
+                    }
                 }
             }
         }
