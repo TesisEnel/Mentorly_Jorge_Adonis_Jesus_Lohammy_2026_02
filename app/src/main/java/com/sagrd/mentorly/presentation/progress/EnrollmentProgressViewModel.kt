@@ -44,6 +44,15 @@ class EnrollmentProgressViewModel @Inject constructor(
         loadProgress(isRefresh = false)
         loadEnrollmentDetails(id)
         loadSubmissions(id)
+        loadSession()
+    }
+
+    private fun loadSession() {
+        viewModelScope.launch {
+            sessionRepository.session.firstOrNull()?.let { session ->
+                _uiState.update { it.copy(studentName = session.displayName) }
+            }
+        }
     }
 
     fun onEvent(event: EnrollmentProgressUiEvent) {
@@ -54,6 +63,7 @@ class EnrollmentProgressViewModel @Inject constructor(
                     loadProgress(isRefresh = true)
                     loadEnrollmentDetails(id)
                     loadSubmissions(id)
+                    loadSession()
                 }
             }
 
@@ -71,6 +81,26 @@ class EnrollmentProgressViewModel @Inject constructor(
             }
 
             EnrollmentProgressUiEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+            EnrollmentProgressUiEvent.ShowCertificateDialog -> {
+                val id = enrollmentId
+                _uiState.update { it.copy(isCertificateDialogVisible = true) }
+                if (id != null && _uiState.value.certificate == null) {
+                    loadCertificate(id)
+                }
+            }
+            EnrollmentProgressUiEvent.DismissCertificateDialog -> {
+                _uiState.update { it.copy(isCertificateDialogVisible = false) }
+            }
+        }
+    }
+
+    private fun loadCertificate(enrollmentId: String) {
+        viewModelScope.launch {
+            enrollmentRepository.getCertificate(enrollmentId).collect { resource ->
+                if (resource is Resource.Success && resource.data != null) {
+                    _uiState.update { it.copy(certificate = resource.data) }
+                }
+            }
         }
     }
 
