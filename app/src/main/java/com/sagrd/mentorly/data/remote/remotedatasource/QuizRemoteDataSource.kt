@@ -19,14 +19,14 @@ class QuizRemoteDataSource @Inject constructor(
             val response = api.getQuizQuestions(activityId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -39,14 +39,14 @@ class QuizRemoteDataSource @Inject constructor(
             val response = api.createQuizQuestion(adminId, activityId, question)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -58,14 +58,14 @@ class QuizRemoteDataSource @Inject constructor(
             val response = api.getAdminQuizQuestions(adminId, activityId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -78,14 +78,14 @@ class QuizRemoteDataSource @Inject constructor(
             val response = api.updateQuizQuestion(adminId, questionId, question)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -97,14 +97,14 @@ class QuizRemoteDataSource @Inject constructor(
             val response = api.deleteQuizQuestion(adminId, questionId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -117,14 +117,14 @@ class QuizRemoteDataSource @Inject constructor(
             val response = api.submitQuizAttempt(enrollmentId, activityId, attempt)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 }

@@ -37,14 +37,14 @@ class CourseCommunityRemoteDataSource @Inject constructor(
             val response = api.getLeaderboard(courseId, viewerStudentId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}: ${response.message()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(response.body() ?: emptyList())
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception(exception.message ?: "Error al obtener el ranking", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -56,14 +56,14 @@ class CourseCommunityRemoteDataSource @Inject constructor(
             val response = api.getLeaderboardEntry(courseId, studentId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception(exception.message ?: "Error al obtener posición en ranking", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -75,14 +75,14 @@ class CourseCommunityRemoteDataSource @Inject constructor(
             val response = api.getAdminLeaderboard(adminId, courseId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception(exception.message ?: "Error al obtener ranking administrativo", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 }

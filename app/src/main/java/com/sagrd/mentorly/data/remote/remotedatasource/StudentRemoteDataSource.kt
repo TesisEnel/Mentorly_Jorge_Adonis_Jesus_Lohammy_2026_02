@@ -17,14 +17,14 @@ class StudentRemoteDataSource @Inject constructor(
             val response = api.getStudents()
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -33,14 +33,14 @@ class StudentRemoteDataSource @Inject constructor(
             val response = api.getStudentById(studentId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -51,14 +51,14 @@ class StudentRemoteDataSource @Inject constructor(
             val response = api.provisionStudent(student)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -70,14 +70,14 @@ class StudentRemoteDataSource @Inject constructor(
             val response = api.updateStudent(studentId, student)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -89,14 +89,14 @@ class StudentRemoteDataSource @Inject constructor(
             val response = api.updateLeaderboardPrivacy(studentId, privacy)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -107,14 +107,14 @@ class StudentRemoteDataSource @Inject constructor(
             val response = api.getStudentStatistics(studentId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -126,14 +126,14 @@ class StudentRemoteDataSource @Inject constructor(
             val response = api.promoteToAdmin(adminId, studentId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 }

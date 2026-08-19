@@ -15,14 +15,14 @@ class ThemeRemoteDataSource @Inject constructor(
         return try {
             val response = api.getThemesByUnit(unitId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -34,14 +34,14 @@ class ThemeRemoteDataSource @Inject constructor(
         return try {
             val response = api.createTheme(adminId, unitId, dto)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -53,14 +53,14 @@ class ThemeRemoteDataSource @Inject constructor(
         return try {
             val response = api.updateTheme(adminId, themeId, dto)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -68,14 +68,14 @@ class ThemeRemoteDataSource @Inject constructor(
         return try {
             val response = api.deleteTheme(adminId, themeId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -87,14 +87,14 @@ class ThemeRemoteDataSource @Inject constructor(
         return try {
             val response = api.reorderThemes(adminId, unitId, dto)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 }

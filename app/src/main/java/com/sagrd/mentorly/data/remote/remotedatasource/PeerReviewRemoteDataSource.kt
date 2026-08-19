@@ -20,14 +20,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.getRubric(activityId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -39,14 +39,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.createRubricCriterion(adminId, activityId, dto)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -58,14 +58,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.updateRubricCriterion(adminId, criterionId, dto)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -76,14 +76,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.deleteRubricCriterion(adminId, criterionId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
-                Result.success(Unit)
+                Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -91,14 +91,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.getQueue(studentId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -106,14 +106,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.getMyReviews(studentId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -124,14 +124,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.getAnonymousSubmission(studentId, submissionId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -142,14 +142,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.getAudit(adminId, peerReviewId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -157,14 +157,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.getAllPeerReviews(adminId)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 
@@ -175,14 +175,14 @@ class PeerReviewRemoteDataSource @Inject constructor(
         return try {
             val response = api.submitReview(studentId, dto)
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo completar la solicitud. Intenta de nuevo más tarde."))
             } else {
                 Result.success(response.body()!!)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde.", exception))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde.", exception))
         }
     }
 }

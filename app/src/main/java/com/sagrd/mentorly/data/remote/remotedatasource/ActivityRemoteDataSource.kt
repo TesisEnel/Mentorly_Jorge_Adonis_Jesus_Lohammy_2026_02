@@ -57,14 +57,14 @@ class ActivityRemoteDataSource @Inject constructor(
             val response = api.updateActivity(adminId, activityId, activity)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo."))
             } else {
                 Result.success(Unit)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde."))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde."))
         }
     }
 
@@ -76,14 +76,14 @@ class ActivityRemoteDataSource @Inject constructor(
             val response = api.deleteActivity(adminId, activityId)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo."))
             } else {
                 Result.success(Unit)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde."))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde."))
         }
     }
 
@@ -96,14 +96,14 @@ class ActivityRemoteDataSource @Inject constructor(
             val response = api.reorderActivities(adminId, themeId, items)
 
             if (!response.isSuccessful) {
-                Result.failure(Exception("Error de red ${response.code()}"))
+                Result.failure(Exception("No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo."))
             } else {
                 Result.success(Unit)
             }
         } catch (exception: HttpException) {
-            Result.failure(Exception("Error de servidor", exception))
+            Result.failure(Exception("Ocurrió un problema al comunicarnos con el servidor. Intenta más tarde."))
         } catch (exception: Exception) {
-            Result.failure(Exception("Error desconocido", exception))
+            Result.failure(Exception("Algo salió mal. Intenta de nuevo más tarde."))
         }
     }
 }
