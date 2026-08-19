@@ -5,4 +5,6 @@ sealed interface EnrollmentProgressUiEvent {
     data class CompleteTheme(val themeId: String) : EnrollmentProgressUiEvent
     data class ToggleUnitExpansion(val unitId: String) : EnrollmentProgressUiEvent
     data object ClearError : EnrollmentProgressUiEvent
+    data object ShowCertificateDialog : EnrollmentProgressUiEvent
+    data object DismissCertificateDialog : EnrollmentProgressUiEvent
 }
