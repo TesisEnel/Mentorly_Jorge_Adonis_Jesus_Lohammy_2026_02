@@ -9,6 +9,7 @@ data class ActivityFormUiState(
     val isDeleting: Boolean = false,
     val isEditMode: Boolean = false,
     val title: String = "",
+    val description: String = "",
     val type: ActivityType = ActivityType.EXERCISE,
     val isMandatory: Boolean = true,
     val approvalStrategy: ApprovalStrategy = ApprovalStrategy.AUTO,

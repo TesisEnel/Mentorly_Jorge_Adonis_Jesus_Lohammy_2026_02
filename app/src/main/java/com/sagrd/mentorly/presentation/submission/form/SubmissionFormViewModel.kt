@@ -116,6 +116,7 @@ class SubmissionFormViewModel @Inject constructor(
                                 _uiState.update {
                                     it.copy(
                                         activityTitle = foundActivity.title,
+                                        activityDescription = foundActivity.description,
                                         isMandatory = foundActivity.isMandatory,
                                         approvalStrategy = foundActivity.approvalStrategy,
                                         requiredPeerReviews = course.requiredPeerReviews

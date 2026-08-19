@@ -37,6 +37,9 @@ class ActivityFormViewModel @Inject constructor(
             is ActivityFormUiEvent.TitleChanged -> _state.update {
                 it.copy(title = event.value, fieldErrors = emptyMap())
             }
+            is ActivityFormUiEvent.DescriptionChanged -> _state.update {
+                it.copy(description = event.value, fieldErrors = emptyMap())
+            }
             is ActivityFormUiEvent.TypeChanged -> _state.update {
                 it.copy(
                     type = event.value,
@@ -89,6 +92,7 @@ class ActivityFormViewModel @Inject constructor(
                                         state.copy(
                                             isLoading = false,
                                             title = activity.title,
+                                            description = activity.description,
                                             type = activity.type,
                                             isMandatory = activity.isMandatory,
                                             approvalStrategy = activity.approvalStrategy,
@@ -147,14 +151,17 @@ class ActivityFormViewModel @Inject constructor(
     private fun deleteActivity() {
         viewModelScope.launch {
             val session = sessionRepository.session.first()
+            val id = activityId
 
             if (session == null) {
                 updateMissingSession()
             } else if (session.role != StudentRole.ADMIN) {
                 updateMissingAdminAccess()
-            } else if (activityId != null && !_state.value.isDeleting) {
+            } else if (id == null) {
+                Unit
+            } else {
                 _state.update { it.copy(isDeleting = true, errorMessage = null) }
-                activityRepository.deleteActivity(session.studentId, activityId.orEmpty()).collect { resource ->
+                activityRepository.deleteActivity(session.studentId, id).collect { resource ->
                     when (resource) {
                         is Resource.Loading -> Unit
                         is Resource.Success -> _state.update {
@@ -175,7 +182,9 @@ class ActivityFormViewModel @Inject constructor(
     private fun handleSaveResult(resource: Resource<*>) {
         when (resource) {
             is Resource.Loading -> Unit
-            is Resource.Success -> _state.update { it.copy(isSaving = false, isSaved = true) }
+            is Resource.Success -> _state.update {
+                it.copy(isSaving = false, isSaved = true, errorMessage = null)
+            }
             is Resource.Error -> _state.update {
                 it.copy(
                     isSaving = false,
@@ -192,6 +201,7 @@ class ActivityFormViewModel @Inject constructor(
 
     private fun ActivityFormUiState.toCreateDto() = CreateActivityDto(
         title = title.trim(),
+        description = description.trim(),
         type = if (type == ActivityType.EXERCISE) 1 else 2,
         isMandatory = isMandatory,
         approvalStrategy = approvalStrategy.toApiValue(),
@@ -200,6 +210,7 @@ class ActivityFormViewModel @Inject constructor(
 
     private fun CreateActivityDto.toUpdateDto() = UpdateActivityDto(
         title = title,
+        description = description,
         type = type,
         isMandatory = isMandatory,
         approvalStrategy = approvalStrategy,
