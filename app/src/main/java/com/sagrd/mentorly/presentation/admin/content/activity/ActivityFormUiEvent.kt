@@ -6,6 +6,7 @@ import com.sagrd.mentorly.domain.model.content.ApprovalStrategy
 sealed interface ActivityFormUiEvent {
     data class Load(val themeId: String, val activityId: String?) : ActivityFormUiEvent
     data class TitleChanged(val value: String) : ActivityFormUiEvent
+    data class DescriptionChanged(val value: String) : ActivityFormUiEvent
     data class TypeChanged(val value: ActivityType) : ActivityFormUiEvent
     data class MandatoryChanged(val value: Boolean) : ActivityFormUiEvent
     data class StrategyChanged(val value: ApprovalStrategy) : ActivityFormUiEvent
