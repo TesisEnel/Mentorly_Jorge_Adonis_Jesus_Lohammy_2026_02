@@ -9,6 +9,7 @@ import com.sagrd.mentorly.domain.model.enrollment.EnrollmentStatus
 import com.sagrd.mentorly.domain.repository.auth.AuthRepository
 import com.sagrd.mentorly.domain.repository.enrollment.EnrollmentRepository
 import com.sagrd.mentorly.domain.repository.peerreview.PeerReviewRepository
+import com.sagrd.mentorly.domain.repository.progress.EnrollmentProgressRepository
 import com.sagrd.mentorly.domain.repository.session.SessionRepository
 import com.sagrd.mentorly.domain.repository.student.StudentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,8 @@ class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val sessionRepository: SessionRepository,
     private val peerReviewRepository: PeerReviewRepository,
-    private val enrollmentRepository: EnrollmentRepository
+    private val enrollmentRepository: EnrollmentRepository,
+    private val enrollmentProgressRepository: EnrollmentProgressRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -45,6 +47,16 @@ class ProfileViewModel @Inject constructor(
             is ProfileUiEvent.EmailChanged -> _uiState.update { it.copy(editedEmail = event.value) }
             ProfileUiEvent.SaveProfile -> saveProfile()
             is ProfileUiEvent.PrivacyChanged -> changePrivacy(event.isPublic)
+            ProfileUiEvent.ShowCertificatesListDialog -> _uiState.update {
+                it.copy(isCertificatesListDialogVisible = true)
+            }
+            ProfileUiEvent.DismissCertificatesListDialog -> _uiState.update {
+                it.copy(isCertificatesListDialogVisible = false)
+            }
+            is ProfileUiEvent.SelectCertificateEnrollment -> selectCertificateEnrollment(event.enrollment)
+            ProfileUiEvent.DismissCertificateDialog -> _uiState.update {
+                it.copy(selectedCertificateEnrollment = null, selectedCertificate = null)
+            }
             ProfileUiEvent.ShowSignOutDialog -> _uiState.update { it.copy(isSignOutDialogVisible = true) }
             ProfileUiEvent.DismissSignOutDialog -> _uiState.update { it.copy(isSignOutDialogVisible = false) }
             ProfileUiEvent.ConfirmSignOut -> signOut()
@@ -123,8 +135,57 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             enrollmentRepository.getEnrollments(studentId).collect { resource ->
                 if (resource is Resource.Success && resource.data != null) {
-                    val completed = resource.data.count { it.status == EnrollmentStatus.COMPLETED }
-                    _uiState.update { it.copy(certificatesCount = completed) }
+                    val enrollments = resource.data
+                    val explicitlyCompleted = enrollments.filter {
+                        it.status == EnrollmentStatus.COMPLETED || it.completedAt != null
+                    }
+                    _uiState.update {
+                        it.copy(
+                            certificatesCount = explicitlyCompleted.size,
+                            completedEnrollments = explicitlyCompleted
+                        )
+                    }
+
+                    // Check progress for any other enrollments in case status in DB hasn't flipped
+                    val pendingStatusEnrollments = enrollments.filter {
+                        it.status != EnrollmentStatus.COMPLETED && it.completedAt == null
+                    }
+
+                    pendingStatusEnrollments.forEach { enrollment ->
+                        launch {
+                            enrollmentProgressRepository.getEnrollmentProgress(enrollment.id).collect { progressResource ->
+                                if (progressResource is Resource.Success && progressResource.data?.percentage == 100) {
+                                    _uiState.update { current ->
+                                        if (current.completedEnrollments.none { it.id == enrollment.id }) {
+                                            val updated = current.completedEnrollments + enrollment
+                                            current.copy(
+                                                certificatesCount = updated.size,
+                                                completedEnrollments = updated
+                                            )
+                                        } else {
+                                            current
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun selectCertificateEnrollment(enrollment: com.sagrd.mentorly.domain.model.enrollment.Enrollment) {
+        _uiState.update {
+            it.copy(
+                selectedCertificateEnrollment = enrollment,
+                selectedCertificate = null
+            )
+        }
+        viewModelScope.launch {
+            enrollmentRepository.getCertificate(enrollment.id).collect { resource ->
+                if (resource is Resource.Success && resource.data != null) {
+                    _uiState.update { it.copy(selectedCertificate = resource.data) }
                 }
             }
         }
