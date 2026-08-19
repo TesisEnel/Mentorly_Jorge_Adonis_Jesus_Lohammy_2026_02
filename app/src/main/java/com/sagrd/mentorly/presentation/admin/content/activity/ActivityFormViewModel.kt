@@ -66,7 +66,7 @@ class ActivityFormViewModel @Inject constructor(
                 updateMissingSession()
             } else if (session.role != StudentRole.ADMIN) {
                 updateMissingAdminAccess()
-            } else if (themeId != newThemeId || activityId != newActivityId) {
+            } else {
                 themeId = newThemeId
                 activityId = newActivityId
                 _state.update {

@@ -62,7 +62,7 @@ class AdminPeerReviewRubricViewModel @Inject constructor(
                 updateMissingSession()
             } else if (session.role != StudentRole.ADMIN) {
                 updateMissingAdminAccess()
-            } else if (activityId != newActivityId) {
+            } else {
                 activityId = newActivityId
                 _state.update {
                     AdminPeerReviewRubricUiState(
