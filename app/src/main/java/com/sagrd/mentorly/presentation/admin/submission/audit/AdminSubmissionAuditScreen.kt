@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sagrd.mentorly.domain.model.submission.AdminPeerReviewAuditItem
 import com.sagrd.mentorly.domain.model.submission.AdminSubmissionAudit
@@ -49,6 +50,11 @@ fun AdminSubmissionAuditScreen(
 
     LaunchedEffect(submissionId) {
         viewModel.setSubmissionId(submissionId)
+    }
+
+    LifecycleResumeEffect(submissionId) {
+        viewModel.onEvent(AdminSubmissionAuditUiEvent.Retry)
+        onPauseOrDispose { }
     }
 
     LaunchedEffect(state.successMessage) {
@@ -283,13 +289,20 @@ private fun AuditDetails(
         }
 
         // Admin Decision
-        if (audit.status == SubmissionStatus.ESCALATED) {
+        val canDecide = audit.status == SubmissionStatus.ESCALATED || audit.status == SubmissionStatus.PENDING
+
+        if (canDecide) {
+            val isEscalated = audit.status == SubmissionStatus.ESCALATED
             AuditSection(
                 title = "Decisión administrativa",
-                containerBorder = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f))
+                containerBorder = BorderStroke(1.dp, if (isEscalated) Color.Red.copy(alpha = 0.5f) else Color(0xFF1565C0).copy(alpha = 0.5f))
             ) {
                 Text(
-                    text = "Como administrador, debes resolver este conflicto de evaluación. Revisa la evidencia directamente y determina si la entrega cumple con los criterios mínimos para ser aprobada o si debe ser rechazada.",
+                    text = if (isEscalated) {
+                        "Como administrador, debes resolver este conflicto de evaluación. Revisa la evidencia directamente y determina si la entrega cumple con los criterios mínimos para ser aprobada o si debe ser rechazada."
+                    } else {
+                        "Revisa la evidencia enviada por el estudiante y califica la entrega como instructor/administrador."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     lineHeight = 18.sp
                 )
@@ -303,7 +316,7 @@ private fun AuditDetails(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     minLines = 3,
-                    placeholder = { Text("Escribe una justificación para tu decisión...") }
+                    placeholder = { Text("Escribe una justificación o retroalimentación...") }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -320,7 +333,7 @@ private fun AuditDetails(
                     } else {
                         Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Aprobar entrega (Forzar)")
+                        Text(if (isEscalated) "Aprobar entrega (Forzar)" else "Aprobar entrega")
                     }
                 }
 
@@ -338,7 +351,7 @@ private fun AuditDetails(
                     } else {
                         Icon(imageVector = Icons.Default.Cancel, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Rechazar entrega (Forzar)")
+                        Text(if (isEscalated) "Rechazar entrega (Forzar)" else "Rechazar entrega")
                     }
                 }
             }
@@ -348,7 +361,11 @@ private fun AuditDetails(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Text(
-                    text = "Esta entrega no está disponible para decisión administrativa.",
+                    text = when (audit.status) {
+                        SubmissionStatus.APPROVED -> "Esta entrega ya ha sido aprobada."
+                        SubmissionStatus.REJECTED -> "Esta entrega ya ha sido rechazada."
+                        else -> "Esta entrega no está disponible para decisión administrativa."
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(16.dp),
                     textAlign = TextAlign.Center
