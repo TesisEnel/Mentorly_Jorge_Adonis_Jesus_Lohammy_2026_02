@@ -57,7 +57,7 @@ class ThemeFormViewModel @Inject constructor(
                 updateMissingSession()
             } else if (session.role != StudentRole.ADMIN) {
                 updateMissingAdminAccess()
-            } else if (unitId != newUnitId || themeId != newThemeId) {
+            } else {
                 unitId = newUnitId
                 themeId = newThemeId
                 _state.update {
